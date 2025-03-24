@@ -1,6 +1,6 @@
 #include "instrument.h"
-#include "Ke2100.h"
-#include "IviDmm.h"
+//#include "Ke2100.h"
+//#include "IviDmm.h"
 #include <string>
 #include <iostream>
 #include <Windows.h>
@@ -10,6 +10,7 @@
 #include "visa.h"
 #include <math.h>       
 #include <windows.h>
+#include <thread> // Asegúrate de incluir esto para usar std::thread
 
 #define PI 3.14159265
 
@@ -59,70 +60,116 @@ double instrument::get()
     return fond;
 }
 
+
 // ----------------------------------------------------------
-// Mover motor a cierto ángulo (mote)
+// Rotate motor to a specific angle (in degrees)
 // ----------------------------------------------------------
-int instrument::moveMotor(int deg, int serialNo, int velocity)
+int instrument::rotateMotor(int serialNo, int deg)
 {
+    const double COUNTS_PER_DEGREE = 1919.5;     // For PRM1Z8 + KDC101
+    const int MIN_ALLOWED_DEG = -60;
+    const int MAX_ALLOWED_DEG = 60;
+    const double ZERO_REFERENCE_DEG = 0.0;
+    const int DEFAULT_VELOCITY = 1800000;          // Device units per second
+
+    // Identifiers for axes (should match main())
+    const int MOTOR_AXIS_X = 27006796;
+    const int MOTOR_AXIS_Y = 27007072;
+
+    // Determine axis label for console output
+    std::string axisLabel = "Unknown Axis";
+    if (serialNo == MOTOR_AXIS_X)
+        axisLabel = "Axis X";
+    else if (serialNo == MOTOR_AXIS_Y)
+        axisLabel = "Axis Y";
+
     char testSerialNo[16];
     sprintf_s(testSerialNo, "%d", serialNo);
 
-    // build device list
+    // Clamp the angle to the allowed range
+    if (deg < MIN_ALLOWED_DEG || deg > MAX_ALLOWED_DEG)
+    {
+        cerr << "[Warning] " << axisLabel << ": Requested angle " << deg
+             << "° is out of bounds. Allowed range: [-60°, 60°]. Rotation aborted.\n";
+        return -3;
+    }
+
+    // Build device list
     if (TLI_BuildDeviceList() != 0)
     {
-        // No se pudo construir la lista de dispositivos, retornamos un código de error
-        cerr << "[Error] No se pudo construir la lista de dispositivos.\n";
+        cerr << "[Error] " << axisLabel << ": Failed to build device list.\n";
         return -1;
     }
 
-    // open device
+    // Open device
     if (CC_Open(testSerialNo) != 0)
     {
-        // No se pudo abrir el dispositivo con el serialNo
-        cerr << "[Error] No se pudo abrir el dispositivo con serial: " << testSerialNo << endl;
+        cerr << "[Error] " << axisLabel << ": Failed to open device with serial: " << testSerialNo << endl;
         return -2;
     }
 
-    // Iniciamos el polling
+    // Start polling
     CC_StartPolling(testSerialNo, 200);
+    Sleep(300); // Allow time to stabilize
 
-    // Rotación sin límite, modo “Quickest”
+    // Set unlimited rotation and quickest path
     CC_SetRotationModes(testSerialNo, RotationalUnlimited, Quickest);
-    Sleep(300);
+    CC_ClearMessageQueue(testSerialNo);
 
-    // Variables para esperar mensajes
+    // Convert angle to device units (CCW = positive)
+    int devicePosition = static_cast<int>((ZERO_REFERENCE_DEG - deg) * COUNTS_PER_DEGREE);
+
+    // Set constant velocity
+    int currentVelocity = 0;
+    int currentAcceleration = 0;
+    CC_GetVelParams(testSerialNo, &currentAcceleration, &currentVelocity);
+    CC_SetVelParams(testSerialNo, currentAcceleration, DEFAULT_VELOCITY);
+    //printf("[Info] %s: Velocity set to %d device units.\n", axisLabel.c_str(), DEFAULT_VELOCITY);
+
+    // Rotate to position
+    printf("[Info] %s: Rotating to %.1f° (%d device units)...\n", axisLabel.c_str(), static_cast<double>(deg), devicePosition);
+    CC_MoveToPosition(testSerialNo, devicePosition);
+
+    // Wait for movement to complete
     WORD messageType;
     WORD messageId;
     DWORD messageData;
-
-    // *** IMPORTANTE: Evitar conversión implícita (warning C4244) ***
-    int pose = static_cast<int>((90 - deg) * 1919.5);
-
-    // set velocity if desired
-    if (velocity > 0)
-    {
-        int currentVelocity = 0;
-        int currentAcceleration = 0;
-        CC_GetVelParams(testSerialNo, &currentAcceleration, &currentVelocity);
-        CC_SetVelParams(testSerialNo, currentAcceleration, velocity);
-    }
-
-    // Mover al ángulo
-    CC_ClearMessageQueue(testSerialNo);
-    CC_MoveToPosition(testSerialNo, pose);
-    printf("Device %s moving to %d deg\n", testSerialNo, deg);
-
-    // Esperar hasta que se complete el movimiento
-    CC_WaitForMessage(testSerialNo, &messageType, &messageId, &messageData);
-    while (messageType != 2 || messageId != 1)
-    {
+    do {
         CC_WaitForMessage(testSerialNo, &messageType, &messageId, &messageData);
-    }
-    Sleep(500);
+    } while (messageType != 2 || messageId != 1);
 
-    // Llegó aquí correctamente
+    Sleep(500); // Small buffer
+
+    // Report final position
+    int finalPosition = CC_GetPosition(testSerialNo);
+    double finalAngle = static_cast<double>(finalPosition) / COUNTS_PER_DEGREE;
+    printf("[Info] %s: Rotation complete. Final position: %d device units (%.2f°)\n", axisLabel.c_str(), finalPosition, finalAngle);
+
     return 0;
 }
+
+// ----------------------------------------------------------
+// Rotate two motors simultaneously to specific angles
+// ----------------------------------------------------------
+int instrument::rotateMotorsSimultaneously(int serialNo1, int deg1, int serialNo2, int deg2)
+{
+    // Define lambda that calls rotateMotor
+    auto rotate = [this](int serial, int deg) {
+        this->rotateMotor(serial, deg);
+    };
+
+    // Create threads
+    std::thread motorThread1(rotate, serialNo1, deg1);
+    std::thread motorThread2(rotate, serialNo2, deg2);
+
+    // Wait for both to finish
+    motorThread1.join();
+    motorThread2.join();
+
+    // Optional: you could return error codes from each if needed in the future
+    return 0;
+}
+
 
 // ----------------------------------------------------------
 // Home del motor
@@ -140,7 +187,7 @@ void instrument::homeMotor(int serialNo)
             // start the device polling
             CC_StartPolling(testSerialNo, 200);
             CC_SetRotationModes(testSerialNo, RotationalUnlimited, Quickest);
-            Sleep(500);
+            Sleep(3000);
 
             // Home device
             CC_ClearMessageQueue(testSerialNo);
@@ -164,7 +211,7 @@ void instrument::homeMotor(int serialNo)
 // ----------------------------------------------------------
 // Multímetro
 // ----------------------------------------------------------
-void instrument::initializeMultimeter() 
+/*void instrument::initializeMultimeter() 
 {
     ViChar name[36] = "USB::0x05E6::0x2100::8018542::INSTR";
     ViStatus status = Ke2100_init(name, VI_TRUE, VI_TRUE, &multimeterSession);
@@ -213,6 +260,7 @@ void instrument::closeMultimeter()
     ViStatus status = Ke2100_close(multimeterSession);
     // (Opcional) Manejo de error si status != VI_SUCCESS
 }
+*/
 
 // ----------------------------------------------------------------------
 // Abrir puerto serial
@@ -299,19 +347,4 @@ void instrument::turnOff(HANDLE h_Serial) {
     if (!WriteFile(h_Serial, &cmdOff, 1, &bytesWritten, NULL)) {
         cerr << "[Error] No se pudo enviar comando OFF al Arduino." << endl;
     }
-}
-
-
-
-void instrument::setZeroOffsets(int offsetX, int offsetY) {
-    zeroOffsetX = offsetX;
-    zeroOffsetY = offsetY;
-}
-
-void instrument::rotateAxisX(int angle, int serialNo, int velocity) {
-    moveMotor(zeroOffsetX + angle, serialNo, velocity);
-}
-
-void instrument::rotateAxisY(int angle, int serialNo, int velocity) {
-    moveMotor(zeroOffsetY + angle, serialNo, velocity);
 }

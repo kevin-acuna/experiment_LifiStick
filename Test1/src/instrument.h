@@ -2,8 +2,8 @@
 #ifndef INSTRUMENT_H
 #define INSTRUMENT_H
 
-#include "Ke2100.h"
-#include "IviDmm.h"
+//#include "Ke2100.h"
+//#include "IviDmm.h"
 #include <string>
 #include <iostream>
 #include "stdafx.h"
@@ -33,9 +33,9 @@ public:
     double x, y, he, hr, der;
 	
     // Para el multímetro
-    ViSession multimeterSession;
-    ViReal64 multimeterRange;
-    ViReal64 multimeterResolution;
+    //ViSession multimeterSession;
+    //ViReal64 multimeterRange;
+    //ViReal64 multimeterResolution;
 
     instrument();
     ~instrument();
@@ -44,7 +44,8 @@ public:
     double get();
     
     // Mover y "home" motores
-    int moveMotor(int deg, int serialNo, int velocity);
+    int rotateMotor(int serialNo, int deg);    
+    int rotateMotorsSimultaneously(int serialNo1, int deg1, int serialNo2, int deg2);
     void homeMotor(int serialNo);
 
     // Métodos para manejo del puerto serial (LED, etc.)
@@ -56,18 +57,11 @@ public:
     void turnOff(HANDLE h_Serial);
     
     // Métodos para manejo del multímetro
-    void initializeMultimeter();
-    double measureVoltage();
-    void closeMultimeter();
-
-    // En instrument.h, al final de la clase:
-    void setZeroOffsets(int offsetX, int offsetY);
-    void rotateAxisX(int angle, int serialNo, int velocity);
-    void rotateAxisY(int angle, int serialNo, int velocity);
+    //void initializeMultimeter();
+    //double measureVoltage();
+    //void closeMultimeter();
 
     private:
-        int zeroOffsetX;
-        int zeroOffsetY;
         double fond;
 };
 
