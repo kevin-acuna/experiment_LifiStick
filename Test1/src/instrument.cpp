@@ -31,33 +31,14 @@ using namespace std;
 // ----------------------------------------------------------
 instrument::instrument()
 {
-    fond = 0;
-    x    = 0;
-    y    = 0;
-    hr   = 0;
-    he   = 0;
-    der  = 0;
+    transmitterPosX = 0;
+    transmitterPosY = 0;
+    transmitterPosZ = 0;
 }
 
 instrument::~instrument()
 {
-    fond = 0;
-}
-
-// ----------------------------------------------------------
-// MÉTODOS DE INSTRUMENT
-// ----------------------------------------------------------
-void instrument::set(double fondVal, double posx, double posy)
-{
-    fond = fondVal;  // almacenar si lo deseas
-    x = posx;
-    y = posy;
-    cout << "************************************************************************* " << endl;
-}
-
-double instrument::get()
-{
-    return fond;
+    cout << "***************************" << endl;
 }
 
 
@@ -347,4 +328,81 @@ void instrument::turnOff(HANDLE h_Serial) {
     if (!WriteFile(h_Serial, &cmdOff, 1, &bytesWritten, NULL)) {
         cerr << "[Error] No se pudo enviar comando OFF al Arduino." << endl;
     }
+}
+
+
+// ******************************************************************************
+// Nuevas funciones 
+// ******************************************************************************
+void instrument::setTransmitterPosition(double x, double y, double z)
+{
+    transmitterPosX = x;
+    transmitterPosY = y;
+    transmitterPosZ = z;
+}
+
+void instrument::setSerialNo_MotorX(double serialNo)
+{
+    serialNo_MotorX = serialNo;
+}
+
+void instrument::setSerialNo_MotorY(double serialNo)
+{
+    serialNo_MotorY = serialNo;
+}
+
+void instrument::transmitterPointingToFloor()
+{
+    rotateMotorsSimultaneously(serialNo_MotorX, 0, serialNo_MotorY, 0);
+}
+
+
+void instrument::transmitterPointingToReceiver(double rx, double ry, double rz)
+{
+    // Vector desde transmisor al receptor
+    double dx = rx - transmitterPosX;
+    double dy = ry - transmitterPosY;
+    double dz = rz - transmitterPosZ;
+
+    // Vector unitario hacia el receptor
+    double norm = sqrt(dx*dx + dy*dy + dz*dz);
+    double vx = dx / norm;
+    double vy = dy / norm;
+    double vz = dz / norm;
+
+    // Cálculo correcto basado en matriz de rotación
+    double angleX_rad = asin(vy);                        // sin(theta_x) = vy
+    double angleY_rad = atan2(-vx, -vz);                 // tan(theta_y) = -vx / -vz
+
+    // Conversión a grados
+    int angleX_deg = static_cast<int>(round(angleX_rad * 180.0 / PI));
+    int angleY_deg = static_cast<int>(round(angleY_rad * 180.0 / PI));
+
+    // Rotar motores en orden adecuado
+    rotateMotorsSimultaneously(serialNo_MotorX, angleX_deg, serialNo_MotorY, angleY_deg);
+}
+
+
+void instrument::transmitterPointingToReceiver(double rx, double ry, double rz)
+{
+    // Diferencias respecto a la posición del transmisor
+    double dx = rx - transmitterPosX; // x_R
+    double dy = ry - transmitterPosY; // y_R
+    // Suponemos que el transmisor está por encima: transmitterPosZ > rz.
+    double delta = transmitterPosZ - rz; // Δ = H - h
+
+    // Calcular el ángulo de rotación en el eje Y (motor interno)
+    // theta_y = -arctan(x_R / (H - h))
+    double angleY_rad = -atan2(dx, delta);
+
+    // Calcular el ángulo de rotación en el eje X (motor externo)
+    // theta_x = arctan((y_R * cos(theta_y)) / (H - h))
+    double angleX_rad = atan2(dy * cos(angleY_rad), delta);
+
+    // Conversión a grados
+    int angleX_deg = static_cast<int>(round(angleX_rad * 180.0 / PI));
+    int angleY_deg = static_cast<int>(round(angleY_rad * 180.0 / PI));
+
+    // Se recomienda rotar primero el motor del eje Y y luego el de X (o enviarlos de forma sincronizada si el controlador lo permite)
+    rotateMotorsSimultaneously(serialNo_MotorX, angleX_deg, serialNo_MotorY, angleY_deg);
 }
