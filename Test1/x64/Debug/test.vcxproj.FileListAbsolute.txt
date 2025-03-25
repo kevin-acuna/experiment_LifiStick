@@ -1,5 +1,0 @@
-C:\Users\Manip\Desktop\Stage\prog\test\x64\Debug\test.exe
-C:\Users\Manip\Desktop\Stage\prog\test_distance\x64\Debug\test.exe
-C:\Users\userlisv\Desktop\HOSSAIN_alternance\alternance\test_distance\x64\Debug\test.exe
-F:\alternance\alternance2.0\test_distance\x64\Debug\test.exe
-C:\Users\Manip\Desktop\Stage\alternance3.0\test_distance\x64\Debug\test.exe
