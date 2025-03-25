@@ -9,11 +9,11 @@ void loadPositions(const std::string& filePath, std::vector<Position>& positions
         // Si el archivo no se abre correctamente, podrías manejar el error aquí
         return;
     }
-    float x, y;
+    double x, y;
     bool done;
     while (file >> x >> y >> done) {
         positions.push_back(Position(x, y, done));
     }
     file.close();
-    cout << "[ok] Points loading successful" << endl;
+    cout << "[Info] Sampling points loaded successfully" << endl;
 }

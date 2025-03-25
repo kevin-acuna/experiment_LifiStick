@@ -27,10 +27,10 @@ SOCKET connectToServer(const char* ip, int port) {
     if (connect(sock, (sockaddr*)&serv_addr, sizeof(serv_addr)) == SOCKET_ERROR) {
         closesocket(sock);
         WSACleanup();
-        std::cerr << "Unable to connect to server!" << std::endl;
+        std::cerr << "[Error] Unable to connect to server!" << std::endl;
         exit(1);
     }
-    std::cout << "[Info] Connection with the Python server successful" << std::endl;
+    std::cout << "[Info] Connection with the server was successful" << std::endl;
     return sock;
 }
 

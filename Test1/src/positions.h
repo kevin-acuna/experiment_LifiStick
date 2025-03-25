@@ -6,12 +6,12 @@
 
 // Definición de la estructura Position
 struct Position {
-    float x;
-    float y;
+    double x;
+    double y;
     bool done;
 
     // Constructor: permite inicializar x, y y, opcionalmente, done (por defecto false)
-    Position(float x, float y, bool done = false) : x(x), y(y), done(done) {}
+    Position(double x, double y, bool done = false) : x(x), y(y), done(done) {}
 };
 
 // Declaración de la función para cargar posiciones desde un archivo
