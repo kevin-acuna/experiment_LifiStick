@@ -1,13 +1,19 @@
 #include <iostream>
+#include <limits>      // For numeric_limits
+#include <cctype>      // For toupper
+#define NOMINMAX
 #include <Windows.h>
-#include "stdafx.h"         // Only if you're using precompiled headers
+#include "stdafx.h"    // Only if you're using precompiled headers
 #include "instrument.h"
 
 using namespace std;
 
 // Adjust according to your hardware
-int motorAxisX = 27006796;  // External axis
-int motorAxisY = 27007072;  // Internal axis
+int MOTOR_AXIS_X = 27006796;  // External axis
+int MOTOR_AXIS_Y = 27007072;  // Internal axis
+
+const double TRANSMITTER_H = 1.98; // altitude in meters
+const double RECEIVER_H = 0.96;    // altitude in meters
 
 int main()
 {
@@ -15,45 +21,84 @@ int main()
     system("chcp 65001 > nul");
 
     instrument gimbal; // Your controller instance
-
-    cout << "========================================\n";
-    cout << "   GIMBAL MOTOR TESTING TOOL (2 AXES)   \n";
-    cout << "========================================\n\n";
-
-    cout << "Usage examples:\n"
-         << "  - Enter 'X 30'   -> rotate X axis to +30 degrees\n"
-         << "  - Enter 'Y -45'  -> rotate Y axis to -45 degrees\n"
-         << "  - Enter 'B 30 -30' -> rotate both axes simultaneously\n"
-         << "  - Enter 'Q' to quit\n\n";
+    gimbal.setSerialNo_MotorX(MOTOR_AXIS_X);
+    gimbal.setSerialNo_MotorY(MOTOR_AXIS_Y);
+    gimbal.setTransmitterPosition(0, 0, TRANSMITTER_H);
 
     while (true) {
-        cout << "[Input] Enter command: ";
 
-        string command;
-        cin >> command;
+        // ****************************************************************
+        // Receiver Position Input
+        // ****************************************************************
+        cout << "************************************\n";
+        cout << "POSITION: X, Y, Z\n";
+        cout << "************************************\n\n";
 
-        if (command == "Q" || command == "q") {
-            cout << "[Exit] Quitting program.\n";
+        double receiverX, receiverY;
+        cout << "Enter receiver position (X Y): ";
+        cin >> receiverX >> receiverY;
+        // Clean the input buffer
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "Receiver position set to: (" << receiverX << ", " << receiverY << ", " << RECEIVER_H << ")\n\n";
+
+        // Scenario 1 - Pointing transmitter to floor and receiver to ceiling
+        cout << "Scenario 1: Waiting for alignment...\n";
+        gimbal.transmitterPointingToFloor();
+        // receiverPointingToCeilToPosition(receiverX, receiverY);
+        cout << "Scenario 1: Ready!\n";
+
+        // Wait for a valid option (C to continue or Q to quit)
+        char option;
+        while (true) {
+            cout << "Press C to continue or Q to quit: ";
+            cin >> option;
+            option = toupper(option);
+            if (option == 'C' || option == 'Q')
+                break;
+            cout << "Invalid option. Please try again." << endl;
+        }
+        if (option == 'Q') {
+            cout << "Program terminated by user." << endl;
             break;
         }
-        else if (command == "X" || command == "x") {
-            int angle;
-            cin >> angle;
-            gimbal.rotateMotor(motorAxisX, angle);
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clean the input buffer
+
+        // Scenario 2 - Pointing transmitter to receiver
+        cout << "\nScenario 2: Waiting for alignment...\n";
+        gimbal.transmitterPointingToReceiver(receiverX, receiverY, RECEIVER_H);
+        cout << "Scenario 2: Ready!\n";
+        while (true) {
+            cout << "Press C to continue or Q to quit: ";
+            cin >> option;
+            option = toupper(option);
+            if (option == 'C' || option == 'Q')
+                break;
+            cout << "Invalid option. Please try again." << endl;
         }
-        else if (command == "Y" || command == "y") {
-            int angle;
-            cin >> angle;
-            gimbal.rotateMotor(motorAxisY, angle);
+        if (option == 'Q') {
+            cout << "Program terminated by user." << endl;
+            break;
         }
-        else if (command == "B" || command == "b") {
-            int angleX, angleY;
-            cin >> angleX >> angleY;
-            gimbal.rotateMotorsSimultaneously(motorAxisX, angleX, motorAxisY, angleY);
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        // Scenario 3 - Pointing transmitter to floor and receiver to transmitter
+        cout << "\nScenario 3: Waiting for alignment...\n";
+        gimbal.transmitterPointingToFloor();
+        // receiverPointingToTransmitter(receiverX, receiverY);
+        cout << "Scenario 3: Ready!\n";
+        while (true) {
+            cout << "Press C to continue or Q to quit: ";
+            cin >> option;
+            option = toupper(option);
+            if (option == 'C' || option == 'Q')
+                break;
+            cout << "Invalid option. Please try again." << endl;
         }
-        else {
-            cout << "[Error] Invalid command. Use 'X', 'Y', 'B' or 'Q'.\n";
+        if (option == 'Q') {
+            cout << "Program terminated by user." << endl;
+            break;
         }
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         cout << endl;
     }

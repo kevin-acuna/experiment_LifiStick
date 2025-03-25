@@ -30,39 +30,38 @@ class instrument
 {
 public:
 
-    double x, y, he, hr, der;
-	
-    // Para el multímetro
-    //ViSession multimeterSession;
-    //ViReal64 multimeterRange;
-    //ViReal64 multimeterResolution;
-
     instrument();
     ~instrument();
 
-    void set(double fond, double posx, double posy);
-    double get();
-    
     // Mover y "home" motores
-    int rotateMotor(int serialNo, int deg);    
-    int rotateMotorsSimultaneously(int serialNo1, int deg1, int serialNo2, int deg2);
+    int rotateMotor(int serialNo, double deg);    
+    int rotateMotorsSimultaneously(int serialNo1, double deg1, int serialNo2, double deg2);
     void homeMotor(int serialNo);
 
     // Métodos para manejo del puerto serial (LED, etc.)
     static HANDLE openSerialPort(LPCWSTR portName);   // Método estático para abrir el puerto
     static void closeSerialPort(HANDLE h_Serial);     // Método estático para cerrar el puerto
 
-    // NUEVAS FUNCIONES: encender / apagar LED en Arduino
+    // Encender / apagar LED en Arduino
     void turnOn(HANDLE h_Serial);
     void turnOff(HANDLE h_Serial);
     
-    // Métodos para manejo del multímetro
-    //void initializeMultimeter();
-    //double measureVoltage();
-    //void closeMultimeter();
+    // NUEVAS FUNCIONES: definir posición del transmisor
+    void setTransmitterPosition(double x, double y, double z); // Define la posición del transmisor
+    void transmitterPointingToFloor(); // Apunta el transmisor al suelo
+    void transmitterPointingToReceiver(double rx, double ry, double rz); // Apunta el transmisor al receptor
+    void transmitterPointingToReceiver_simple(double rx, double ry, double rz); // Apunta el transmisor al receptor
+
+    void setSerialNo_MotorX(int serialNo);
+    void setSerialNo_MotorY(int serialNo);
 
     private:
-        double fond;
+        int serialNo_MotorX;
+        int serialNo_MotorY;
+        double transmitterPosX;
+        double transmitterPosY;
+        double transmitterPosZ;
+
 };
 
 #endif

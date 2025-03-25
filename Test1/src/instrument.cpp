@@ -31,40 +31,21 @@ using namespace std;
 // ----------------------------------------------------------
 instrument::instrument()
 {
-    fond = 0;
-    x    = 0;
-    y    = 0;
-    hr   = 0;
-    he   = 0;
-    der  = 0;
+    transmitterPosX = 0;
+    transmitterPosY = 0;
+    transmitterPosZ = 0;
 }
 
 instrument::~instrument()
 {
-    fond = 0;
-}
-
-// ----------------------------------------------------------
-// MÉTODOS DE INSTRUMENT
-// ----------------------------------------------------------
-void instrument::set(double fondVal, double posx, double posy)
-{
-    fond = fondVal;  // almacenar si lo deseas
-    x = posx;
-    y = posy;
-    cout << "************************************************************************* " << endl;
-}
-
-double instrument::get()
-{
-    return fond;
+    cout << "***************************" << endl;
 }
 
 
 // ----------------------------------------------------------
 // Rotate motor to a specific angle (in degrees)
 // ----------------------------------------------------------
-int instrument::rotateMotor(int serialNo, int deg)
+int instrument::rotateMotor(int serialNo, double deg)
 {
     const double COUNTS_PER_DEGREE = 1919.5;     // For PRM1Z8 + KDC101
     const int MIN_ALLOWED_DEG = -60;
@@ -151,10 +132,10 @@ int instrument::rotateMotor(int serialNo, int deg)
 // ----------------------------------------------------------
 // Rotate two motors simultaneously to specific angles
 // ----------------------------------------------------------
-int instrument::rotateMotorsSimultaneously(int serialNo1, int deg1, int serialNo2, int deg2)
+int instrument::rotateMotorsSimultaneously(int serialNo1, double deg1, int serialNo2, double deg2)
 {
     // Define lambda that calls rotateMotor
-    auto rotate = [this](int serial, int deg) {
+    auto rotate = [this](int serial, double deg) {
         this->rotateMotor(serial, deg);
     };
 
@@ -347,4 +328,82 @@ void instrument::turnOff(HANDLE h_Serial) {
     if (!WriteFile(h_Serial, &cmdOff, 1, &bytesWritten, NULL)) {
         cerr << "[Error] No se pudo enviar comando OFF al Arduino." << endl;
     }
+}
+
+
+// ******************************************************************************
+// Nuevas funciones 
+// ******************************************************************************
+void instrument::setTransmitterPosition(double x, double y, double z)
+{
+    transmitterPosX = x;
+    transmitterPosY = y;
+    transmitterPosZ = z;
+}
+
+void instrument::setSerialNo_MotorX(int serialNo)
+{
+    serialNo_MotorX = serialNo;
+}
+
+void instrument::setSerialNo_MotorY(int serialNo)
+{
+    serialNo_MotorY = serialNo;
+}
+
+void instrument::transmitterPointingToFloor()
+{
+    rotateMotorsSimultaneously(serialNo_MotorX, 0, serialNo_MotorY, 0);
+}
+
+
+void instrument::transmitterPointingToReceiver_simple(double rx, double ry, double rz)
+{
+    // Vector desde transmisor al receptor
+    double dx = rx - transmitterPosX;
+    double dy = ry - transmitterPosY;
+    double dz = rz - transmitterPosZ;
+
+    // Vector unitario hacia el receptor
+    double norm = sqrt(dx*dx + dy*dy + dz*dz);
+    double vx = dx / norm;
+    double vy = dy / norm;
+    double vz = dz / norm;
+
+    // Cálculo correcto basado en matriz de rotación
+    double angleX_rad = asin(vy);                        // sin(theta_x) = vy
+    double angleY_rad = atan2(-vx, -vz);                 // tan(theta_y) = -vx / -vz
+
+    // Conversión a grados
+    int angleX_deg = static_cast<int>(round(angleX_rad * 180.0 / PI));
+    int angleY_deg = static_cast<int>(round(angleY_rad * 180.0 / PI));
+
+    // Rotar motores en orden adecuado
+    rotateMotorsSimultaneously(serialNo_MotorX, angleX_deg, serialNo_MotorY, angleY_deg);
+}
+
+
+void instrument::transmitterPointingToReceiver(double rx, double ry, double rz)
+{
+    // Diferencias respecto a la posición del transmisor
+    double dx = rx - transmitterPosX; // x_R
+    double dy = ry - transmitterPosY; // y_R
+    // Suponemos que el transmisor está por encima: transmitterPosZ > rz.
+    double delta = transmitterPosZ - rz; // Δ = H - h
+
+    // Calcular el ángulo de rotación en el eje Y (motor interno)
+    // theta_y = -arctan(x_R / (H - h))
+    double angleY_rad = -atan2(dx, delta);
+
+    // Calcular el ángulo de rotación en el eje X (motor externo)
+    // theta_x = arctan((y_R * cos(theta_y)) / (H - h))
+    double angleX_rad = atan2(dy * cos(angleY_rad), delta);
+
+    // Conversión a grados con 1 decimal
+    // Multiplicamos por 10, redondeamos, y dividimos por 10
+    double angleX_deg = std::round((angleX_rad * 180.0 / PI) * 10.0) / 10.0;
+    double angleY_deg = std::round((angleY_rad * 180.0 / PI) * 10.0) / 10.0;
+
+    // Se recomienda rotar primero el motor del eje Y y luego el de X (o enviarlos de forma sincronizada si el controlador lo permite)
+    rotateMotorsSimultaneously(serialNo_MotorX, angleX_deg, serialNo_MotorY, angleY_deg);
 }

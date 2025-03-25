@@ -5,6 +5,10 @@
     {
       "AbsoluteMoniker": "D:0:0:{DCDC4D58-B67B-4DAF-B870-DF8A8175DE13}|test.vcxproj|C:\\Users\\userlisv\\OneDrive\\Documentos\\PhD\\Proyecto 3D Visible Light Positioning\\Project - Haitham Experiment\\Test1\\src\\test.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{DCDC4D58-B67B-4DAF-B870-DF8A8175DE13}|test.vcxproj|solutionrelative:src\\test.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DCDC4D58-B67B-4DAF-B870-DF8A8175DE13}|test.vcxproj|C:\\Users\\userlisv\\OneDrive\\Documentos\\PhD\\Proyecto 3D Visible Light Positioning\\Project - Haitham Experiment\\Test1\\src\\instrument.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{DCDC4D58-B67B-4DAF-B870-DF8A8175DE13}|test.vcxproj|solutionrelative:src\\instrument.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -14,11 +18,23 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "instrument.cpp",
+              "DocumentMoniker": "C:\\Users\\userlisv\\OneDrive\\Documentos\\PhD\\Proyecto 3D Visible Light Positioning\\Project - Haitham Experiment\\Test1\\src\\instrument.cpp",
+              "RelativeDocumentMoniker": "src\\instrument.cpp",
+              "ToolTip": "C:\\Users\\userlisv\\OneDrive\\Documentos\\PhD\\Proyecto 3D Visible Light Positioning\\Project - Haitham Experiment\\Test1\\src\\instrument.cpp",
+              "RelativeToolTip": "src\\instrument.cpp",
+              "ViewState": "AgIAAD4AAAAAAAAAAAAgwFUAAAAjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-03-25T09:30:23.831Z"
             },
             {
               "$type": "Document",
@@ -28,7 +44,7 @@
               "RelativeDocumentMoniker": "src\\test.cpp",
               "ToolTip": "C:\\Users\\userlisv\\OneDrive\\Documentos\\PhD\\Proyecto 3D Visible Light Positioning\\Project - Haitham Experiment\\Test1\\src\\test.cpp",
               "RelativeToolTip": "src\\test.cpp",
-              "ViewState": "AgIAAAMAAAAAAAAAAAAAABsAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAABwAAAAAAAAAAAAMwCUAAAAyAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-01-14T21:26:10.937Z",
               "EditorCaption": ""
