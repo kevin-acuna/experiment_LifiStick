@@ -142,9 +142,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\instrument.cpp" />
+    <ClCompile Include="src\positions.cpp" />
     <ClCompile Include="src\test.cpp" />
   </ItemGroup>
-
   <ItemGroup>
     <ClInclude Include="src\instrument.h" />
     <ClInclude Include="include\ivi.h" />
@@ -152,6 +152,7 @@
     <ClInclude Include="include\IviDmmObsolete.h" />
     <ClInclude Include="include\IviVisaType.h" />
     <ClInclude Include="include\Ke2100.h" />
+    <ClInclude Include="src\positions.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\targetver.h" />
     <ClInclude Include="include\Thorlabs.MotionControl.KCube.DCServo.h" />
