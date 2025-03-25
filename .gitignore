@@ -1,2 +1,7 @@
 *.ipch
 Comentarios/
+
+Test1/.vs/
+Test1/test/
+Test1/x64/
+Test1/Debug
