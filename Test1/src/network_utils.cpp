@@ -1,0 +1,83 @@
+#include "network_utils.h"
+#include <iostream>
+#include <cstdlib>  // para exit(1)
+
+void initializeWinsock() {
+    WSADATA wsaData;
+    int result = WSAStartup(MAKEWORD(2,2), &wsaData);
+    if (result != 0) {
+        std::cerr << "WSAStartup failed: " << result << std::endl;
+        exit(1);
+    }
+}
+
+SOCKET connectToServer(const char* ip, int port) {
+    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == INVALID_SOCKET) {
+        std::cerr << "Error at socket(): " << WSAGetLastError() << std::endl;
+        WSACleanup();
+        exit(1);
+    }
+
+    sockaddr_in serv_addr;
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port);
+    inet_pton(AF_INET, ip, &serv_addr.sin_addr);
+
+    if (connect(sock, (sockaddr*)&serv_addr, sizeof(serv_addr)) == SOCKET_ERROR) {
+        closesocket(sock);
+        WSACleanup();
+        std::cerr << "Unable to connect to server!" << std::endl;
+        exit(1);
+    }
+    std::cout << "[Info] Connection with the Python server successful" << std::endl;
+    return sock;
+}
+
+void sendCoordinates(SOCKET sock, double x, double y, double z) {
+    double coordinates[3] = { x, y, z };
+    int bytesSent = send(sock, reinterpret_cast<char*>(coordinates), sizeof(coordinates), 0);
+    if (bytesSent == SOCKET_ERROR) {
+        std::cerr << "Send failed: " << WSAGetLastError() << std::endl;
+        closesocket(sock);
+        WSACleanup();
+        exit(1);
+    }
+}
+
+std::string receiveResponse(SOCKET sock, int timeout_sec) {
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(sock, &readfds);
+
+    timeval timeout;
+    timeout.tv_sec = timeout_sec;
+    timeout.tv_usec = 0;
+
+    int result = select(sock + 1, &readfds, NULL, NULL, &timeout);
+    if (result > 0) {
+        char buffer[1024];
+        int bytesReceived = recv(sock, buffer, sizeof(buffer), 0);
+        if (bytesReceived > 0) {
+            return std::string(buffer, bytesReceived);
+        }
+    } else if (result == 0) {
+        return "No response from robot";
+    } else {
+        std::cerr << "recv failed: " << WSAGetLastError() << std::endl;
+        closesocket(sock);
+        WSACleanup();
+        exit(1);
+    }
+    return "";
+}
+
+void sendMessage(SOCKET sock, const std::string& message) {
+    int bytesSent = send(sock, message.c_str(), message.length(), 0);
+    if (bytesSent == SOCKET_ERROR) {
+        std::cerr << "Send failed: " << WSAGetLastError() << std::endl;
+        closesocket(sock);
+        WSACleanup();
+        exit(1);
+    }
+}

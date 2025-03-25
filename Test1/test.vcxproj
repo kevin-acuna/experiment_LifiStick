@@ -142,6 +142,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\instrument.cpp" />
+    <ClCompile Include="src\network_utils.cpp" />
     <ClCompile Include="src\positions.cpp" />
     <ClCompile Include="src\test.cpp" />
   </ItemGroup>
@@ -152,6 +153,7 @@
     <ClInclude Include="include\IviDmmObsolete.h" />
     <ClInclude Include="include\IviVisaType.h" />
     <ClInclude Include="include\Ke2100.h" />
+    <ClInclude Include="src\network_utils.h" />
     <ClInclude Include="src\positions.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\targetver.h" />
