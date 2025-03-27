@@ -1,104 +1,98 @@
 """
 main.py
-
-This script demonstrates how to:
-1) Build a desired piece pose in the global frame based on the transmitter position.
-2) Compute the required end-effector pose in the robot's local frame (T^R_E).
-3) Convert the rotation to axis-angle (rx, ry, rz).
-4) Open a socket to the robot and send the move command.
-
-Adjust the code to match your real scenario.
 """
 
 import time
 import numpy as np
+import socket
 
 import config
-from transformations import (
-    get_robot_pose_in_global,
-    get_piece_pose_from_transmitter,
-    build_global_pose_from_vector,
-    inv_se3,
-    rotation_matrix_to_axis_angle
+from network import create_socket, send_move_command_time
+from cpp_client_comm import (
+    start_server,
+    process_coordinates,
+    send_text_message,
+    receive_text_message
 )
-from network import (
-    create_socket,
-    send_move_command_time
+from workspace_utils import check_workspace
+from transformations import (
+    compute_pose_vertical,
+    compute_pose_pointed_to_transmitter,
+    rotation_matrix_to_axis_angle
 )
 
 def main():
-    print("Starting program...")
+    print("Starting main...")
 
-    # ----------------------------------------------------------
-    # 1) Desired piece pose in the global frame
-    # ----------------------------------------------------------
-    # Example: we want the piece (receptor) at (0.4, 0.5, 1.3),
-    # oriented toward the transmitter at (0,0,2) [defined in config].
-    piece_x, piece_y, piece_z = (-1.1, -1.1, 0.92)
-    pos_piece, orient_piece = get_piece_pose_from_transmitter(
-        piece_x, piece_y, piece_z,
-        config.TRANSMITTER_X,
-        config.TRANSMITTER_Y,
-        config.TRANSMITTER_Z
-    )
-    T_G_P = build_global_pose_from_vector(pos_piece, orient_piece)
-
-    # ----------------------------------------------------------
-    # 2) Robot pose in the global frame: T^G_R
-    # ----------------------------------------------------------
-    T_G_R = get_robot_pose_in_global(
-        config.ROBOT_GLOBAL_X,
-        config.ROBOT_GLOBAL_Y,
-        config.ROBOT_GLOBAL_Z,
-        config.ROBOT_YAW_DEG
-    )
-
-    # ----------------------------------------------------------
-    # 3) Piece offset in the end-effector: T^E_P (0.1 m up in local z)
-    # ----------------------------------------------------------
-    T_E_P = np.eye(4)
-    T_E_P[2, 3] = config.PIECE_HEIGHT
-
-    # ----------------------------------------------------------
-    # 4) Compute T^R_E so that the piece ends up at T^G_P:
-    #    T^G_P = T^G_R * T^R_E * T^E_P
-    #    => T^R_E = (T^G_R)^-1 * T^G_P * (T^E_P)^-1
-    # ----------------------------------------------------------
-    T_R_E = inv_se3(T_G_R) @ T_G_P @ inv_se3(T_E_P)
-
-    # Extract position and rotation from T^R_E
-    pos_robot = T_R_E[0:3, 3]
-    R_robot   = T_R_E[0:3, 0:3]
-
-    rx, ry, rz = rotation_matrix_to_axis_angle(R_robot)
-
-    # Prepare final pose in [x, y, z, rx, ry, rz] format
-    pose_robot = [pos_robot[0], pos_robot[1], pos_robot[2], rx, ry, rz]
-
-    print("===== Computed Robot Pose (Local) =====")
-    print(f"Position: {pos_robot}")
-    print(f"Axis-angle rotation (rx, ry, rz): {rx, ry, rz}")
-    print("=======================================")
-
-    # ----------------------------------------------------------
-    # 5) Establish socket connection and send move command
-    # ----------------------------------------------------------
-    sock = create_socket(config.ROBOT_HOST, config.ROBOT_PORT)
+    # 1) Connect to the robot
+    print(f"Connecting to robot at {config.ROBOT_HOST}:{config.ROBOT_PORT}")
+    robot_socket = create_socket(config.ROBOT_HOST, config.ROBOT_PORT)
     print("Connected to the robot.")
 
-    # Now send the movement command
-    send_move_command_time(sock,
-                           pose_robot,
-                           config.ACCELERATION,
-                           config.VELOCITY,
-                           config.MOVE_TIME)
+    # 2) Start local server for the C++ client
+    server_socket = start_server('localhost', 12345)
+    client_socket, addr = server_socket.accept()
+    print(f"Connection from {addr} established.")
 
-    # Wait for the motion to complete
-    time.sleep(config.MOVE_TIME + 2)
+    try:
+        while True:
+            # 3) Wait for piece coordinates from the client
+            piece_coords = process_coordinates(client_socket)
+            if not piece_coords:
+                print("No data received. Client may have disconnected.")
+                break  # or continue, or handle differently
 
-    # Close socket
-    sock.close()
-    print("Movement completed. Socket closed.")
+            piece_x, piece_y, piece_z = piece_coords
+
+            # 4) Directly compute the vertical orientation 
+            #    (since we removed the old step 4 with transform_to_baseReference)
+            pos_robot_vert, R_robot_vert = compute_pose_vertical(piece_x, piece_y, piece_z)
+
+            # 5) Check if that vertical pose is in workspace
+            x_r, y_r, z_r = pos_robot_vert
+            if check_workspace((x_r, y_r, z_r)):
+                send_text_message(client_socket, "reachable")
+
+                # Wait for next message: "vertical" or "pointed"
+                command_str = receive_text_message(client_socket, 24)
+                if not command_str:
+                    print("No command received. Client might have closed.")
+                    break
+
+                if command_str == "vertical":
+                    rx, ry, rz = rotation_matrix_to_axis_angle(R_robot_vert)
+                    pose = [x_r, y_r, z_r, rx, ry, rz]
+                    send_move_command_time(robot_socket, pose, config.ACCELERATION, config.VELOCITY, config.MOVE_TIME)
+
+                    time.sleep(config.MOVE_TIME + 2)
+                    send_text_message(client_socket, "reached")
+
+                elif command_str == "pointed":
+                    pos_robot_ptr, R_robot_ptr = compute_pose_pointed_to_transmitter(piece_x, piece_y, piece_z)
+                    x_p, y_p, z_p = pos_robot_ptr
+                    rx2, ry2, rz2 = rotation_matrix_to_axis_angle(R_robot_ptr)
+                    pose2 = [x_p, y_p, z_p, rx2, ry2, rz2]
+                    send_move_command_time(robot_socket, pose2, config.ACCELERATION, config.VELOCITY, config.MOVE_TIME)
+
+                    time.sleep(config.MOVE_TIME + 2)
+                    send_text_message(client_socket, "reached")
+
+                else:
+                    print(f"Unknown command: {command_str}")
+                    # Possibly ignore or break from loop
+
+            else:
+                send_text_message(client_socket, "unobtainable")
+                # Then continue to wait for next coords
+
+    except KeyboardInterrupt:
+        print("Interrupted by user.")
+    finally:
+        print("Shutting down. Closing sockets.")
+        robot_socket.close()
+        client_socket.close()
+        server_socket.close()
+        print("Done.")
 
 if __name__ == "__main__":
     main()

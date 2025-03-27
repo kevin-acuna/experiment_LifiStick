@@ -6,6 +6,7 @@ matrices (SE(3)) and for converting rotation matrices to axis-angle, etc.
 """
 
 import numpy as np
+from . import config  
 
 def get_robot_pose_in_global(x_robot, y_robot, z_robot, yaw_deg):
     """
@@ -116,3 +117,71 @@ def get_piece_pose_from_transmitter(xp, yp, zp, xt, yt, zt):
     pos = np.array([xp, yp, zp], dtype=float)
     orient_vec = np.array([xt - xp, yt - yp, zt - zp], dtype=float)
     return pos, orient_vec
+
+
+def compute_pose_pointed_to_transmitter(piece_x, piece_y, piece_z):
+    """
+    1) Build T^G_P by aiming local z-axis toward the transmitter.
+    2) Compute T^R_E for the robot.
+    3) Return (pos_robot, R_robot).
+    """
+    # 1) Build T^G_P
+    pos_piece, orient_piece = get_piece_pose_from_transmitter(
+        piece_x, piece_y, piece_z,
+        config.TRANSMITTER_X,
+        config.TRANSMITTER_Y,
+        config.TRANSMITTER_Z
+    )
+    T_G_P = build_global_pose_from_vector(pos_piece, orient_piece)
+
+    # 2) Robot pose in global
+    T_G_R = get_robot_pose_in_global(
+        config.ROBOT_GLOBAL_X,
+        config.ROBOT_GLOBAL_Y,
+        config.ROBOT_GLOBAL_Z,
+        config.ROBOT_YAW_DEG
+    )
+
+    # 3) T^E_P: piece offset from end-effector
+    T_E_P = np.eye(4)
+    T_E_P[2, 3] = config.PIECE_HEIGHT
+
+    # 4) T^R_E = (T^G_R)^-1 * T^G_P * (T^E_P)^-1
+    T_R_E = inv_se3(T_G_R) @ T_G_P @ inv_se3(T_E_P)
+
+    # Extract position/orientation
+    pos_robot = T_R_E[0:3, 3]
+    R_robot   = T_R_E[0:3, 0:3]
+    return pos_robot, R_robot
+
+
+def compute_pose_vertical(piece_x, piece_y, piece_z):
+    """
+    1) Build T^G_P by giving it a fixed upward z-axis = [0, 0, 1].
+    2) Compute T^R_E for the robot.
+    3) Return (pos_robot, R_robot).
+    """
+    # 1) Build T^G_P
+    pos_piece = np.array([piece_x, piece_y, piece_z])
+    orient_vec = np.array([0.0, 0.0, 1.0])  # vertical up
+    T_G_P = build_global_pose_from_vector(pos_piece, orient_vec)
+
+    # 2) Robot pose in global
+    T_G_R = get_robot_pose_in_global(
+        config.ROBOT_GLOBAL_X,
+        config.ROBOT_GLOBAL_Y,
+        config.ROBOT_GLOBAL_Z,
+        config.ROBOT_YAW_DEG
+    )
+
+    # 3) T^E_P: piece offset from end-effector
+    T_E_P = np.eye(4)
+    T_E_P[2, 3] = config.PIECE_HEIGHT
+
+    # 4) T^R_E = (T^G_R)^-1 * T^G_P * (T^E_P)^-1
+    T_R_E = inv_se3(T_G_R) @ T_G_P @ inv_se3(T_E_P)
+
+    # Extract position/orientation
+    pos_robot = T_R_E[0:3, 3]
+    R_robot   = T_R_E[0:3, 0:3]
+    return pos_robot, R_robot
