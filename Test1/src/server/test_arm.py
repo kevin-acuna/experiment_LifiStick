@@ -55,6 +55,11 @@ def vector_to_axis_angle(v):
 
 
 
+## BASE OF THE ROBOT > 0.787
+## AJUSTE DE BASE 0.782 (Z of ROBOT)
+## 3.5cm /// 3D PRINTED PIECE
+## h_TRANSMITER    2m
+## 
 
 
 # Configuración del robot
@@ -62,9 +67,9 @@ HOST = "193.51.28.59"  # Dirección IP del robot
 PORT = 30002           # Puerto de conexión
 
 # Posición objetivo (x, y) y valor constante de z
-TARGET_X = 0.5
+TARGET_X = -0.5
 TARGET_Y = 0.5
-TARGET_Z = 0.13
+TARGET_Z = 0.14
 
 # Parámetros de movimiento
 ACCELERATION = 1.0
@@ -94,7 +99,8 @@ def main():
     print("Conectado al robot.")
 
     # Definición de la pose: [x, y, z, rx, ry, rz]
-    pose = [TARGET_X, TARGET_Y, TARGET_Z, -0.785, 0, 0]
+    #pose = [TARGET_X, TARGET_Y, TARGET_Z, 0.35, -1.48, -2.29]
+    pose = [TARGET_X, TARGET_Y, TARGET_Z, 0.0, 0.0, 0.0]
     send_move_command_time(sock, pose, ACCELERATION, VELOCITY, TIME_POS)
 
     # Esperar el tiempo estimado para el movimiento

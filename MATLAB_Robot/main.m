@@ -5,7 +5,7 @@
     %---------------------------------------------------------
     % a) Pose deseada de la pieza en el marco global
     p_G_P = [0.6; 0.6; 1.0];   % posición deseada de la pieza (x, y, z) en {G}
-    n     = [-1; -1; -1];        % vector que define la orientación deseada para el eje z de la pieza en {G}
+    n     = [-2; -1; 1];        % vector que define la orientación deseada para el eje z de la pieza en {G}
 
     % b) Transformación del Robot en el sistema global
     %    Ejemplo: el robot está en (0.6, 0.6, 0.8) y girado 90° en z global
