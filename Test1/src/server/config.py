@@ -14,8 +14,8 @@ VELOCITY = 0.1
 MOVE_TIME = 5  # Estimated movement time
 
 # Robot base position in the global frame
-ROBOT_GLOBAL_X = -0.5
-ROBOT_GLOBAL_Y = -0.5
+ROBOT_GLOBAL_X = -0.6
+ROBOT_GLOBAL_Y = -0.6
 ROBOT_GLOBAL_Z = 0.782
 
 # Robot yaw orientation in degrees (around global Z)
@@ -31,6 +31,6 @@ PIECE_HEIGHT = 0.035
 
 # Workspace 
 WS_R_INNER = 0.40 # Inner radius of the workspace
-WS_R_OUTER = 0.90 # Outer radius of the workspace
-WS_THETA_INIT = 86 # Initial angle of the workspace
-WS_THETA_FIN = 184 # Final angle of the workspace
+WS_R_OUTER = 0.80 # Outer radius of the workspace
+WS_THETA_INIT = 90 # Initial angle of the workspace
+WS_THETA_FIN = 180 # Final angle of the workspace
