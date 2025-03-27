@@ -5,3 +5,4 @@ Test1/.vs/
 Test1/test/
 Test1/x64/
 Test1/Debug
+Test1/src/server/__pycache__
