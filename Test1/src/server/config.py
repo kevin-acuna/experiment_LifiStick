@@ -14,8 +14,8 @@ VELOCITY = 0.1
 MOVE_TIME = 5  # Estimated movement time
 
 # Robot base position in the global frame
-ROBOT_GLOBAL_X = -0.6
-ROBOT_GLOBAL_Y = -0.6
+ROBOT_GLOBAL_X = -0.5
+ROBOT_GLOBAL_Y = -0.5
 ROBOT_GLOBAL_Z = 0.782
 
 # Robot yaw orientation in degrees (around global Z)

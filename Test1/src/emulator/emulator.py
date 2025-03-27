@@ -51,11 +51,24 @@ def main():
                 print("  sendxyz x y z   -> send three floats in 24 bytes to the server")
                 print("  text message    -> send a text message to the server")
                 print("  quit            -> close the connection and exit")
+                print("  read            -> send manually a text message to the server")
                 continue
 
             if cmd == "quit":
                 print("Closing connection.")
                 break
+
+            if cmd == "read":
+                try:
+                    client_socket.settimeout(0.5)  # short timeout to not block forever
+                    resp = client_socket.recv(1024)
+                    if resp:
+                        print("Server response:", resp.decode().strip())
+                except socket.timeout:
+                    pass
+                finally:
+                    client_socket.settimeout(None)  # reset timeout
+                continue
 
             if cmd == "sendxyz":
                 # Expecting: sendxyz x y z

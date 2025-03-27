@@ -6,7 +6,7 @@ matrices (SE(3)) and for converting rotation matrices to axis-angle, etc.
 """
 
 import numpy as np
-from . import config  
+import config  
 
 def get_robot_pose_in_global(x_robot, y_robot, z_robot, yaw_deg):
     """
