@@ -22,4 +22,8 @@ std::string receiveResponse(SOCKET sock, int timeout_sec);
 // Envía un mensaje (string) al servidor
 void sendMessage(SOCKET sock, const std::string& message);
 
+void receiverPointingToCeil(SOCKET sock);
+
+void receiverPointingToTransmitter(SOCKET sock);
+
 #endif // NETWORK_UTILS_H

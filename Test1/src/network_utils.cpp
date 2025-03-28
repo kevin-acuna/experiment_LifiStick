@@ -81,3 +81,14 @@ void sendMessage(SOCKET sock, const std::string& message) {
         exit(1);
     }
 }
+
+void receiverPointingToCeil(SOCKET sock) {
+    std::cout << "[Info] Sending command for receiver to face upward (vertical)...\n";
+    sendMessage(sock, "vertical");  
+}
+
+
+void receiverPointingToTransmitter(SOCKET sock) {
+    std::cout << "[Info] Sending command for receiver to face the transmitter (pointed)...\n";
+    sendMessage(sock, "pointed");  
+}

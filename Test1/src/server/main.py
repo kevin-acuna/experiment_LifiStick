@@ -1,5 +1,11 @@
 """
 main.py
+
+Now we:
+ 1) Connect to the robot.
+ 2) Start the local server for the C++ client.
+ 3) **Wait once** for the robot's (X, Y, Z) position from the client and override config.
+ 4) Then, in the main loop, process piece coordinates, orientation commands, etc.
 """
 
 import time
@@ -35,25 +41,38 @@ def main():
     print(f"Connection from {addr} established.")
 
     try:
+
+        print("Waiting to receive the robot's current (X, Y, Z) position from the client...")
+        robot_coords = process_coordinates(client_socket)   # Reuse same 24-byte struct logic if you want
+        if not robot_coords:
+            print("No data received for the robot's position. Closing.")
+            return
+        # Unpack
+        robot_x, robot_y, robot_z = robot_coords
+        print(f"Received robot position: X={robot_x}, Y={robot_y}, Z={robot_z}")
+
+        # Overwrite config so the rest of the code sees updated values
+        config.ROBOT_GLOBAL_X = robot_x
+        config.ROBOT_GLOBAL_Y = robot_y
+
         while True:
             # 3) Wait for piece coordinates from the client
             piece_coords = process_coordinates(client_socket)
             if not piece_coords:
-                print("No data received. Client may have disconnected.")
-                break  # or continue, or handle differently
+                print("No data received for the piece coordinates. Client may have disconnected.")
+                break
 
             piece_x, piece_y, piece_z = piece_coords
 
-            # 4) Directly compute the vertical orientation 
-            #    (since we removed the old step 4 with transform_to_baseReference)
+            # 4) Compute the 'vertical' orientation
             pos_robot_vert, R_robot_vert = compute_pose_vertical(piece_x, piece_y, piece_z)
 
-            # 5) Check if that vertical pose is in workspace
+            # 5) Check workspace
             x_r, y_r, z_r = pos_robot_vert
             if check_workspace((x_r, y_r, z_r)):
                 send_text_message(client_socket, "reachable")
 
-                # Wait for next message: "vertical" or "pointed"
+                # Wait for next command
                 command_str = receive_text_message(client_socket, 24)
                 if not command_str:
                     print("No command received. Client might have closed.")
@@ -83,7 +102,7 @@ def main():
 
             else:
                 send_text_message(client_socket, "unobtainable")
-                # Then continue to wait for next coords
+                # Then continue waiting for next piece coords
 
     except KeyboardInterrupt:
         print("Interrupted by user.")
