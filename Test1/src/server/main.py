@@ -62,9 +62,7 @@ def main():
             if not piece_coords:
                 print("No data received for the piece coordinates. Client may have disconnected.")
                 break
-
             piece_x, piece_y, piece_z = piece_coords
-            print(piece_x, piece_y, piece_z)
             # 4) Compute the 'vertical' orientation
             pos_robot_vert, R_robot_vert = compute_pose_vertical(piece_x, piece_y, piece_z)
 

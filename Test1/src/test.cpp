@@ -196,8 +196,6 @@ int main()
                     cout << "[Info] Position not reached" << endl;
                 }
                 // **********************************
-                cout << "Scenario 1: Ready!\n";
-
                 cout << "Scenario 2: Ready!\n";
                 while (true) {
                     cout << "Press C to continue or Q to quit: ";

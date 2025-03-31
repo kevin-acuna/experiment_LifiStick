@@ -21,7 +21,6 @@ def process_coordinates(client_socket):
     Returns (x, y, z) as a tuple or False if no data is received.
     """
     data = client_socket.recv(24)
-    print(data)
     if not data:
         return False
     x, y, z = struct.unpack('ddd', data)
