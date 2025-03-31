@@ -156,6 +156,8 @@ int main()
                 cout << "Scenario 1: Waiting for alignment...\n";
                 gimbal.transmitterPointingToFloor();
                 cout << "[Info] Robot starting to move\n";
+                sendCoordinates(sock, pos.x, pos.y, RECEIVER_H); // Envía coordenadas
+                std::string response = receiveResponse(sock, 1); // Recibe respuesta
                 receiverPointingToCeil(sock); // Send command to receiver to point to ceiling
 
                 std::string confirmation = receiveResponse(sock, 30);
