@@ -185,7 +185,7 @@ int main()
 
                 // Scenario 2 - Pointing transmitter to receiver
                 cout << "\nScenario 2: Waiting for alignment...\n";
-                gimbal.transmitterPointingToReceiver(-pos.x, -pos.y, RECEIVER_H); // ajuste de coordenadas
+                gimbal.transmitterPointingToReceiver_New(-pos.x, -pos.y, RECEIVER_H); // ajuste de coordenadas
                 cout << "[Info] Robot starting to move\n";
                 receiverPointingToTransmitter(sock); 
 

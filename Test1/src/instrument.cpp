@@ -407,3 +407,29 @@ void instrument::transmitterPointingToReceiver(double rx, double ry, double rz)
     // Se recomienda rotar primero el motor del eje Y y luego el de X (o enviarlos de forma sincronizada si el controlador lo permite)
     rotateMotorsSimultaneously(serialNo_MotorX, angleX_deg, serialNo_MotorY, angleY_deg);
 }
+
+
+void instrument::transmitterPointingToReceiver_New(double rx, double ry, double rz)
+{
+    // Diferencias respecto a la posición del transmisor
+    double dx = rx - transmitterPosX; // x_R
+    double dy = ry - transmitterPosY; // y_R
+    // Suponemos que el transmisor está por encima: transmitterPosZ > rz.
+    double delta = transmitterPosZ - rz; // Δ = H - h
+
+    // Paso 1: Calcular el ángulo en el eje X (motor externo)
+    // theta_x = arctan(y_R / (H - h))
+    double angleX_rad = atan2(dy, delta);
+
+    // Paso 2: Calcular el ángulo en el eje Y (motor interno)
+    // theta_y = -arctan((cos(theta_x) * x_R) / (H - h))
+    double angleY_rad = -atan2(cos(angleX_rad) * dx, delta);
+
+    // Conversión a grados con 1 decimal
+    double angleX_deg = std::round((angleX_rad * 180.0 / PI) * 10.0) / 10.0;
+    double angleY_deg = std::round((angleY_rad * 180.0 / PI) * 10.0) / 10.0;
+
+    // Se recomienda rotar primero el motor del eje X y luego el de Y, 
+    // o enviarlos de forma sincronizada si el controlador lo permite.
+    rotateMotorsSimultaneously(serialNo_MotorX, angleX_deg, serialNo_MotorY, angleY_deg);
+}
