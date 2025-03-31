@@ -138,10 +138,9 @@ int main()
     for (auto& pos : positions) {
         if (!pos.done) {
 
-            cout << "Position: " << pos.x << ", " << pos.y << endl;
             sendCoordinates(sock, pos.x, pos.y, RECEIVER_H); // Envía coordenadas
             std::string response = receiveResponse(sock, 2); // Recibe respuesta
-            cout << response << endl;
+            
             if (response == "reachable") {
 
                 // ****************************************************************
@@ -152,24 +151,14 @@ int main()
                 cout << "Receiver position set to: (" << pos.x << ", " << pos.y << ", " << RECEIVER_H << ")\n\n";
                 cout << "************************************\n\n";
 
+                // ****************************************************************
                 // Scenario 1 - Pointing transmitter to floor and receiver to ceiling
-                cout << "Scenario 1: Waiting for alignment...\n";
-                gimbal.transmitterPointingToFloor();
-                cout << "[Info] Robot starting to move\n";
-                receiverPointingToCeil(sock); // Send command to receiver to point to ceiling
-
-                std::string confirmation = receiveResponse(sock, 30);
-                if (confirmation == "reached") {
-                    cout << "[Info] Position reached" << endl;
-                } else {
-                    cout << "[Info] Position not reached" << endl;
-                }
-                // **********************************
-                cout << "Scenario 1: Ready!\n";
-
+                // ****************************************************************
+                
                 // Wait for a valid option (C to continue or Q to quit)
                 char option;
                 while (true) {
+                    cout << "Scenario 1 - Pointing transmitter to floor and receiver to ceiling\n";
                     cout << "Press C to continue or Q to quit: ";
                     cin >> option;
                     option = toupper(option);
@@ -183,7 +172,43 @@ int main()
                 }
                 cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clean the input buffer
 
-                // Scenario 2 - Pointing transmitter to receiver
+                
+                cout << "Scenario 1: Waiting for alignment...\n";
+                gimbal.transmitterPointingToFloor();
+                cout << "[Info] Robot starting to move\n";
+                receiverPointingToCeil(sock); // Send command to receiver to point to ceiling
+
+                std::string confirmation = receiveResponse(sock, 30);
+                if (confirmation == "reached") {
+                    cout << "[Info] Position reached" << endl;
+                } else {
+                    cout << "[Info] Position not reached" << endl;
+                }
+                cout << "Scenario 1: Ready!\n";
+                // ****************************************************************
+                
+
+                
+                // ****************************************************************
+                // Scenario 2 - Pointing transmitter to receiver and receiver to transmitter
+                // ****************************************************************
+
+                while (true) {
+                    cout << "Scenario 2 - Pointing transmitter to receiver and receiver to transmitter\n";
+                    cout << "Press C to continue or Q to quit: ";
+                    cin >> option;
+                    option = toupper(option);
+                    if (option == 'C' || option == 'Q')
+                        break;
+                    cout << "Invalid option. Please try again." << endl;
+                }
+                if (option == 'Q') {
+                    cout << "Program terminated by user." << endl;
+                    break;
+                }
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+
                 cout << "\nScenario 2: Waiting for alignment...\n";
                 gimbal.transmitterPointingToReceiver_New(-pos.x, -pos.y, RECEIVER_H); // ajuste de coordenadas
                 cout << "[Info] Robot starting to move\n";
@@ -197,7 +222,15 @@ int main()
                 }
                 // **********************************
                 cout << "Scenario 2: Ready!\n";
+
+
+
+
+                // ****************************************************************
+                // Scenario 3 - Pointing transmitter to floor and receiver to transmitter
+                // ****************************************************************
                 while (true) {
+                    cout << "Scenario 3 - Pointing transmitter to floor and receiver to transmitter\n";
                     cout << "Press C to continue or Q to quit: ";
                     cin >> option;
                     option = toupper(option);
@@ -211,12 +244,34 @@ int main()
                 }
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-                // Scenario 3 - Pointing transmitter to floor and receiver to transmitter
                 cout << "\nScenario 3: Waiting for alignment...\n";
                 gimbal.transmitterPointingToFloor();
                 receiverFinished(sock);
                 cout << "Scenario 3: Ready!\n";
+
+                // ****************************************************************
+                // NEXT POSITION
+                // ****************************************************************
+
+
+                // Actualizar la posición actual indicando que ya se completó
+                pos.done = 1;
+
+                // Abrir el archivo de posiciones para escribir las actualizaciones
+                std::ofstream posFile(PATH_POSITIONS_FILE);
+                if (posFile.is_open()) {
+                    // Reescribir todas las posiciones actualizadas (suponiendo que 'positions' es el vector actualizado)
+                    for (const auto& p : positions) {
+                        posFile << p.x << "," << p.y << "," << p.done << "\n";
+                    }
+                    posFile.close();
+                } else {
+                    std::cerr << "[Error] No se pudo abrir el archivo de posiciones.\n";
+                }
+                // ------------------------------------------------------------------
+
                 while (true) {
+                    cout << "Next position? \n";
                     cout << "Press C to continue or Q to quit: ";
                     cin >> option;
                     option = toupper(option);
@@ -229,7 +284,6 @@ int main()
                     break;
                 }
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
                 cout << endl;
 
 
