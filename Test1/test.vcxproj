@@ -168,8 +168,13 @@
     <None Include="lib\IviDriverTypeLib.dll" />
     <None Include="lib\Ke2100.dll" />
     <None Include="lib\kernel32.dll" />
-    <None Include="lib\Thorlabs.MotionControl.DeviceManager.dll" />
-    <None Include="lib\Thorlabs.MotionControl.KCube.DCServo.dll" />
+    <None Include="lib\Thorlabs.MotionControl.DeviceManager.dll">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </None>
+    <None Include="lib\Thorlabs.MotionControl.KCube.DCServo.dll">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </None>
     <None Include="lib\user32.dll" />
   </ItemGroup>
   <ItemGroup>
