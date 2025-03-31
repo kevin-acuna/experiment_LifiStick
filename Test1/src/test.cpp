@@ -123,11 +123,8 @@ int main()
     sendCoordinates(sock, robotX, robotY, robotZ); // Envía posicion
 
     // Clear the screen to proceed
-    #ifdef _WIN32
-        system("cls");
-    #else
-        system("clear");
-    #endif
+    system("cls");
+
 
 
     instrument gimbal; // Gimbal Mechanism
@@ -146,10 +143,10 @@ int main()
                 // ****************************************************************
                 // Receiver Position Input
                 // ****************************************************************
-                cout << "************************************\n";
+                cout << "*********************************************************\n";
                 cout << "SAMPLING POINT: X, Y, Z\n";
-                cout << "Receiver position set to: (" << pos.x << ", " << pos.y << ", " << RECEIVER_H << ")\n\n";
-                cout << "************************************\n\n";
+                cout << "Receiver position set to: (" << pos.x << ", " << pos.y << ", " << RECEIVER_H << ")\n";
+                cout << "*********************************************************\n\n";
 
                 // ****************************************************************
                 // Scenario 1 - Pointing transmitter to floor and receiver to ceiling
@@ -184,7 +181,7 @@ int main()
                 } else {
                     cout << "[Info] Position not reached" << endl;
                 }
-                cout << "Scenario 1: Ready!\n";
+                cout << "Scenario 1: Ready!\n\n\n";
                 // ****************************************************************
                 
 
@@ -221,7 +218,7 @@ int main()
                     cout << "[Info] Position not reached" << endl;
                 }
                 // **********************************
-                cout << "Scenario 2: Ready!\n";
+                cout << "Scenario 2: Ready!\n\n\n";
 
 
 
@@ -247,7 +244,7 @@ int main()
                 cout << "\nScenario 3: Waiting for alignment...\n";
                 gimbal.transmitterPointingToFloor();
                 receiverFinished(sock);
-                cout << "Scenario 3: Ready!\n";
+                cout << "Scenario 3: Ready!\n\n\n";
 
                 // ****************************************************************
                 // NEXT POSITION
@@ -262,7 +259,7 @@ int main()
                 if (posFile.is_open()) {
                     // Reescribir todas las posiciones actualizadas (suponiendo que 'positions' es el vector actualizado)
                     for (const auto& p : positions) {
-                        posFile << p.x << "," << p.y << "," << p.done << "\n";
+                        posFile << p.x << " " << p.y << " " << p.done << "\n";
                     }
                     posFile.close();
                 } else {
@@ -285,11 +282,10 @@ int main()
                 }
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 cout << endl;
-
-
+                system("cls");
 
             } else {
-                cout << "Position is not obtainable" << endl;
+                //cout << "Position is not obtainable" << endl;
             }
         }
     }
