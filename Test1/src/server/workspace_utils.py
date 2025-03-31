@@ -23,7 +23,7 @@ def check_workspace(coordinates):
     """
     x, y, z = coordinates
     r, theta, _ = cartesian_to_cylindrical(x, y, z)
-
+    print("radios!!",r)
     # Check radial range
     if config.WS_R_INNER <= r <= config.WS_R_OUTER:
         # Check angular range

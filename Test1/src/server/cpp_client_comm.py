@@ -21,6 +21,7 @@ def process_coordinates(client_socket):
     Returns (x, y, z) as a tuple or False if no data is received.
     """
     data = client_socket.recv(24)
+    print(data)
     if not data:
         return False
     x, y, z = struct.unpack('ddd', data)
@@ -32,6 +33,7 @@ def send_text_message(client_socket, message: str):
     message: ASCII string to send (e.g. 'reachable', 'unobtainable', 'reached').
     """
     client_socket.sendall(message.encode())
+    print("sended:", message.encode())
 
 def receive_text_message(client_socket, buffer_size=24):
     """
@@ -41,4 +43,5 @@ def receive_text_message(client_socket, buffer_size=24):
     data = client_socket.recv(buffer_size)
     if not data:
         return None
+    print(data)
     return data.decode().strip()

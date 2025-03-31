@@ -92,3 +92,8 @@ void receiverPointingToTransmitter(SOCKET sock) {
     std::cout << "[Info] Sending command for receiver to face the transmitter (pointed)...\n";
     sendMessage(sock, "pointed");  
 }
+
+void receiverFinished(SOCKET sock) {
+    std::cout << "[Info] Sending command for receiver to face the transmitter (finish)...\n";
+    sendMessage(sock, "finished");  
+}

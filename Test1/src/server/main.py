@@ -39,6 +39,7 @@ def main():
     server_socket = start_server('localhost', 12345)
     client_socket, addr = server_socket.accept()
     print(f"Connection from {addr} established.")
+    
 
     try:
 
@@ -63,7 +64,7 @@ def main():
                 break
 
             piece_x, piece_y, piece_z = piece_coords
-
+            print(piece_x, piece_y, piece_z)
             # 4) Compute the 'vertical' orientation
             pos_robot_vert, R_robot_vert = compute_pose_vertical(piece_x, piece_y, piece_z)
 
@@ -72,33 +73,38 @@ def main():
             if check_workspace((x_r, y_r, z_r)):
                 send_text_message(client_socket, "reachable")
 
-                # Wait for next command
-                command_str = receive_text_message(client_socket, 24)
-                if not command_str:
-                    print("No command received. Client might have closed.")
-                    break
+                while True:
+                    # Wait for next command
+                    command_str = receive_text_message(client_socket, 24)
+                    if not command_str:
+                        print("No command received. Client might have closed.")
+                        break
 
-                if command_str == "vertical":
-                    rx, ry, rz = rotation_matrix_to_axis_angle(R_robot_vert)
-                    pose = [x_r, y_r, z_r, rx, ry, rz]
-                    send_move_command_time(robot_socket, pose, config.ACCELERATION, config.VELOCITY, config.MOVE_TIME)
+                    if command_str == "vertical":
+                        rx, ry, rz = rotation_matrix_to_axis_angle(R_robot_vert)
+                        pose = [x_r, y_r, z_r, rx, ry, 0.7854] #pi/4
+                        send_move_command_time(robot_socket, pose, config.ACCELERATION, config.VELOCITY, config.MOVE_TIME)
 
-                    time.sleep(config.MOVE_TIME + 2)
-                    send_text_message(client_socket, "reached")
+                        time.sleep(config.MOVE_TIME + 2)
+                        send_text_message(client_socket, "reached")
 
-                elif command_str == "pointed":
-                    pos_robot_ptr, R_robot_ptr = compute_pose_pointed_to_transmitter(piece_x, piece_y, piece_z)
-                    x_p, y_p, z_p = pos_robot_ptr
-                    rx2, ry2, rz2 = rotation_matrix_to_axis_angle(R_robot_ptr)
-                    pose2 = [x_p, y_p, z_p, rx2, ry2, rz2]
-                    send_move_command_time(robot_socket, pose2, config.ACCELERATION, config.VELOCITY, config.MOVE_TIME)
+                    elif command_str == "pointed":
+                        pos_robot_ptr, R_robot_ptr = compute_pose_pointed_to_transmitter(piece_x, piece_y, piece_z)
+                        x_p, y_p, z_p = pos_robot_ptr
+                        rx2, ry2, rz2 = rotation_matrix_to_axis_angle(R_robot_ptr)
+                        pose2 = [x_p, y_p, z_p, rx2, ry2, rz2]
+                        send_move_command_time(robot_socket, pose2, config.ACCELERATION, config.VELOCITY, config.MOVE_TIME)
 
-                    time.sleep(config.MOVE_TIME + 2)
-                    send_text_message(client_socket, "reached")
+                        time.sleep(config.MOVE_TIME + 2)
+                        send_text_message(client_socket, "reached")
 
-                else:
-                    print(f"Unknown command: {command_str}")
-                    # Possibly ignore or break from loop
+                    elif command_str == "finished":
+                        print("finish this Run")
+                        break
+
+                    else:
+                        print(f"Unknown command: {command_str}")
+                        # Possibly ignore or break from loop
 
             else:
                 send_text_message(client_socket, "unobtainable")

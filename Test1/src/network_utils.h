@@ -26,4 +26,6 @@ void receiverPointingToCeil(SOCKET sock);
 
 void receiverPointingToTransmitter(SOCKET sock);
 
+void receiverFinished(SOCKET sock);
+
 #endif // NETWORK_UTILS_H
