@@ -8,13 +8,13 @@
 % - Puntos sin etiquetar (etiqueta 0) como círculos grises.
 % - Puntos etiquetados (condición cumplida) como asteriscos de colores aleatorios.
 
-clc; clear; close all;
+clc; clear;
 
 %% Parámetros de evaluación
-d_min = 0.39;         % Distancia mínima requerida
-d_max = 0.80;         % Distancia máxima requerida
-angle_min = 90;      % Ángulo mínimo en grados
-angle_max = 180;     % Ángulo máximo en grados
+d_min = 0.40;         % Distancia mínima requerida
+d_max = 0.77;         % Distancia máxima requerida
+angle_min = 80;      % Ángulo mínimo en grados
+angle_max = 190;     % Ángulo máximo en grados
 
 %% Cargar datos
 filename = 'positions.txt';   % Archivo de entrada (asegúrate que esté en el path)
@@ -23,24 +23,13 @@ X = data(:,1);
 Y = data(:,2);
 labels = data(:,3);
 
-%% Definir los 16 pares (Xr, Yr) de referencia
-refs = [ -0.6, -0.6;
-         -0.6,  0;
-         -0.6,  0.6;
-         -0.6,  1.2;
-          0,    1.2;
-          0,    0.6;
-          0,    0;
-          0,   -0.6;
-          0.6, -0.6;
-          0.6,  0;
-          0.6,  0.6;
-          0.6,  1.2;
-          1.2,  1.2;
-          1.2,  0.6;
-          1.2,  0;
-          1.2, -0.6];
+%% Definir los 25 pares (Xr, Yr) de referencia
+xref = -0.5:0.5:1.5;
+yref = -0.5:0.5:1.5;
+[Xref, Yref] = meshgrid(xref, yref);
+refs = [Xref(:), Yref(:)];
 
+points= size(refs,1)
 numRefs = size(refs,1);  % Número de referencias (debe ser 16)
 
 %% Procesamiento: Evaluar cada par (Xr, Yr) de forma secuencial
@@ -78,13 +67,23 @@ end
 % Actualizar la matriz de datos con las etiquetas modificadas
 data(:,3) = labels;
 
+missing = length(find(data(:,3)==0))
+
+sample_per_position=[];
+for k = 1:max(labels)
+    sample_per_position = [sample_per_position; length(find(data(:,3)==k)) ];
+end
+sample_per_position
 %% Graficación
-figure;
-hold on;
+
+
+figure(1);
+
 
 % Graficar puntos sin etiquetar (etiqueta 0) como círculos grises
 idx0 = labels == 0;
-scatter(X(idx0), Y(idx0), 36, [0.5 0.5 0.5], 'filled');
+scatter(X(idx0), Y(idx0), 46, 'red');
+hold on;
 
 % Graficar puntos etiquetados (etiqueta diferente de 0) con asterisco y colores aleatorios
 uniqueLabels = unique(labels(labels~=0));  % Etiquetas únicas asignadas (1 a 16)
@@ -93,12 +92,13 @@ for k = 1:length(uniqueLabels)
     color = rand(1,3);  % Genera un color aleatorio
     idx = labels == currentLabel;
     % Graficar con asterisco; se usa plot en vez de scatter para cambiar el marcador.
-    plot(X(idx), Y(idx), '.', 'Color', color, 'MarkerSize', 40);
+    plot(X(idx), Y(idx), '.', 'Color', color, 'MarkerSize', 60);
 end
 
 xlabel('X');
 ylabel('Y');
 title('Distribución de Puntos con Etiquetas Actualizadas');
+grid minor;
 grid on;
 hold off;
 

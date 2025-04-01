@@ -25,7 +25,7 @@ using namespace std;
 // *****************************************************************************
 // Adjust according to your experiment
 // *****************************************************************************
-const char* PATH_POSITIONS_FILE = "src/positionsToSample/test.txt";
+const char* PATH_POSITIONS_FILE = "src/positionsToSample/positions.txt";
 
 const double TRANSMITTER_H = 2.00; // altitude in meters
 const double RECEIVER_H = 0.96;    // altitude in meters
@@ -35,50 +35,53 @@ int MOTOR_AXIS_Y = 27007072;  // Internal axis
 // *****************************************************************************
 
 // Predefined positions for the robot base (X, Y). Indices 1..16 map to rows 0..15.
-static const double PREDEFINED_POSITIONS[16][2] = {
-    {-0.6, -0.6},
-    {-0.6,  0.0},
-    {-0.6,  0.6},
-    {-0.6,  1.2},
-    { 0.0,  1.2},
-    { 0.0,  0.6},
+static const double PREDEFINED_POSITIONS[25][2] = {
+    {-0.5, -0.5},
+    {-0.5,  0.0},
+    {-0.5,  0.5},
+    {-0.5,  1.0},
+    {-0.5,  1.5},
+    { 0.0,  1.5},
+    { 0.0,  1.0},
+    { 0.0,  0.5},
     { 0.0,  0.0},
-    { 0.0, -0.6},
-    { 0.6, -0.6},
-    { 0.6,  0.0},
-    { 0.6,  0.6},
-    { 0.6,  1.2},
-    { 1.2,  1.2},
-    { 1.2,  0.6},
-    { 1.2,  0.0},
-    { 1.2, -0.6}
+    { 0.0, -0.5},
+    { 0.5, -0.5},
+    { 0.5,  0.0},
+    { 0.5,  0.5},
+    { 0.5,  1.0},
+    { 0.5,  1.5},
+    { 1.0,  1.5},
+    { 1.0,  1.0},
+    { 1.0,  0.5},
+    { 1.0,  0.0},
+    { 1.0, -0.5},
+    { 1.5, -0.5},
+    { 1.5,  0.0},
+    { 1.5,  0.5},
+    { 1.5,  1.0},
+    { 1.5,  1.5}
 };
 
 int promptUserForRobotPositionIndex()
 {
     while (true) {
         cout << "\n"
-                  << "====================================================\n"
-                  << " Select Robot Position [1..16] or 'q' to quit\n"
-                  << "----------------------------------------------------\n"
-                  << " 1)  (-0.6, -0.6)\n"
-                  << " 2)  (-0.6,  0.0)\n"
-                  << " 3)  (-0.6,  0.6)\n"
-                  << " 4)  (-0.6,  1.2)\n"
-                  << " 5)  ( 0.0,  1.2)\n"
-                  << " 6)  ( 0.0,  0.6)\n"
-                  << " 7)  ( 0.0,  0.0)\n"
-                  << " 8)  ( 0.0, -0.6)\n"
-                  << " 9)  ( 0.6, -0.6)\n"
-                  << "10)  ( 0.6,  0.0)\n"
-                  << "11)  ( 0.6,  0.6)\n"
-                  << "12)  ( 0.6,  1.2)\n"
-                  << "13)  ( 1.2,  1.2)\n"
-                  << "14)  ( 1.2,  0.6)\n"
-                  << "15)  ( 1.2,  0.0)\n"
-                  << "16)  ( 1.2, -0.6)\n"
-                  << "----------------------------------------------------\n"
-                  << "Choose an option: ";
+        << "====================================================\n"
+        << " Select Robot Position [1..25] or 'q' to quit\n"
+        << "----------------------------------------------------\n";
+        
+        // Imprimir las posiciones de forma dinámica
+        for (int i = 0; i < 25; i++) {
+            cout << " " << (i + 1) << ")  ("
+                    << PREDEFINED_POSITIONS[i][0] << ", " 
+                    << PREDEFINED_POSITIONS[i][1] << ")\n";
+        }
+        
+        cout << "----------------------------------------------------\n"
+            << "Choose an option: ";
+
+
         std::string input;
         cin >> input;
 
@@ -88,7 +91,7 @@ int promptUserForRobotPositionIndex()
         }
         try {
             int index = std::stoi(input);
-            if (index >= 1 && index <= 16) {
+            if (index >= 1 && index <= 25) {
                 return index;
             }
         } catch (...) {
