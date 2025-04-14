@@ -77,8 +77,9 @@ def inv_se3(T):
     T_inv[0:3, 3]   = -R.T @ t
     return T_inv
 
-def rotation_matrix_to_axis_angle(R):
+def rotation_matrix_to_axis_angle_previus(R):
     """
+    Versión anterior de la función rotation_matrix_to_axis_angle.
     Converts a 3x3 rotation matrix into axis-angle (rx, ry, rz).
     The output (rx, ry, rz) = theta * (unit_axis).
     """
@@ -106,6 +107,78 @@ def rotation_matrix_to_axis_angle(R):
     rz *= theta
 
     return (rx, ry, rz)
+
+
+
+# fixed
+def rotation_matrix_to_axis_angle(R):
+    """
+    Se considera los puntos cercanos a 180 que causaban problemas en la version anterior 
+    Convierte una matriz de rotación 3x3 en una rotación en formato
+    eje-ángulo (rx, ry, rz) = theta * (axis unitario).
+    """
+    # Verificar determinante
+    det_R = np.linalg.det(R)
+    if abs(det_R - 1.0) > 1e-3:
+        print("[WARNING] rotation_matrix_to_axis_angle: determinant not close to 1.")
+
+    trace_val = np.trace(R)
+    # Clampeo para evitar errores numéricos
+    cos_theta = max(min((trace_val - 1.0) / 2.0, 1.0), -1.0)
+    theta = np.arccos(cos_theta)
+
+    # Caso theta ~ 0 => no hay rotación
+    if np.isclose(theta, 0.0, atol=1e-8):
+        return (0.0, 0.0, 0.0)
+
+    # Caso theta ~ pi => usar fórmula especial
+    if np.isclose(theta, np.pi, atol=1e-8):
+        # Ejes candidatos a partir de la diagonal
+        rx = R[0,0] + 1.0
+        ry = R[1,1] + 1.0
+        rz = R[2,2] + 1.0
+
+        # Podría ocurrir que el mayor sea muy pequeño (matriz degenerada numéricamente)
+        # así que lo forzamos a que no sea negativo por razones numéricas
+        # y evitamos sqrt de un número negativo
+        rx = max(rx, 0.0)
+        ry = max(ry, 0.0)
+        rz = max(rz, 0.0)
+
+        rx = np.sqrt(rx / 2.0)
+        ry = np.sqrt(ry / 2.0)
+        rz = np.sqrt(rz / 2.0)
+
+        # Ajuste de signos basado en elementos fuera de la diagonal
+        # (Mirar la relación R[2,1]-R[1,2], etc.)
+        if (R[2,1] - R[1,2]) < 0.0:
+            rx = -rx
+        if (R[0,2] - R[2,0]) < 0.0:
+            ry = -ry
+        if (R[1,0] - R[0,1]) < 0.0:
+            rz = -rz
+
+        # Multiplicamos por pi (theta)
+        rx *= np.pi
+        ry *= np.pi
+        rz *= np.pi
+
+        return (rx, ry, rz)
+
+    # Caso general: sin(theta) != 0
+    sin_theta = np.sin(theta)
+    rx = (R[2,1] - R[1,2]) / (2.0 * sin_theta)
+    ry = (R[0,2] - R[2,0]) / (2.0 * sin_theta)
+    rz = (R[1,0] - R[0,1]) / (2.0 * sin_theta)
+
+    # Multiplicamos por theta
+    rx *= theta
+    ry *= theta
+    rz *= theta
+
+    return (rx, ry, rz)
+
+
 
 def get_piece_pose_from_transmitter(xp, yp, zp, xt, yt, zt):
     """
@@ -185,3 +258,5 @@ def compute_pose_vertical(piece_x, piece_y, piece_z):
     pos_robot = T_R_E[0:3, 3]
     R_robot   = T_R_E[0:3, 0:3]
     return pos_robot, R_robot
+
+

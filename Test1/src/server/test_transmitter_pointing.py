@@ -30,8 +30,8 @@ print(f"Orientation: {config.ROBOT_YAW_DEG} degrees")
 print(f"Piece height: {config.PIECE_HEIGHT} meters")
 
 # Test the function with piece at (0.4, 0, 0.96)
-piece_x = 0.4
-piece_y = 0.0
+piece_x = 0.8
+piece_y = 0
 piece_z = 0.96
 
 print("\nTesting with piece position:", piece_x, piece_y, piece_z)
@@ -48,10 +48,60 @@ print("\nRobot orientation matrix (3x3):")
 for row in R_robot:
     print(f"[{row[0]:8.5f}, {row[1]:8.5f}, {row[2]:8.5f}]")
 
+
+print("ANALISIS ***********************************")
+R = R_robot
+# Check determinant
+det_R = np.linalg.det(R)
+if abs(det_R - 1.0) > 1e-3:
+      print("[WARNING] rotation_matrix_to_axis_angle: determinant not close to 1.")
+
+trace_val = np.trace(R)
+print(trace_val)
+
+# Clip within -1..1 for numerical safety
+cos_theta = max(min((trace_val - 1.0) / 2.0, 1.0), -1.0)
+theta = np.arccos(cos_theta)
+
+print(theta*180/np.pi)
+if np.isclose(theta, 0.0, atol=1e-8):
+      # No significant rotation
+      print("iscloseeee !! ")
+      #return (0.0, 0.0, 0.0)
+
+print((R[2,1] - R[1,2]))
+print(1/(2.0*np.sin(theta)))
+rx = (R[2,1] - R[1,2]) / (2.0*np.sin(theta))
+ry = (R[0,2] - R[2,0]) / (2.0*np.sin(theta))
+rz = (R[1,0] - R[0,1]) / (2.0*np.sin(theta))
+
+print(rx, ry, rz)
+# Multiply by theta
+rx *= theta
+ry *= theta
+rz *= theta
+
+print(rx, ry, rz)
+
+
+
+
+
+
+
+
+
+
+
+
 # Convert rotation matrix to axis-angle for easier interpretation
 axis_angle = rotation_matrix_to_axis_angle(R_robot)
 print("\nRobot orientation as axis-angle (rx, ry, rz):")
 print(f"({axis_angle[0]:8.5f}, {axis_angle[1]:8.5f}, {axis_angle[2]:8.5f})")
+
+
+'''
+
 
 # Calculate the vector from piece to transmitter (for verification)
 transmitter_pos = np.array([config.TRANSMITTER_X, config.TRANSMITTER_Y, config.TRANSMITTER_Z])
@@ -89,3 +139,8 @@ elif alignment > 0.99:
     print("ACCEPTABLE: Robot z-axis reasonably aligned with vector to transmitter.")
 else:
     print("WARNING: Robot z-axis not well aligned with vector to transmitter.")
+'''
+
+
+
+
