@@ -34,45 +34,26 @@ int MOTOR_AXIS_X = 27006796;  // External axis
 int MOTOR_AXIS_Y = 27007072;  // Internal axis
 // *****************************************************************************
 
-// Predefined positions for the robot base (X, Y). Indices 1..16 map to rows 0..15.
-static const double PREDEFINED_POSITIONS[25][2] = {
-    {-0.5, -0.5},
-    {-0.5,  0.0},
-    {-0.5,  0.5},
-    {-0.5,  1.0},
-    {-0.5,  1.5},
-    { 0.0, -0.5},
-    { 0.0,  0.0},
-    { 0.0,  0.5},
-    { 0.0,  1.0},
-    { 0.0,  1.5},
-    { 0.5, -0.5},
-    { 0.5,  0.0},
-    { 0.5,  0.5},
-    { 0.5,  1.0},
-    { 0.5,  1.5},
-    { 1.0, -0.5},
-    { 1.0,  0.0},
-    { 1.0,  0.5},
-    { 1.0,  1.0},
-    { 1.0,  1.5},
-    { 1.5, -0.5},
-    { 1.5,  0.0},
-    { 1.5,  0.5},
-    { 1.5,  1.0},
-    { 1.5,  1.5}
+// Predefined positions for the robot base (X, Y).
+// El tamaño del array se determina automáticamente por el número de elementos inicializados
+static const double PREDEFINED_POSITIONS[][2] = {
+    {-0.5, -1},
+    { 1.5,  -0.5}
 };
 
 int promptUserForRobotPositionIndex()
 {
+    // Calculate the actual number of positions in the array
+    const size_t numPositions = sizeof(PREDEFINED_POSITIONS) / sizeof(PREDEFINED_POSITIONS[0]);
+    
     while (true) {
         cout << "\n"
         << "====================================================\n"
-        << " Select Robot Position [1..25] or 'q' to quit\n"
+        << " Select Robot Position [1.." << numPositions << "] or 'q' to quit\n"
         << "----------------------------------------------------\n";
         
         // Imprimir las posiciones de forma dinámica
-        for (int i = 0; i < 25; i++) {
+        for (size_t i = 0; i < numPositions; i++) {
             cout << " " << (i + 1) << ")  ("
                     << PREDEFINED_POSITIONS[i][0] << ", " 
                     << PREDEFINED_POSITIONS[i][1] << ")\n";
@@ -91,7 +72,9 @@ int promptUserForRobotPositionIndex()
         }
         try {
             int index = std::stoi(input);
-            if (index >= 1 && index <= 25) {
+            // Use the actual number of positions for validation
+            const size_t numPositions = sizeof(PREDEFINED_POSITIONS) / sizeof(PREDEFINED_POSITIONS[0]);
+            if (index >= 1 && index <= static_cast<int>(numPositions)) {
                 return index;
             }
         } catch (...) {
