@@ -37,8 +37,8 @@ int MOTOR_AXIS_Y = 27007072;  // Internal axis
 // Predefined positions for the robot base (X, Y).
 // El tamaño del array se determina automáticamente por el número de elementos inicializados
 static const double PREDEFINED_POSITIONS[][2] = {
-    {-0.5, -1},
-    { 1.5,  -0.5}
+    {0.5, 1}, //14
+    {0, 1} //9
 };
 
 int promptUserForRobotPositionIndex()
