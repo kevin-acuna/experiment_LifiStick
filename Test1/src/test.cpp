@@ -177,9 +177,6 @@ int main()
                 }
                 cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clean the input buffer
 
-                
-                cout << "Scenario 1: Waiting for alignment...\n";
-                gimbal.transmitterPointingToFloor();
                 cout << "[Info] Robot starting to move\n";
                 receiverPointingToCeil(sock); // Send command to receiver to point to ceiling
 
@@ -189,6 +186,10 @@ int main()
                 } else {
                     cout << "[Info] Position not reached" << endl;
                 }
+
+                cout << "Scenario 1: Waiting for alignment...\n";
+                gimbal.transmitterPointingToFloor();
+
                 cout << "Scenario 1: Ready!\n\n\n";
                 // ****************************************************************
                 
