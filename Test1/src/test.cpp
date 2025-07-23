@@ -25,10 +25,9 @@ using namespace std;
 // *****************************************************************************
 // Adjust according to your experiment
 // *****************************************************************************
-const char* PATH_POSITIONS_FILE = "src/positionsToSample/positions.txt";
+const char* PATH_POSITIONS_FILE = "src/positionsToSample/positions3D.txt";
 
 const double TRANSMITTER_H = 2.00; // altitude in meters
-const double RECEIVER_H = 0.96;    // altitude in meters
 
 int MOTOR_AXIS_X = 27006796;  // External axis
 int MOTOR_AXIS_Y = 27007072;  // Internal axis
@@ -37,8 +36,31 @@ int MOTOR_AXIS_Y = 27007072;  // Internal axis
 // Predefined positions for the robot base (X, Y).
 // El tamaño del array se determina automáticamente por el número de elementos inicializados
 static const double PREDEFINED_POSITIONS[][2] = {
-    {0.5, 1}, //14
-    {0, 1} //9
+    {-0.5, -0.5},
+    {-0.5,  0.0},
+    {-0.5,  0.5},
+    {-0.5,  1.0},
+    {-0.5,  1.5},
+    { 0.0, -0.5},
+    { 0.0,  0.0},
+    { 0.0,  0.5},
+    { 0.0,  1.0},
+    { 0.0,  1.5},
+    { 0.5, -0.5},
+    { 0.5,  0.0},
+    { 0.5,  0.5},
+    { 0.5,  1.0},
+    { 0.5,  1.5},
+    { 1.0, -0.5},
+    { 1.0,  0.0},
+    { 1.0,  0.5},
+    { 1.0,  1.0},
+    { 1.0,  1.5},
+    { 1.5, -0.5},
+    { 1.5,  0.0},
+    { 1.5,  0.5},
+    { 1.5,  1.0},
+    { 1.5,  1.5}
 };
 
 int promptUserForRobotPositionIndex()
@@ -105,7 +127,7 @@ int main()
 
     double robotX = PREDEFINED_POSITIONS[index - 1][0];
     double robotY = PREDEFINED_POSITIONS[index - 1][1];
-    double robotZ = 0.782; 
+    double robotZ = 0.782; // Altura de la base
     sendCoordinates(sock, robotX, robotY, robotZ); // Envía posicion
 
     // Clear the screen to proceed
@@ -121,7 +143,7 @@ int main()
     for (auto& pos : positions) {
         if (!pos.done) {
 
-            sendCoordinates(sock, pos.x, pos.y, RECEIVER_H); // Envía coordenadas
+            sendCoordinates(sock, pos.x, pos.y, pos.z); // Envía coordenadas incluyendo altura
             std::string response = receiveResponse(sock, 2); // Recibe respuesta
             
             if (response == "reachable") {
@@ -131,7 +153,7 @@ int main()
                 // ****************************************************************
                 cout << "*********************************************************\n";
                 cout << "SAMPLING POINT: X, Y, Z\n";
-                cout << "Receiver position set to: (" << pos.x << ", " << pos.y << ", " << RECEIVER_H << ")\n";
+                cout << "Receiver position set to: (" << pos.x << ", " << pos.y << ", " << pos.z << ")\n";
                 cout << "*********************************************************\n\n";
 
                 // ****************************************************************
@@ -193,7 +215,7 @@ int main()
 
 
                 cout << "\nScenario 2: Waiting for alignment...\n";
-                gimbal.transmitterPointingToReceiver_New(-pos.x, -pos.y, RECEIVER_H); // ajuste de coordenadas
+                gimbal.transmitterPointingToReceiver_New(-pos.x, -pos.y, pos.z); // ajuste de coordenadas con altura dinámica
                 cout << "[Info] Robot starting to move\n";
                 receiverPointingToTransmitter(sock); 
 
