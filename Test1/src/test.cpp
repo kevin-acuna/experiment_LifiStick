@@ -483,7 +483,7 @@ int main()
                 // ****************************************************************
                 // NEXT POSITION
                 // ****************************************************************
-
+                receiverFinished(sock);
 
                 // Actualizar la posición actual indicando que ya se completó
                 pos.done = 1;
