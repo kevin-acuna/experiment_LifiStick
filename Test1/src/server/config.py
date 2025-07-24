@@ -26,7 +26,7 @@ TRANSMITTER_X = 0.0
 TRANSMITTER_Y = 0.0
 TRANSMITTER_Z = 2.0
 
-# Height of the piece (end-effector extension)
+# Height of the piece (end-effector extension in meters)
 PIECE_HEIGHT = 0.035
 
 # Workspace 
