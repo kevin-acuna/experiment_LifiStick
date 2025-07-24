@@ -33,6 +33,22 @@ int MOTOR_AXIS_X = 27006796;  // External axis
 int MOTOR_AXIS_Y = 27007072;  // Internal axis
 // *****************************************************************************
 
+
+// Orientaciones predefinidas para el transmisor {inclinacion, azimuth}
+// inclinacion: angulo con respecto a la vertical (0-180 grados)
+// azimuth: angulo en el plano XY desde el eje X (0-360 grados)
+static const double PREDEFINED_ORIENTATIONS[][2] = {
+    {0.0,    0.0},   // Apuntando verticalmente hacia abajo
+    {15.0,   0.0},   // Inclinado 15 grados en dirección del eje X+
+    {15.0,  90.0},   // Inclinado 15 grados en dirección del eje Y+
+    {45.0, 225.0},   // Inclinado 45 grados en dirección diagonal
+    {45.0, 315.0}    // Inclinado 45 grados en dirección diagonal
+};
+
+// Número de orientaciones predefinidas
+#define K_ORIENTATIONS (sizeof(PREDEFINED_ORIENTATIONS) / sizeof(PREDEFINED_ORIENTATIONS[0]))
+
+
 // Predefined positions for the robot base (X, Y).
 // El tamaño del array se determina automáticamente por el número de elementos inicializados
 static const double PREDEFINED_POSITIONS[][2] = {
@@ -157,13 +173,13 @@ int main()
                 cout << "*********************************************************\n\n";
 
                 // ****************************************************************
-                // Scenario 1 - Pointing transmitter to floor and receiver to ceiling
+                // Scenario 1 - Transmitter orientations test with receiver pointing to ceiling
                 // ****************************************************************
                 
                 // Wait for a valid option (C to continue or Q to quit)
                 char option;
                 while (true) {
-                    cout << "Scenario 1 - Pointing transmitter to floor and receiver to ceiling\n";
+                    cout << "Scenario 1 - Transmitter orientations test with receiver pointing to ceiling\n";
                     cout << "Press C to continue or Q to quit: ";
                     cin >> option;
                     option = toupper(option);
@@ -185,11 +201,30 @@ int main()
                     cout << "[Info] Position reached" << endl;
                 } else {
                     cout << "[Info] Position not reached" << endl;
+                    continue; // Si no se alcanzó la posición, pasar a la siguiente iteración
                 }
 
-                cout << "Scenario 1: Waiting for alignment...\n";
-                gimbal.transmitterPointingToFloor();
-
+                cout << "\nIniciando prueba con " << K_ORIENTATIONS << " orientaciones diferentes\n";
+                cout << "------------------------------------------------\n";
+                
+                // Bucle para recorrer todas las orientaciones predefinidas
+                for (size_t i = 0; i < K_ORIENTATIONS; i++) {
+                    double inclination = PREDEFINED_ORIENTATIONS[i][0];
+                    double azimuth = PREDEFINED_ORIENTATIONS[i][1];
+                    
+                    cout << "Orientación " << (i + 1) << "/" << K_ORIENTATIONS 
+                         << ": Inclinación = " << inclination 
+                         << ", Azimuth = " << azimuth << "\n";
+                    
+                    // Aplicar la orientación al transmisor
+                    gimbal.setTransmitterOrientation(inclination, azimuth);
+                    
+                    // Esperar 10 segundos
+                    cout << "Esperando 10 segundos...\n";
+                    Sleep(10000); // 10 segundos en milisegundos
+                }
+                
+                cout << "Prueba de orientaciones completada\n";
                 cout << "Scenario 1: Ready!\n\n\n";
                 // ****************************************************************
                 
@@ -199,61 +234,11 @@ int main()
                 // Scenario 2 - Pointing transmitter to receiver and receiver to transmitter
                 // ****************************************************************
 
-                while (true) {
-                    cout << "Scenario 2 - Pointing transmitter to receiver and receiver to transmitter\n";
-                    cout << "Press C to continue or Q to quit: ";
-                    cin >> option;
-                    option = toupper(option);
-                    if (option == 'C' || option == 'Q')
-                        break;
-                    cout << "Invalid option. Please try again." << endl;
-                }
-                if (option == 'Q') {
-                    cout << "Program terminated by user." << endl;
-                    break;
-                }
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-
                 cout << "\nScenario 2: Waiting for alignment...\n";
                 gimbal.transmitterPointingToReceiver_New(-pos.x, -pos.y, pos.z); // ajuste de coordenadas con altura dinámica
-                cout << "[Info] Robot starting to move\n";
-                receiverPointingToTransmitter(sock); 
-
-                confirmation = receiveResponse(sock, 30);
-                if (confirmation == "reached") {
-                    cout << "[Info] Position reached" << endl;
-                } else {
-                    cout << "[Info] Position not reached" << endl;
-                }
-                // **********************************
+                cout << "Esperando 10 segundos...\n";
+                Sleep(10000); // 10 segundos en milisegundos
                 cout << "Scenario 2: Ready!\n\n\n";
-
-
-
-
-                // ****************************************************************
-                // Scenario 3 - Pointing transmitter to floor and receiver to transmitter
-                // ****************************************************************
-                while (true) {
-                    cout << "Scenario 3 - Pointing transmitter to floor and receiver to transmitter\n";
-                    cout << "Press C to continue or Q to quit: ";
-                    cin >> option;
-                    option = toupper(option);
-                    if (option == 'C' || option == 'Q')
-                        break;
-                    cout << "Invalid option. Please try again." << endl;
-                }
-                if (option == 'Q') {
-                    cout << "Program terminated by user." << endl;
-                    break;
-                }
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-                cout << "\nScenario 3: Waiting for alignment...\n";
-                gimbal.transmitterPointingToFloor();
-                receiverFinished(sock);
-                cout << "Scenario 3: Ready!\n\n\n";
 
                 // ****************************************************************
                 // NEXT POSITION
@@ -268,7 +253,7 @@ int main()
                 if (posFile.is_open()) {
                     // Reescribir todas las posiciones actualizadas (suponiendo que 'positions' es el vector actualizado)
                     for (const auto& p : positions) {
-                        posFile << p.x << " " << p.y << " " << p.done << "\n";
+                        posFile << p.x << " " << p.y << " " << p.z << " " << p.done << "\n";
                     }
                     posFile.close();
                 } else {

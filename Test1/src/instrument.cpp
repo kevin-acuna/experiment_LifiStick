@@ -433,3 +433,39 @@ void instrument::transmitterPointingToReceiver_New(double rx, double ry, double 
     // o enviarlos de forma sincronizada si el controlador lo permite.
     rotateMotorsSimultaneously(serialNo_MotorX, angleX_deg, serialNo_MotorY, angleY_deg);
 }
+
+
+// ----------------------------------------------------------------------
+// Define orientación del transmisor usando ángulos de inclinación y azimuth
+// inclination: ángulo entre el vector de orientación y el eje vertical (0-180 grados)
+// azimuth: ángulo en el plano XY medido desde el eje X (0-360 grados)
+// ----------------------------------------------------------------------
+void instrument::setTransmitterOrientation(double inclination, double azimuth)
+{
+    // Convertir ángulos de grados a radianes
+    double inclination_rad = inclination * PI / 180.0;
+    double azimuth_rad = azimuth * PI / 180.0;
+    
+    // Convertir coordenadas esféricas a un vector de dirección
+    // Para inclination=0 y azimuth=0, el vector debe ser (0,0,-1)
+    // Por eso el sin/cos de inclination están invertidos respecto a las fórmulas tradicionales
+    double dirX = sin(inclination_rad) * cos(azimuth_rad);
+    double dirY = sin(inclination_rad) * sin(azimuth_rad);
+    double dirZ = -cos(inclination_rad);  // Negativo para que apunte hacia abajo cuando inclination=0
+    
+    // Paso 1: Calcular el ángulo en el eje X (motor externo)
+    // theta_x = arctan(y_R / (H - h))
+    double angleX_rad = atan2(dirY, dirZ);
+
+    // Paso 2: Calcular el ángulo en el eje Y (motor interno)
+    // theta_y = -arctan((cos(theta_x) * x_R) / (H - h))
+    double angleY_rad = -atan2(cos(angleX_rad) * dirX, dirZ);
+
+    // Conversión a grados con 1 decimal
+    double angleX_deg = std::round((angleX_rad * 180.0 / PI) * 10.0) / 10.0;
+    double angleY_deg = std::round((angleY_rad * 180.0 / PI) * 10.0) / 10.0;
+
+    // Se recomienda rotar primero el motor del eje X y luego el de Y, 
+    // o enviarlos de forma sincronizada si el controlador lo permite.
+    rotateMotorsSimultaneously(serialNo_MotorX, angleX_deg, serialNo_MotorY, angleY_deg);
+}
