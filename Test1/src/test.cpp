@@ -31,7 +31,7 @@ using namespace std;
 // *****************************************************************************
 // Hiperparametros configurables
 // *****************************************************************************
-const LPCWSTR COM_PORT = L"COM4";       // Puerto serial para el control del LED
+#define COM_PORT_NAME "COM4"           // Puerto serial para el control del LED (sin L prefix)
 const int STABILIZATION_TIME_MS = 1000;  // Tiempo de estabilización en milisegundos
 const int BACKGROUND_TIME_SEC = 10;      // Tiempo de adquisición de background en segundos
 const int ORIENTATION_TIME_SEC = 10;    // Tiempo de adquisición por cada orientación en segundos
@@ -310,8 +310,8 @@ int main()
                 csv_file << "x,y,z,inclinacion,azimuth,stage,medida_daq" << std::endl;
                 
                 // Open serial port for LED control
-                cout << "\nOpening serial port " << wstring(COM_PORT).c_str() << " for LED control...\n";
-                HANDLE serialPort = instrument::openSerialPort(COM_PORT);
+                cout << "\nOpening serial port " << COM_PORT_NAME << " for LED control...\n";
+                HANDLE serialPort = instrument::openSerialPort(L"COM4"); // Hardcoded to avoid conversion issues
                 if (serialPort == INVALID_HANDLE_VALUE) {
                     cout << "Failed to open serial port. Continuing without LED control.\n";
                 } else {
@@ -367,7 +367,7 @@ int main()
                 cout << "------------------------------------------------\n";
                 
                 // Loop through all predefined orientations
-                for (size_t i = 0; i < K_ORIENTATIONS; i++) {
+                for (int i = 0; i < (int)K_ORIENTATIONS; i++) {
                     double inclination = PREDEFINED_ORIENTATIONS[i][0];
                     double azimuth = PREDEFINED_ORIENTATIONS[i][1];
                     
@@ -497,7 +497,7 @@ int main()
                     }
                     posFile.close();
                 } else {
-                    std::cerr << "[Error] No se pudo abrir el archivo de posiciones.\n";
+                    std::cerr << "[Error] Could not open positions file.\n";
                 }
                 // ------------------------------------------------------------------
 
