@@ -28,6 +28,10 @@ using namespace std;
 // Macro para verificar errores de DAQ
 #define DAQmxErrChk(functionCall) if( DAQmxFailed(error=(functionCall)) ) goto Error; else
 
+// Configuración para la adquisición de DAQ
+int32 fSample = 1000;  // Frecuencia de muestreo: 1000 Hz
+int32 nSamples = 10 * fSample;  // 10 segundos a 1000 Hz = 10,000 muestras
+
 // Función para adquirir datos de la DAQ
 // nSamples: número de muestras a adquirir
 // fSample: frecuencia de muestreo en Hz
@@ -372,10 +376,6 @@ int main()
                 
                 // Esperar un breve momento para que el transmisor se posicione
                 Sleep(1000); // 1 segundo para estabilizar
-                
-                // Configuración para la adquisición de DAQ
-                int32 fSample = 1000;  // Frecuencia de muestreo: 1000 Hz
-                int32 nSamples = 10 * fSample;  // 10 segundos a 1000 Hz = 10,000 muestras
                 
                 // Reservar memoria para los datos de la DAQ
                 float64* daq_data = new float64[nSamples];
