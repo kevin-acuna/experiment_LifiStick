@@ -10,6 +10,9 @@
 #include <istream>     // For cin.ignore
 #include <cctype>      // For toupper
 #include <string>
+#include <NIDAQmx.h>   // Para la adquisición de datos DAQ
+#include <chrono>      // Para mediciones de tiempo
+#include <thread>      // Para sleep_for
 
 #include "stdafx.h"    // If using precompiled headers
 #include "instrument.h"
@@ -21,6 +24,81 @@
 
 using namespace std;
 // 302,x Y 44,y
+
+// Macro para verificar errores de DAQ
+#define DAQmxErrChk(functionCall) if( DAQmxFailed(error=(functionCall)) ) goto Error; else
+
+// Función para adquirir datos de la DAQ
+// nSamples: número de muestras a adquirir
+// fSample: frecuencia de muestreo en Hz
+// data: array para almacenar los datos adquiridos (debe ser preasignado)
+// Devuelve: número de muestras adquiridas o 0 si hay error
+int AcquireDataFromDAQ(int32 nSamples, int32 fSample, float64* data) {
+    int32       error = 0;
+    TaskHandle  taskHandle = 0;
+    int32       read = 0;
+    char        errBuff[2048] = { '\0' };
+
+    try {
+        // Crear y configurar la tarea
+        DAQmxErrChk(DAQmxCreateTask("", &taskHandle));
+        DAQmxErrChk(DAQmxCreateAIVoltageChan(
+            taskHandle,
+            "Dev1/ai1",       // Canal de entrada (ajustar según la configuración de hardware)
+            "",
+            DAQmx_Val_RSE,    // Modo de conexión (RSE - Single-Ended)
+            -10.0,           // Rango de voltaje mínimo
+            10.0,            // Rango de voltaje máximo
+            DAQmx_Val_Volts, // Unidades de medida (Voltios)
+            NULL
+        ));
+        
+        // Configurar reloj de muestreo
+        DAQmxErrChk(DAQmxCfgSampClkTiming(
+            taskHandle,
+            "",                // Usar reloj interno
+            fSample,          // Frecuencia de muestreo
+            DAQmx_Val_Rising,
+            DAQmx_Val_FiniteSamps,
+            nSamples          // Número de muestras a adquirir
+        ));
+
+        // Iniciar la tarea
+        DAQmxErrChk(DAQmxStartTask(taskHandle));
+
+        // Leer los datos
+        DAQmxErrChk(DAQmxReadAnalogF64(
+            taskHandle,
+            nSamples,         // Leer exactamente nSamples
+            200.0,            // Timeout en segundos
+            DAQmx_Val_GroupByChannel,
+            data,             // Array para almacenar los datos
+            nSamples,         // Tamaño del buffer
+            &read,            // Número de muestras leídas
+            NULL
+        ));
+
+    Error:  // Manejo de errores
+        if (DAQmxFailed(error))
+            DAQmxGetExtendedErrorInfo(errBuff, 2048);
+
+        if (taskHandle != 0) {
+            DAQmxStopTask(taskHandle);
+            DAQmxClearTask(taskHandle);
+        }
+
+        if (DAQmxFailed(error)) {
+            std::cerr << "Error DAQmx: " << errBuff << std::endl;
+            return 0;
+        }
+    }
+    catch (const std::exception& ex) {
+        std::cerr << "Excepción estándar: " << ex.what() << std::endl;
+        return 0;
+    }
+    
+    return read;
+}
 
 // *****************************************************************************
 // Adjust according to your experiment
@@ -204,8 +282,27 @@ int main()
                     continue; // Si no se alcanzó la posición, pasar a la siguiente iteración
                 }
 
+                // Crear un archivo CSV para guardar todas las mediciones
+                std::string csv_filename = "data_" + 
+                                           std::to_string(pos.x) + "_" + 
+                                           std::to_string(pos.y) + "_" + 
+                                           std::to_string(pos.z) + ".csv";
+                                           
+                std::ofstream csv_file(csv_filename);
+                if (!csv_file.is_open()) {
+                    std::cerr << "Error al crear el archivo CSV: " << csv_filename << std::endl;
+                    continue;
+                }
+                
+                // Escribir encabezado del CSV
+                csv_file << "x,y,z,inclinacion,azimuth,stage,medida_daq" << std::endl;
+                
                 cout << "\nIniciando prueba con " << K_ORIENTATIONS << " orientaciones diferentes\n";
                 cout << "------------------------------------------------\n";
+                
+                // Configuración para la adquisición de DAQ
+                int32 fSample = 1000;  // Frecuencia de muestreo: 1000 Hz
+                int32 nSamples = 10 * fSample;  // 10 segundos a 1000 Hz = 10,000 muestras
                 
                 // Bucle para recorrer todas las orientaciones predefinidas
                 for (size_t i = 0; i < K_ORIENTATIONS; i++) {
@@ -219,12 +316,48 @@ int main()
                     // Aplicar la orientación al transmisor
                     gimbal.setTransmitterOrientation(inclination, azimuth);
                     
-                    // Esperar 10 segundos
-                    cout << "Esperando 10 segundos...\n";
-                    Sleep(10000); // 10 segundos en milisegundos
+                    // Esperar un breve momento para que el motor se estabilice
+                    Sleep(1000); // 1 segundo
+                    
+                    // Reservar memoria para los datos de la DAQ
+                    float64* daq_data = new float64[nSamples];
+                    
+                    cout << "Adquiriendo datos durante 10 segundos...\n";
+                    
+                    // Adquirir datos de la DAQ
+                    int read_samples = AcquireDataFromDAQ(nSamples, fSample, daq_data);
+                    
+                    if (read_samples > 0) {
+                        cout << "Se adquirieron " << read_samples << " muestras correctamente.\n";
+                        
+                        // Guardar cada muestra en el archivo CSV
+                        for (int j = 0; j < read_samples; j++) {
+                            csv_file << pos.x << "," 
+                                     << pos.y << "," 
+                                     << pos.z << "," 
+                                     << inclination << "," 
+                                     << azimuth << "," 
+                                     << "direction" << ","
+                                     << daq_data[j] << std::endl;
+                        }
+                    } else {
+                        cout << "Error en la adquisición de datos de la DAQ.\n";
+                        // Escribir una línea con valor nulo para esta orientación
+                        csv_file << pos.x << "," 
+                                 << pos.y << "," 
+                                 << pos.z << "," 
+                                 << inclination << "," 
+                                 << azimuth << ","
+                                 << "direction" << ",NA" << std::endl;
+                    }
+                    
+                    // Liberar memoria
+                    delete[] daq_data;
                 }
                 
-                cout << "Prueba de orientaciones completada\n";
+                // Cerrar el archivo CSV
+                csv_file.close();
+                cout << "Prueba de orientaciones completada. Datos guardados en: " << csv_filename << "\n";
                 cout << "Scenario 1: Ready!\n\n\n";
                 // ****************************************************************
                 
@@ -236,8 +369,49 @@ int main()
 
                 cout << "\nScenario 2: Waiting for alignment...\n";
                 gimbal.transmitterPointingToReceiver_New(-pos.x, -pos.y, pos.z); // ajuste de coordenadas con altura dinámica
-                cout << "Esperando 10 segundos...\n";
-                Sleep(10000); // 10 segundos en milisegundos
+                
+                // Esperar un breve momento para que el transmisor se posicione
+                Sleep(1000); // 1 segundo para estabilizar
+                
+                // Configuración para la adquisición de DAQ
+                int32 fSample = 1000;  // Frecuencia de muestreo: 1000 Hz
+                int32 nSamples = 10 * fSample;  // 10 segundos a 1000 Hz = 10,000 muestras
+                
+                // Reservar memoria para los datos de la DAQ
+                float64* daq_data = new float64[nSamples];
+                
+                cout << "Adquiriendo datos durante 10 segundos para escenario 'distance'...\n";
+                
+                // Adquirir datos de la DAQ
+                int read_samples = AcquireDataFromDAQ(nSamples, fSample, daq_data);
+                
+                if (read_samples > 0) {
+                    cout << "Se adquirieron " << read_samples << " muestras correctamente.\n";
+                    
+                    // Guardar cada muestra en el archivo CSV
+                    for (int j = 0; j < read_samples; j++) {
+                        csv_file << pos.x << "," 
+                                 << pos.y << "," 
+                                 << pos.z << "," 
+                                 << 0.0 << ","  // No hay inclinación definida para este escenario
+                                 << 0.0 << ","  // No hay azimuth definido para este escenario
+                                 << "distance" << ","
+                                 << daq_data[j] << std::endl;
+                    }
+                } else {
+                    cout << "Error en la adquisición de datos de la DAQ.\n";
+                    // Escribir una línea con valor nulo para este escenario
+                    csv_file << pos.x << "," 
+                             << pos.y << "," 
+                             << pos.z << "," 
+                             << 0.0 << ","  // No hay inclinación definida para este escenario
+                             << 0.0 << ","  // No hay azimuth definido para este escenario
+                             << "distance" << ",NA" << std::endl;
+                }
+                
+                // Liberar memoria
+                delete[] daq_data;
+                
                 cout << "Scenario 2: Ready!\n\n\n";
 
                 // ****************************************************************
