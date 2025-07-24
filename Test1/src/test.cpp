@@ -28,9 +28,17 @@ using namespace std;
 // Macro para verificar errores de DAQ
 #define DAQmxErrChk(functionCall) if( DAQmxFailed(error=(functionCall)) ) goto Error; else
 
+// *****************************************************************************
+// Hiperparametros configurables
+// *****************************************************************************
+const LPCWSTR COM_PORT = L"COM4";       // Puerto serial para el control del LED
+const int STABILIZATION_TIME_MS = 1000;  // Tiempo de estabilización en milisegundos
+const int BACKGROUND_TIME_SEC = 10;      // Tiempo de adquisición de background en segundos
+const int ORIENTATION_TIME_SEC = 10;    // Tiempo de adquisición por cada orientación en segundos
+
 // Configuración para la adquisición de DAQ
 int32 fSample = 1000;  // Frecuencia de muestreo: 1000 Hz
-int32 nSamples = 10 * fSample;  // 10 segundos a 1000 Hz = 10,000 muestras
+int32 nSamples = ORIENTATION_TIME_SEC * fSample;  // Muestras según tiempo configurado
 
 // Función para adquirir datos de la DAQ
 // nSamples: número de muestras a adquirir
@@ -210,10 +218,10 @@ int promptUserForRobotPositionIndex()
 int main()
 {
     system("chcp 65001 > nul"); // Optional: enable UTF-8 output in console
-    initializeWinsock(); // Inicializar Winsock
-    SOCKET sock = connectToServer("127.0.0.1", 12345); // Conectar al servidor
-    vector<Position> positions; // Vector de posiciones
-    loadPositions(PATH_POSITIONS_FILE, positions); // Cargar posiciones
+    initializeWinsock(); // Initialize Winsock
+    SOCKET sock = connectToServer("127.0.0.1", 12345); // Connect to server
+    vector<Position> positions; // Vector of positions
+    loadPositions(PATH_POSITIONS_FILE, positions); // Load positions
 
     int index = promptUserForRobotPositionIndex();
     if (index == -1) {
@@ -283,70 +291,120 @@ int main()
                     cout << "[Info] Position reached" << endl;
                 } else {
                     cout << "[Info] Position not reached" << endl;
-                    continue; // Si no se alcanzó la posición, pasar a la siguiente iteración
-                }
-
-                // Crear un archivo CSV para guardar todas las mediciones
-                std::string csv_filename = "data_" + 
-                                           std::to_string(pos.x) + "_" + 
-                                           std::to_string(pos.y) + "_" + 
-                                           std::to_string(pos.z) + ".csv";
-                                           
-                std::ofstream csv_file(csv_filename);
-                if (!csv_file.is_open()) {
-                    std::cerr << "Error al crear el archivo CSV: " << csv_filename << std::endl;
-                    continue;
+                    continue; // If position was not reached, skip this iteration
                 }
                 
-                // Escribir encabezado del CSV
-                csv_file << "x,y,z,inclinacion,azimuth,stage,medida_daq" << std::endl;
+                // Open serial port for LED control
+                cout << "\nOpening serial port " << wstring(COM_PORT).c_str() << " for LED control...\n";
+                HANDLE serialPort = instrument::openSerialPort(COM_PORT);
+                if (serialPort == INVALID_HANDLE_VALUE) {
+                    cout << "Failed to open serial port. Continuing without LED control.\n";
+                } else {
+                    cout << "Serial port opened successfully.\n";
+                    
+                    // Turn off the LED for background acquisition
+                    cout << "Turning LED off for background measurement...\n";
+                    gimbal.turnOff(serialPort);
+                    Sleep(STABILIZATION_TIME_MS); // Wait for LED to stabilize
+                    
+                    // Acquire background DAQ data
+                    cout << "Acquiring background data for " << BACKGROUND_TIME_SEC << " seconds...\n";
+                    int32 backgroundSamples = BACKGROUND_TIME_SEC * fSample; // Seconds at 1000 Hz
+                    float64* background_data = new float64[backgroundSamples];
+                    
+                    int background_read = AcquireDataFromDAQ(backgroundSamples, fSample, background_data);
+                    
+                    // Create CSV file for all measurements
+                    std::string csv_filename = "data_" + 
+                                             std::to_string(pos.x) + "_" + 
+                                             std::to_string(pos.y) + "_" + 
+                                             std::to_string(pos.z) + ".csv";
+                                             
+                    std::ofstream csv_file(csv_filename);
+                    if (!csv_file.is_open()) {
+                        std::cerr << "Error creating CSV file: " << csv_filename << std::endl;
+                        continue;
+                    }
+                    
+                    // Write CSV header
+                    csv_file << "x,y,z,inclinacion,azimuth,stage,medida_daq" << std::endl;
+                    
+                    // Save background data to CSV
+                    if (background_read > 0) {
+                        cout << "Successfully acquired " << background_read << " background samples.\n";
+                        
+                        // Save each background sample to CSV file
+                        for (int j = 0; j < background_read; j++) {
+                            csv_file << pos.x << "," 
+                                     << pos.y << "," 
+                                     << pos.z << "," 
+                                     << 0.0 << ","  // No inclination for background
+                                     << 0.0 << ","  // No azimuth for background
+                                     << "background" << ","
+                                     << background_data[j] << std::endl;
+                        }
+                    } else {
+                        cout << "Error acquiring background data from DAQ.\n";
+                        // Write a line with null value for background
+                        csv_file << pos.x << "," 
+                                 << pos.y << "," 
+                                 << pos.z << "," 
+                                 << 0.0 << ","
+                                 << 0.0 << ","
+                                 << "background" << ",NA" << std::endl;
+                    }
+                    
+                    // Free memory for background data
+                    delete[] background_data;
+                    
+                    // Turn LED back on for scenarios 1 and 2
+                    cout << "Turning LED on for main measurements...\n";
+                    gimbal.turnOn(serialPort);
+                    Sleep(STABILIZATION_TIME_MS); // Wait for LED to stabilize
+                }
                 
-                cout << "\nIniciando prueba con " << K_ORIENTATIONS << " orientaciones diferentes\n";
+                cout << "\nStarting test with " << K_ORIENTATIONS << " different orientations\n";
                 cout << "------------------------------------------------\n";
                 
-                // Configuración para la adquisición de DAQ
-                int32 fSample = 1000;  // Frecuencia de muestreo: 1000 Hz
-                int32 nSamples = 10 * fSample;  // 10 segundos a 1000 Hz = 10,000 muestras
-                
-                // Bucle para recorrer todas las orientaciones predefinidas
+                // Loop through all predefined orientations
                 for (size_t i = 0; i < K_ORIENTATIONS; i++) {
                     double inclination = PREDEFINED_ORIENTATIONS[i][0];
                     double azimuth = PREDEFINED_ORIENTATIONS[i][1];
                     
-                    cout << "Orientación " << (i + 1) << "/" << K_ORIENTATIONS 
-                         << ": Inclinación = " << inclination 
+                    cout << "Orientation " << (i + 1) << "/" << K_ORIENTATIONS 
+                         << ": Inclination = " << inclination 
                          << ", Azimuth = " << azimuth << "\n";
                     
-                    // Aplicar la orientación al transmisor
+                    // Apply orientation to transmitter
                     gimbal.setTransmitterOrientation(inclination, azimuth);
                     
-                    // Esperar un breve momento para que el motor se estabilice
-                    Sleep(1000); // 1 segundo
+                    // Wait briefly for motor stabilization
+                    Sleep(STABILIZATION_TIME_MS * 2); // Double stabilization time for motors
                     
-                    // Reservar memoria para los datos de la DAQ
+                    // Allocate memory for DAQ data
                     float64* daq_data = new float64[nSamples];
                     
-                    cout << "Adquiriendo datos durante 10 segundos...\n";
+                    cout << "Acquiring data for " << ORIENTATION_TIME_SEC << " seconds...\n";
                     
-                    // Adquirir datos de la DAQ
+                    // Acquire data from DAQ
                     int read_samples = AcquireDataFromDAQ(nSamples, fSample, daq_data);
                     
                     if (read_samples > 0) {
-                        cout << "Se adquirieron " << read_samples << " muestras correctamente.\n";
+                        cout << "Successfully acquired " << read_samples << " samples.\n";
                         
-                        // Guardar cada muestra en el archivo CSV
+                        // Save each sample to CSV file
                         for (int j = 0; j < read_samples; j++) {
                             csv_file << pos.x << "," 
                                      << pos.y << "," 
                                      << pos.z << "," 
                                      << inclination << "," 
-                                     << azimuth << "," 
+                                     << azimuth << ","
                                      << "direction" << ","
                                      << daq_data[j] << std::endl;
                         }
                     } else {
-                        cout << "Error en la adquisición de datos de la DAQ.\n";
-                        // Escribir una línea con valor nulo para esta orientación
+                        cout << "Error acquiring data from DAQ.\n";
+                        // Write a line with null value for this orientation
                         csv_file << pos.x << "," 
                                  << pos.y << "," 
                                  << pos.z << "," 
@@ -355,13 +413,11 @@ int main()
                                  << "direction" << ",NA" << std::endl;
                     }
                     
-                    // Liberar memoria
+                    // Free memory
                     delete[] daq_data;
                 }
                 
-                // Cerrar el archivo CSV
-                csv_file.close();
-                cout << "Prueba de orientaciones completada. Datos guardados en: " << csv_filename << "\n";
+                cout << "Orientation test completed.\n";
                 cout << "Scenario 1: Ready!\n\n\n";
                 // ****************************************************************
                 
@@ -372,47 +428,57 @@ int main()
                 // ****************************************************************
 
                 cout << "\nScenario 2: Waiting for alignment...\n";
-                gimbal.transmitterPointingToReceiver_New(-pos.x, -pos.y, pos.z); // ajuste de coordenadas con altura dinámica
+                gimbal.transmitterPointingToReceiver_New(-pos.x, -pos.y, pos.z); // coordinate adjustment with dynamic height
                 
-                // Esperar un breve momento para que el transmisor se posicione
-                Sleep(1000); // 1 segundo para estabilizar
+                // Wait briefly for transmitter positioning
+                Sleep(1000); // 1 second for stabilization
                 
-                // Reservar memoria para los datos de la DAQ
+                // Allocate memory for DAQ data
                 float64* daq_data = new float64[nSamples];
                 
-                cout << "Adquiriendo datos durante 10 segundos para escenario 'distance'...\n";
+                cout << "Acquiring data for " << ORIENTATION_TIME_SEC << " seconds for 'distance' scenario...\n";
                 
-                // Adquirir datos de la DAQ
+                // Acquire data from DAQ
                 int read_samples = AcquireDataFromDAQ(nSamples, fSample, daq_data);
                 
                 if (read_samples > 0) {
-                    cout << "Se adquirieron " << read_samples << " muestras correctamente.\n";
+                    cout << "Successfully acquired " << read_samples << " samples.\n";
                     
-                    // Guardar cada muestra en el archivo CSV
+                    // Save each sample to CSV file (same file as scenario 1)
                     for (int j = 0; j < read_samples; j++) {
                         csv_file << pos.x << "," 
                                  << pos.y << "," 
                                  << pos.z << "," 
-                                 << 0.0 << ","  // No hay inclinación definida para este escenario
-                                 << 0.0 << ","  // No hay azimuth definido para este escenario
+                                 << 0.0 << ","  // No inclination defined for this scenario
+                                 << 0.0 << ","  // No azimuth defined for this scenario
                                  << "distance" << ","
                                  << daq_data[j] << std::endl;
                     }
                 } else {
-                    cout << "Error en la adquisición de datos de la DAQ.\n";
-                    // Escribir una línea con valor nulo para este escenario
+                    cout << "Error acquiring data from DAQ.\n";
+                    // Write a line with null value for this scenario
                     csv_file << pos.x << "," 
                              << pos.y << "," 
                              << pos.z << "," 
-                             << 0.0 << ","  // No hay inclinación definida para este escenario
-                             << 0.0 << ","  // No hay azimuth definido para este escenario
+                             << 0.0 << ","  // No inclination defined for this scenario
+                             << 0.0 << ","  // No azimuth defined for this scenario
                              << "distance" << ",NA" << std::endl;
                 }
                 
-                // Liberar memoria
+                // Free memory
                 delete[] daq_data;
                 
+                // Close the CSV file after both scenarios are complete
+                csv_file.close();
+                cout << "Data acquisition complete. Data saved to: " << csv_filename << "\n";
                 cout << "Scenario 2: Ready!\n\n\n";
+                
+                // Close serial port if it was opened
+                if (serialPort != INVALID_HANDLE_VALUE) {
+                    cout << "Closing serial port...\n";
+                    gimbal.closeSerialPort(serialPort);
+                    cout << "Serial port closed.\n";
+                }
 
                 // ****************************************************************
                 // NEXT POSITION
