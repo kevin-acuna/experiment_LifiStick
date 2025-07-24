@@ -294,6 +294,21 @@ int main()
                     continue; // If position was not reached, skip this iteration
                 }
                 
+                // Create CSV file for all measurements
+                std::string csv_filename = "data_" + 
+                                         std::to_string(pos.x) + "_" + 
+                                         std::to_string(pos.y) + "_" + 
+                                         std::to_string(pos.z) + ".csv";
+                                         
+                std::ofstream csv_file(csv_filename);
+                if (!csv_file.is_open()) {
+                    std::cerr << "Error creating CSV file: " << csv_filename << std::endl;
+                    continue;
+                }
+                
+                // Write CSV header
+                csv_file << "x,y,z,inclinacion,azimuth,stage,medida_daq" << std::endl;
+                
                 // Open serial port for LED control
                 cout << "\nOpening serial port " << wstring(COM_PORT).c_str() << " for LED control...\n";
                 HANDLE serialPort = instrument::openSerialPort(COM_PORT);
@@ -313,21 +328,6 @@ int main()
                     float64* background_data = new float64[backgroundSamples];
                     
                     int background_read = AcquireDataFromDAQ(backgroundSamples, fSample, background_data);
-                    
-                    // Create CSV file for all measurements
-                    std::string csv_filename = "data_" + 
-                                             std::to_string(pos.x) + "_" + 
-                                             std::to_string(pos.y) + "_" + 
-                                             std::to_string(pos.z) + ".csv";
-                                             
-                    std::ofstream csv_file(csv_filename);
-                    if (!csv_file.is_open()) {
-                        std::cerr << "Error creating CSV file: " << csv_filename << std::endl;
-                        continue;
-                    }
-                    
-                    // Write CSV header
-                    csv_file << "x,y,z,inclinacion,azimuth,stage,medida_daq" << std::endl;
                     
                     // Save background data to CSV
                     if (background_read > 0) {
