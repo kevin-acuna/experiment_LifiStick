@@ -455,11 +455,11 @@ void instrument::setTransmitterOrientation(double inclination, double azimuth)
     
     // Paso 1: Calcular el ángulo en el eje X (motor externo)
     // theta_x = arctan(y_R / (H - h))
-    double angleX_rad = atan2(dirY, dirZ);
+    double angleX_rad = atan2(dirY, -dirZ);
 
     // Paso 2: Calcular el ángulo en el eje Y (motor interno)
     // theta_y = -arctan((cos(theta_x) * x_R) / (H - h))
-    double angleY_rad = -atan2(cos(angleX_rad) * dirX, dirZ);
+    double angleY_rad = -atan2(cos(angleX_rad) * dirX, -dirZ);
 
     // Conversión a grados con 1 decimal
     double angleX_deg = std::round((angleX_rad * 180.0 / PI) * 10.0) / 10.0;
