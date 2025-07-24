@@ -38,11 +38,11 @@ int MOTOR_AXIS_Y = 27007072;  // Internal axis
 // inclinacion: angulo con respecto a la vertical (0-180 grados)
 // azimuth: angulo en el plano XY desde el eje X (0-360 grados)
 static const double PREDEFINED_ORIENTATIONS[][2] = {
-    {0.0,    0.0},   // Apuntando verticalmente hacia abajo
-    {15.0,   0.0},   // Inclinado 15 grados en dirección del eje X+
-    {15.0,  90.0},   // Inclinado 15 grados en dirección del eje Y+
-    {45.0, 225.0},   // Inclinado 45 grados en dirección diagonal
-    {45.0, 315.0}    // Inclinado 45 grados en dirección diagonal
+    {0,0},
+    {57.6,87.8},
+    {57.7,358.6},
+    {57.2,177.7},
+    {55.7,268.1}
 };
 
 // Número de orientaciones predefinidas
