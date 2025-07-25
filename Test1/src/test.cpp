@@ -132,7 +132,11 @@ static const double PREDEFINED_ORIENTATIONS[][2] = {
     {57.6,87.8},
     {57.7,358.6},
     {57.2,177.7},
-    {55.7,268.1}
+    {55.7,268.1},
+    {30,0},
+    {30,90},
+    {30,180},
+    {30,270}
 };
 
 // Número de orientaciones predefinidas
