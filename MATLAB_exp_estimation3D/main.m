@@ -9,15 +9,15 @@ clc;
 m = 2; % Orden Lambertiano (ajustar según sea necesario)
 
 % Archivo CSV a leer
-% csv_file = '../dataset/data_0.000000_0.000000_1.000000.csv';
+csv_file = '../dataset/data_0.000000_0.000000_1.000000.csv';
 % csv_file = '../dataset/data_-0.600000_0.600000_1.200000.csv';
-csv_file = '../dataset/data_-0.600000_0.400000_1.200000.csv';
+% csv_file = '../dataset/data_-0.600000_0.400000_1.200000.csv';
 
 % ======================================================================
 % Vector de índices de orientaciones a utilizar (se ajustará después de identificar orientaciones)
 % Por ejemplo, K = [1,6,7,8,9] seleccionará las orientaciones en esas posiciones
-% K = [1,6,7,8,9]; % Por defecto, vacío significa usar todas las orientaciones
-K = [1,2,3,4,5]; % Por defecto, vacío significa usar todas las orientaciones
+K = [1,6,7,8,9]; % Por defecto, vacío significa usar todas las orientaciones
+% K = [1,2,3,4,5]; % Por defecto, vacío significa usar todas las orientaciones
 % K = []
 % ======================================================================
 
@@ -67,13 +67,29 @@ end
 background_data = data(strcmp(data.stage, 'background'), :);
 disp(['Datos de background: ' num2str(height(background_data)) ' muestras.']);
 
-% Calcular la media de las medidas de background
+% Calcular la media y varianza de las medidas de background
 if ~isempty(background_data)
-    background_mean = mean(background_data.medida_daq);
+    background_values = background_data.medida_daq;
+    background_mean = mean(background_values);
+    background_var = var(background_values);
     disp(['Media de las medidas de background: ' num2str(background_mean)]);
+    disp(['Varianza de las medidas de background: ' num2str(background_var)]);
+    
+    % Graficar la señal de background en una figura separada
+    figure;
+    plot(1:length(background_values), background_values, '.b', 'MarkerSize', 8);
+    hold on;
+    plot([1, length(background_values)], [background_mean, background_mean], 'r-', 'LineWidth', 2);
+    xlabel('Número de muestra');
+    ylabel('Valor medido');
+    title('Señal de Background');
+    legend('Medidas de background', ['Media (' num2str(background_mean, '%.4f') ')']);
+    grid on;
+    hold off;
 else
     warning('No se encontraron datos de background');
     background_mean = 0; % Valor por defecto si no hay background
+    background_var = 0;
 end
 
 % Crear matriz nt (vectores de orientación) para las orientaciones seleccionadas
@@ -159,30 +175,45 @@ end
 disp(['Dimensión de nt: ' num2str(size(nt, 1)) 'x' num2str(size(nt, 2))]);
 disp(['Dimensión de Praw: ' num2str(size(Praw, 1)) 'x' num2str(size(Praw, 2))]);
 
-% Visualizar los datos recibidos para cada orientación seleccionada
+% Visualizar los datos procesados (Praw) para cada orientación seleccionada
 figure;
 hold on;
 colors = hsv(length(K)); % Colores diferentes para cada orientación
 legendInfo = cell(length(K), 1);
 
+disp('\nVarianzas de las señales seleccionadas:');
+disp('----------------------------------------');
+
 for idx = 1:length(K)
-        i=K(idx);
+    i = K(idx); % Índice original de la orientación
+    
+    % Extraer datos procesados de Praw para esta orientación
+    praw_data = Praw(:, idx);
+    valid_data = ~isnan(praw_data);
+    praw_data = praw_data(valid_data); % Eliminar NaN
+    
+    if ~isempty(praw_data)
+        % Calcular media y varianza de los datos procesados
+        media_praw = mean(praw_data);
+        var_praw = var(praw_data);
         
-        % Graficar medidas de la orientación actual
-        plot(1:length(Praw), Praw(:,idx), 'Color', colors(idx,:), 'MarkerSize', 2);
+        % Mostrar varianza de Praw en la ventana de comandos
+        disp(['Praw Orientación ' num2str(i) ': Varianza = ' num2str(var_praw, '%.6f')]);
         
-        % Calcular y graficar la media
-        media_orientacion = mean(Praw(:,idx));
-        % plot([1, length(Praw)], [media_orientacion, media_orientacion], '-', 'Color', colors(idx,:), 'LineWidth', 1);
-        % 
+        % Graficar datos procesados de la orientación actual
+        plot(1:length(praw_data), praw_data, 'Color', colors(idx,:), 'MarkerSize', 4);
+        
         % Información para la leyenda
         legendInfo{idx} = ['Ori. ' num2str(i) ': Inc=' num2str(orientaciones.inclinacion(i)) ...
-                           '\circ, Az=' num2str(orientaciones.azimuth(i)) '\circ (mean=' num2str(media_orientacion, '%.4f') ')'];
+                           '\circ, Az=' num2str(orientaciones.azimuth(i)) '\circ (media=' num2str(media_praw, '%.4f') ')'];
+    else
+        legendInfo{idx} = ['Ori. ' num2str(i) ': No hay datos'];
+    end
 end
-
+disp('----------------------------------------');
 xlabel('Número de muestra');
-ylabel('Valor medido');
-title('Medidas por orientación seleccionada');
+ylabel('Valor procesado (Praw)');
+title('Datos procesados (Praw) por orientación seleccionada');
 grid on;
 legend(legendInfo, 'Location', 'best');
 hold off;
