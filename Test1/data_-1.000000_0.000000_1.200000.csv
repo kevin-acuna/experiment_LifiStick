@@ -1,8 +1,0 @@
-x,y,z,inclinacion,azimuth,stage,medida_daq
--1,0,1.2,0,0,background,NA
--1,0,1.2,0,0,direction,NA
--1,0,1.2,57.6,87.8,direction,NA
--1,0,1.2,57.7,358.6,direction,NA
--1,0,1.2,57.2,177.7,direction,NA
--1,0,1.2,55.7,268.1,direction,NA
--1,0,1.2,0,0,distance,NA

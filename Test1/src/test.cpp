@@ -32,7 +32,7 @@ using namespace std;
 // Hiperparametros configurables
 // *****************************************************************************
 #define COM_PORT_NAME "COM4"           // Puerto serial para el control del LED (sin L prefix)
-const int STABILIZATION_TIME_MS = 1000;  // Tiempo de estabilización en milisegundos
+const int STABILIZATION_TIME_MS = 2000;  // Tiempo de estabilización en milisegundos
 const int BACKGROUND_TIME_SEC = 10;      // Tiempo de adquisición de background en segundos
 const int ORIENTATION_TIME_SEC = 10;    // Tiempo de adquisición por cada orientación en segundos
 
@@ -139,6 +139,7 @@ static const double PREDEFINED_ORIENTATIONS[][2] = {
     {30,270}
 };
 
+
 // Número de orientaciones predefinidas
 #define K_ORIENTATIONS (sizeof(PREDEFINED_ORIENTATIONS) / sizeof(PREDEFINED_ORIENTATIONS[0]))
 
@@ -243,7 +244,14 @@ int main()
     // Clear the screen to proceed
     system("cls");
 
-
+    // Open serial port for LED control
+    cout << "\nOpening serial port " << COM_PORT_NAME << " for LED control...\n";
+    HANDLE serialPort = instrument::openSerialPort(L"COM4"); // Hardcoded to avoid conversion issues
+    if (serialPort == INVALID_HANDLE_VALUE) {
+        cout << "Failed to open serial port. Continuing without LED control.\n";
+    } else {
+        cout << "Serial port opened successfully.\n";
+    }
 
     instrument gimbal; // Gimbal Mechanism
     gimbal.setSerialNo_MotorX(MOTOR_AXIS_X);
@@ -287,6 +295,10 @@ int main()
                 }
                 cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clean the input buffer
 
+                // Turn off the LED for background acquisition
+                cout << "Turning LED off for background measurement...\n";
+                gimbal.turnOff(serialPort);
+                    
                 cout << "[Info] Robot starting to move\n";
                 receiverPointingToCeil(sock); // Send command to receiver to point to ceiling
 
@@ -313,18 +325,7 @@ int main()
                 // Write CSV header
                 csv_file << "x,y,z,inclinacion,azimuth,stage,medida_daq" << std::endl;
                 
-                // Open serial port for LED control
-                cout << "\nOpening serial port " << COM_PORT_NAME << " for LED control...\n";
-                HANDLE serialPort = instrument::openSerialPort(L"COM4"); // Hardcoded to avoid conversion issues
-                if (serialPort == INVALID_HANDLE_VALUE) {
-                    cout << "Failed to open serial port. Continuing without LED control.\n";
-                } else {
-                    cout << "Serial port opened successfully.\n";
                     
-                    // Turn off the LED for background acquisition
-                    cout << "Turning LED off for background measurement...\n";
-                    gimbal.turnOff(serialPort);
-                    Sleep(STABILIZATION_TIME_MS); // Wait for LED to stabilize
                     
                     // Acquire background DAQ data
                     cout << "Acquiring background data for " << BACKGROUND_TIME_SEC << " seconds...\n";
@@ -365,7 +366,7 @@ int main()
                     cout << "Turning LED on for main measurements...\n";
                     gimbal.turnOn(serialPort);
                     Sleep(STABILIZATION_TIME_MS); // Wait for LED to stabilize
-                }
+                
                 
                 cout << "\nStarting test with " << K_ORIENTATIONS << " different orientations\n";
                 cout << "------------------------------------------------\n";
@@ -383,7 +384,7 @@ int main()
                     gimbal.setTransmitterOrientation(inclination, azimuth);
                     
                     // Wait briefly for motor stabilization
-                    Sleep(STABILIZATION_TIME_MS * 2); // Double stabilization time for motors
+                    Sleep(STABILIZATION_TIME_MS ); // Double stabilization time for motors
                     
                     // Allocate memory for DAQ data
                     float64* daq_data = new float64[nSamples];
@@ -435,7 +436,7 @@ int main()
                 gimbal.transmitterPointingToReceiver_New(-pos.x, -pos.y, pos.z); // coordinate adjustment with dynamic height
                 
                 // Wait briefly for transmitter positioning
-                Sleep(1000); // 1 second for stabilization
+                Sleep(STABILIZATION_TIME_MS); // 1 second for stabilization
                 
                 // Allocate memory for DAQ data
                 float64* daq_data = new float64[nSamples];
@@ -476,13 +477,6 @@ int main()
                 csv_file.close();
                 cout << "Data acquisition complete. Data saved to: " << csv_filename << "\n";
                 cout << "Scenario 2: Ready!\n\n\n";
-                
-                // Close serial port if it was opened
-                if (serialPort != INVALID_HANDLE_VALUE) {
-                    cout << "Closing serial port...\n";
-                    gimbal.closeSerialPort(serialPort);
-                    cout << "Serial port closed.\n";
-                }
 
                 // ****************************************************************
                 // NEXT POSITION
@@ -529,6 +523,12 @@ int main()
     }
 
     // Cerrar socket, si es necesario
+    // Close serial port if it was opened
+    if (serialPort != INVALID_HANDLE_VALUE) {
+        cout << "Closing serial port...\n";
+        gimbal.closeSerialPort(serialPort);
+        cout << "Serial port closed.\n";
+    }
     closesocket(sock);
     WSACleanup();
 
