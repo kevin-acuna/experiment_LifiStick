@@ -1,4 +1,4 @@
-function d_hat = vlp_gls(nt, Praw, m, sigma2)
+function d_hat = vlp_gls(nt, Praw, m)
 % VLP_GLS Generalized Least Squares estimator for VLP
 % 
 % Inputs:

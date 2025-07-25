@@ -6,20 +6,41 @@ close all;
 clc;
 
 % Constantes
-m = 2; % Orden Lambertiano (ajustar según sea necesario)
+m = 3; % Orden Lambertiano (ajustar según sea necesario)
 
 % Archivo CSV a leer
-csv_file = '../dataset/data_0.000000_0.000000_1.000000.csv';
+% csv_file = '../dataset/data_0.000000_0.000000_1.000000.csv';
 % csv_file = '../dataset/data_-0.600000_0.600000_1.200000.csv';
-% csv_file = '../dataset/data_-0.600000_0.400000_1.200000.csv';
+csv_file = '../dataset/data_-0.600000_0.000000_1.200000.csv';
 
 % ======================================================================
 % Vector de índices de orientaciones a utilizar (se ajustará después de identificar orientaciones)
 % Por ejemplo, K = [1,6,7,8,9] seleccionará las orientaciones en esas posiciones
-K = [1,6,7,8,9]; % Por defecto, vacío significa usar todas las orientaciones
-% K = [1,2,3,4,5]; % Por defecto, vacío significa usar todas las orientaciones
+% K = [1,6,7,8,9]; % Por defecto, vacío significa usar todas las orientaciones
+K = [1,2,3,4,5]; % Por defecto, vacío significa usar todas las orientaciones
 % K = []
 % ======================================================================
+
+% Extraer posición del receptor del nombre del archivo CSV
+[~, filename, ~] = fileparts(csv_file);
+parts = split(filename, '_');
+if length(parts) >= 4
+    receiver_x = str2double(parts{2});
+    receiver_y = str2double(parts{3});
+    receiver_z = str2double(parts{4});
+    receiver_pos = [receiver_x, receiver_y, receiver_z];
+    transmitter_pos = [0, 0, 2]; % Posición fija del transmisor
+    
+    % Calcular vector unitario de dirección real (del transmisor al receptor)
+    direction_vector = receiver_pos - transmitter_pos;
+    direction_unit_vector = direction_vector / norm(direction_vector);
+    
+    disp(['Posición del receptor: [' num2str(receiver_x) ', ' num2str(receiver_y) ', ' num2str(receiver_z) ']']);
+    disp(['Vector de dirección real (unitario): [' num2str(direction_unit_vector(1)) ', ' num2str(direction_unit_vector(2)) ', ' num2str(direction_unit_vector(3)) ']']);
+else
+    warning('No se pudo extraer la posición del receptor del nombre del archivo');
+    direction_unit_vector = [];
+end
 
 % Leer archivo CSV
 disp(['Leyendo archivo CSV: ' csv_file]);
@@ -77,12 +98,13 @@ if ~isempty(background_data)
     
     % Graficar la señal de background en una figura separada
     figure;
-    plot(1:length(background_values), background_values, '.b', 'MarkerSize', 8);
+    plot(1:length(background_values), background_values, 'b', 'MarkerSize', 8);
     hold on;
     plot([1, length(background_values)], [background_mean, background_mean], 'r-', 'LineWidth', 2);
     xlabel('Número de muestra');
     ylabel('Valor medido');
     title('Señal de Background');
+    axis([-inf inf 0 1])
     legend('Medidas de background', ['Media (' num2str(background_mean, '%.4f') ')']);
     grid on;
     hold off;
@@ -221,8 +243,8 @@ hold off;
 % Estimar dirección usando vlp_direction_cov_hetero
 disp('Estimando dirección del vector...');
 try
-    d_hat = vlp_direction_cov_hetero(nt, Praw, m);
-    
+    %d_hat = vlp_direction_cov_hetero(nt, Praw, m);
+    d_hat = vlp_gls(nt, Praw, m);
     % Mostrar resultados
     disp('Vector de dirección estimado (del transmisor al receptor):');
     disp(d_hat);
@@ -234,10 +256,35 @@ try
     
     disp(['Elevation: ' num2str(elevation) '°', 'Azimuth: ' num2str(azimuth) '°']);
     
+    % Comparar con vector real si está disponible
+    if ~isempty(direction_unit_vector)
+        disp('\nComparación con vector real:');
+        disp(['Vector real (unitario): [' num2str(direction_unit_vector(1), '%.4f') ', ' num2str(direction_unit_vector(2), '%.4f') ', ' num2str(direction_unit_vector(3), '%.4f') ']']);
+        disp(['Vector estimado: [' num2str(d_hat(1), '%.4f') ', ' num2str(d_hat(2), '%.4f') ', ' num2str(d_hat(3), '%.4f') ']']);
+        
+        % Calcular error angular
+        dot_product = dot(direction_unit_vector, d_hat);
+        % Asegurar que el producto punto esté en el rango [-1, 1] para evitar errores numéricos
+        dot_product = max(-1, min(1, dot_product));
+        angular_error = acos(dot_product);
+        angular_error_deg = rad2deg(angular_error);
+        
+        disp(['Error angular: ' num2str(angular_error_deg, '%.2f') '°']);
+        
+        % Calcular error euclidiano
+        euclidean_error = norm(direction_unit_vector - d_hat);
+        disp(['Error euclidiano: ' num2str(euclidean_error, '%.4f')]);
+    end
+    
     % Visualización
     figure;
     quiver3(0, 0, 0, d_hat(1), d_hat(2), d_hat(3), 'LineWidth', 2, 'Color', 'r');
     hold on;
+    
+    % Añadir vector de dirección real si está disponible
+    if ~isempty(direction_unit_vector)
+        quiver3(0, 0, 0, direction_unit_vector(1), direction_unit_vector(2), direction_unit_vector(3), 'LineWidth', 2, 'Color', 'g');
+    end
     
     % Visualizar orientaciones de los LEDs
     for i = 1:size(nt, 2)
@@ -249,8 +296,13 @@ try
     xlabel('X');
     ylabel('Y');
     zlabel('Z');
-    title('Estimación de dirección y orientaciones');
-    legend('Dirección Estimada', 'Orientaciones de LED');
+    title('Comparación: Dirección Real vs Estimada');
+    if ~isempty(direction_unit_vector)
+        legend('Dirección Estimada', 'Dirección Real', 'Orientaciones de LED');
+    else
+        legend('Dirección Estimada', 'Orientaciones de LED');
+    end
+    axis([-1 1 -1 1 -1 0])
     
 catch e
     error(['Error en la estimación de dirección: ' e.message]);

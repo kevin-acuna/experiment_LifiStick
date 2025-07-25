@@ -365,7 +365,7 @@ int main()
                     // Turn LED back on for scenarios 1 and 2
                     cout << "Turning LED on for main measurements...\n";
                     gimbal.turnOn(serialPort);
-                    Sleep(STABILIZATION_TIME_MS); // Wait for LED to stabilize
+                    Sleep(10000); // Wait for LED to stabilize - first time turn on.
                 
                 
                 cout << "\nStarting test with " << K_ORIENTATIONS << " different orientations\n";
