@@ -381,7 +381,7 @@ int main()
                          << ", Azimuth = " << azimuth << "\n";
                     
                     // Apply orientation to transmitter
-                    gimbal.setTransmitterOrientation(inclination, azimuth);
+                    gimbal.setTransmitterOrientation(inclination, fmod(azimuth + 180.0, 360.0));
                     
                     // Wait briefly for motor stabilization
                     Sleep(STABILIZATION_TIME_MS ); // Double stabilization time for motors
