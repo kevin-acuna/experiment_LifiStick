@@ -11,7 +11,9 @@ m = 3; % Orden Lambertiano (ajustar según sea necesario)
 % Archivo CSV a leer
 % csv_file = '../dataset/data_0.000000_0.000000_1.000000.csv';
 % csv_file = '../dataset/data_-0.600000_0.600000_1.200000.csv';
-csv_file = '../dataset/data_-0.600000_0.000000_1.200000.csv';
+% csv_file = '../dataset/data_-0.600000_0.000000_1.200000.csv';
+csv_file = '../dataset/sabado26/data_-0.600000_0.400000_0.800000.csv';
+
 
 % ======================================================================
 % Vector de índices de orientaciones a utilizar (se ajustará después de identificar orientaciones)
