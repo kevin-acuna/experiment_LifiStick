@@ -10,6 +10,9 @@
 #include <istream>     // For cin.ignore
 #include <cctype>      // For toupper
 #include <string>
+#include <NIDAQmx.h>   // Para la adquisición de datos DAQ
+#include <chrono>      // Para mediciones de tiempo
+#include <thread>      // Para sleep_for
 
 #include "stdafx.h"    // If using precompiled headers
 #include "instrument.h"
@@ -22,6 +25,93 @@
 using namespace std;
 // 302,x Y 44,y
 
+// Macro para verificar errores de DAQ
+#define DAQmxErrChk(functionCall) if( DAQmxFailed(error=(functionCall)) ) goto Error; else
+
+// *****************************************************************************
+// Hiperparametros configurables
+// *****************************************************************************
+#define COM_PORT_NAME "COM4"           // Puerto serial para el control del LED (sin L prefix)
+const int STABILIZATION_TIME_MS = 2000;  // Tiempo de estabilización en milisegundos
+const int BACKGROUND_TIME_SEC = 10;      // Tiempo de adquisición de background en segundos
+const int ORIENTATION_TIME_SEC = 10;    // Tiempo de adquisición por cada orientación en segundos
+
+// Configuración para la adquisición de DAQ
+int32 fSample = 1000;  // Frecuencia de muestreo: 1000 Hz
+int32 nSamples = ORIENTATION_TIME_SEC * fSample;  // Muestras según tiempo configurado
+
+// Función para adquirir datos de la DAQ
+// nSamples: número de muestras a adquirir
+// fSample: frecuencia de muestreo en Hz
+// data: array para almacenar los datos adquiridos (debe ser preasignado)
+// Devuelve: número de muestras adquiridas o 0 si hay error
+int AcquireDataFromDAQ(int32 nSamples, int32 fSample, float64* data) {
+    int32       error = 0;
+    TaskHandle  taskHandle = 0;
+    int32       read = 0;
+    char        errBuff[2048] = { '\0' };
+
+    try {
+        // Crear y configurar la tarea
+        DAQmxErrChk(DAQmxCreateTask("", &taskHandle));
+        DAQmxErrChk(DAQmxCreateAIVoltageChan(
+            taskHandle,
+            "Dev1/ai1",       // Canal de entrada (ajustar según la configuración de hardware)
+            "",
+            DAQmx_Val_RSE,    // Modo de conexión (RSE - Single-Ended)
+            -10.0,           // Rango de voltaje mínimo
+            10.0,            // Rango de voltaje máximo
+            DAQmx_Val_Volts, // Unidades de medida (Voltios)
+            NULL
+        ));
+        
+        // Configurar reloj de muestreo
+        DAQmxErrChk(DAQmxCfgSampClkTiming(
+            taskHandle,
+            "",                // Usar reloj interno
+            fSample,          // Frecuencia de muestreo
+            DAQmx_Val_Rising,
+            DAQmx_Val_FiniteSamps,
+            nSamples          // Número de muestras a adquirir
+        ));
+
+        // Iniciar la tarea
+        DAQmxErrChk(DAQmxStartTask(taskHandle));
+
+        // Leer los datos
+        DAQmxErrChk(DAQmxReadAnalogF64(
+            taskHandle,
+            nSamples,         // Leer exactamente nSamples
+            200.0,            // Timeout en segundos
+            DAQmx_Val_GroupByChannel,
+            data,             // Array para almacenar los datos
+            nSamples,         // Tamaño del buffer
+            &read,            // Número de muestras leídas
+            NULL
+        ));
+
+    Error:  // Manejo de errores
+        if (DAQmxFailed(error))
+            DAQmxGetExtendedErrorInfo(errBuff, 2048);
+
+        if (taskHandle != 0) {
+            DAQmxStopTask(taskHandle);
+            DAQmxClearTask(taskHandle);
+        }
+
+        if (DAQmxFailed(error)) {
+            std::cerr << "Error DAQmx: " << errBuff << std::endl;
+            return 0;
+        }
+    }
+    catch (const std::exception& ex) {
+        std::cerr << "Excepción estándar: " << ex.what() << std::endl;
+        return 0;
+    }
+    
+    return read;
+}
+
 // *****************************************************************************
 // Adjust according to your experiment
 // *****************************************************************************
@@ -32,6 +122,27 @@ const double TRANSMITTER_H = 2.00; // altitude in meters
 int MOTOR_AXIS_X = 27006796;  // External axis
 int MOTOR_AXIS_Y = 27007072;  // Internal axis
 // *****************************************************************************
+
+
+// Orientaciones predefinidas para el transmisor {inclinacion, azimuth}
+// inclinacion: angulo con respecto a la vertical (0-180 grados)
+// azimuth: angulo en el plano XY desde el eje X (0-360 grados)
+static const double PREDEFINED_ORIENTATIONS[][2] = {
+    {0,0},
+    {57.6,87.8},
+    {57.7,358.6},
+    {57.2,177.7},
+    {55.7,268.1},
+    {30,0},
+    {30,90},
+    {30,180},
+    {30,270}
+};
+
+
+// Número de orientaciones predefinidas
+#define K_ORIENTATIONS (sizeof(PREDEFINED_ORIENTATIONS) / sizeof(PREDEFINED_ORIENTATIONS[0]))
+
 
 // Predefined positions for the robot base (X, Y).
 // El tamaño del array se determina automáticamente por el número de elementos inicializados
@@ -112,10 +223,10 @@ int promptUserForRobotPositionIndex()
 int main()
 {
     system("chcp 65001 > nul"); // Optional: enable UTF-8 output in console
-    initializeWinsock(); // Inicializar Winsock
-    SOCKET sock = connectToServer("127.0.0.1", 12345); // Conectar al servidor
-    vector<Position> positions; // Vector de posiciones
-    loadPositions(PATH_POSITIONS_FILE, positions); // Cargar posiciones
+    initializeWinsock(); // Initialize Winsock
+    SOCKET sock = connectToServer("127.0.0.1", 12345); // Connect to server
+    vector<Position> positions; // Vector of positions
+    loadPositions(PATH_POSITIONS_FILE, positions); // Load positions
 
     int index = promptUserForRobotPositionIndex();
     if (index == -1) {
@@ -133,7 +244,14 @@ int main()
     // Clear the screen to proceed
     system("cls");
 
-
+    // Open serial port for LED control
+    cout << "\nOpening serial port " << COM_PORT_NAME << " for LED control...\n";
+    HANDLE serialPort = instrument::openSerialPort(L"COM4"); // Hardcoded to avoid conversion issues
+    if (serialPort == INVALID_HANDLE_VALUE) {
+        cout << "Failed to open serial port. Continuing without LED control.\n";
+    } else {
+        cout << "Serial port opened successfully.\n";
+    }
 
     instrument gimbal; // Gimbal Mechanism
     gimbal.setSerialNo_MotorX(MOTOR_AXIS_X);
@@ -157,13 +275,13 @@ int main()
                 cout << "*********************************************************\n\n";
 
                 // ****************************************************************
-                // Scenario 1 - Pointing transmitter to floor and receiver to ceiling
+                // Scenario 1 - Transmitter orientations test with receiver pointing to ceiling
                 // ****************************************************************
                 
                 // Wait for a valid option (C to continue or Q to quit)
                 char option;
                 while (true) {
-                    cout << "Scenario 1 - Pointing transmitter to floor and receiver to ceiling\n";
+                    cout << "Scenario 1 - Transmitter orientations test with receiver pointing to ceiling\n";
                     cout << "Press C to continue or Q to quit: ";
                     cin >> option;
                     option = toupper(option);
@@ -177,6 +295,10 @@ int main()
                 }
                 cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clean the input buffer
 
+                // Turn off the LED for background acquisition
+                cout << "Turning LED off for background measurement...\n";
+                gimbal.turnOff(serialPort);
+                    
                 cout << "[Info] Robot starting to move\n";
                 receiverPointingToCeil(sock); // Send command to receiver to point to ceiling
 
@@ -185,11 +307,122 @@ int main()
                     cout << "[Info] Position reached" << endl;
                 } else {
                     cout << "[Info] Position not reached" << endl;
+                    continue; // If position was not reached, skip this iteration
                 }
-
-                cout << "Scenario 1: Waiting for alignment...\n";
-                gimbal.transmitterPointingToFloor();
-
+                
+                // Create CSV file for all measurements
+                std::string csv_filename = "data_" + 
+                                         std::to_string(pos.x) + "_" + 
+                                         std::to_string(pos.y) + "_" + 
+                                         std::to_string(pos.z) + ".csv";
+                                         
+                std::ofstream csv_file(csv_filename);
+                if (!csv_file.is_open()) {
+                    std::cerr << "Error creating CSV file: " << csv_filename << std::endl;
+                    continue;
+                }
+                
+                // Write CSV header
+                csv_file << "x,y,z,inclinacion,azimuth,stage,medida_daq" << std::endl;
+                
+                    
+                    
+                    // Acquire background DAQ data
+                    cout << "Acquiring background data for " << BACKGROUND_TIME_SEC << " seconds...\n";
+                    int32 backgroundSamples = BACKGROUND_TIME_SEC * fSample; // Seconds at 1000 Hz
+                    float64* background_data = new float64[backgroundSamples];
+                    
+                    int background_read = AcquireDataFromDAQ(backgroundSamples, fSample, background_data);
+                    
+                    // Save background data to CSV
+                    if (background_read > 0) {
+                        cout << "Successfully acquired " << background_read << " background samples.\n";
+                        
+                        // Save each background sample to CSV file
+                        for (int j = 0; j < background_read; j++) {
+                            csv_file << pos.x << "," 
+                                     << pos.y << "," 
+                                     << pos.z << "," 
+                                     << 0.0 << ","  // No inclination for background
+                                     << 0.0 << ","  // No azimuth for background
+                                     << "background" << ","
+                                     << background_data[j] << std::endl;
+                        }
+                    } else {
+                        cout << "Error acquiring background data from DAQ.\n";
+                        // Write a line with null value for background
+                        csv_file << pos.x << "," 
+                                 << pos.y << "," 
+                                 << pos.z << "," 
+                                 << 0.0 << ","
+                                 << 0.0 << ","
+                                 << "background" << ",NA" << std::endl;
+                    }
+                    
+                    // Free memory for background data
+                    delete[] background_data;
+                    
+                    // Turn LED back on for scenarios 1 and 2
+                    cout << "Turning LED on for main measurements...\n";
+                    gimbal.turnOn(serialPort);
+                    Sleep(STABILIZATION_TIME_MS); // Wait for LED to stabilize
+                
+                
+                cout << "\nStarting test with " << K_ORIENTATIONS << " different orientations\n";
+                cout << "------------------------------------------------\n";
+                
+                // Loop through all predefined orientations
+                for (int i = 0; i < (int)K_ORIENTATIONS; i++) {
+                    double inclination = PREDEFINED_ORIENTATIONS[i][0];
+                    double azimuth = PREDEFINED_ORIENTATIONS[i][1];
+                    
+                    cout << "Orientation " << (i + 1) << "/" << K_ORIENTATIONS 
+                         << ": Inclination = " << inclination 
+                         << ", Azimuth = " << azimuth << "\n";
+                    
+                    // Apply orientation to transmitter
+                    gimbal.setTransmitterOrientation(inclination, azimuth);
+                    
+                    // Wait briefly for motor stabilization
+                    Sleep(STABILIZATION_TIME_MS ); // Double stabilization time for motors
+                    
+                    // Allocate memory for DAQ data
+                    float64* daq_data = new float64[nSamples];
+                    
+                    cout << "Acquiring data for " << ORIENTATION_TIME_SEC << " seconds...\n";
+                    
+                    // Acquire data from DAQ
+                    int read_samples = AcquireDataFromDAQ(nSamples, fSample, daq_data);
+                    
+                    if (read_samples > 0) {
+                        cout << "Successfully acquired " << read_samples << " samples.\n";
+                        
+                        // Save each sample to CSV file
+                        for (int j = 0; j < read_samples; j++) {
+                            csv_file << pos.x << "," 
+                                     << pos.y << "," 
+                                     << pos.z << "," 
+                                     << inclination << "," 
+                                     << azimuth << ","
+                                     << "direction" << ","
+                                     << daq_data[j] << std::endl;
+                        }
+                    } else {
+                        cout << "Error acquiring data from DAQ.\n";
+                        // Write a line with null value for this orientation
+                        csv_file << pos.x << "," 
+                                 << pos.y << "," 
+                                 << pos.z << "," 
+                                 << inclination << "," 
+                                 << azimuth << ","
+                                 << "direction" << ",NA" << std::endl;
+                    }
+                    
+                    // Free memory
+                    delete[] daq_data;
+                }
+                
+                cout << "Orientation test completed.\n";
                 cout << "Scenario 1: Ready!\n\n\n";
                 // ****************************************************************
                 
@@ -199,66 +432,56 @@ int main()
                 // Scenario 2 - Pointing transmitter to receiver and receiver to transmitter
                 // ****************************************************************
 
-                while (true) {
-                    cout << "Scenario 2 - Pointing transmitter to receiver and receiver to transmitter\n";
-                    cout << "Press C to continue or Q to quit: ";
-                    cin >> option;
-                    option = toupper(option);
-                    if (option == 'C' || option == 'Q')
-                        break;
-                    cout << "Invalid option. Please try again." << endl;
-                }
-                if (option == 'Q') {
-                    cout << "Program terminated by user." << endl;
-                    break;
-                }
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-
                 cout << "\nScenario 2: Waiting for alignment...\n";
-                gimbal.transmitterPointingToReceiver_New(-pos.x, -pos.y, pos.z); // ajuste de coordenadas con altura dinámica
-                cout << "[Info] Robot starting to move\n";
-                receiverPointingToTransmitter(sock); 
-
-                confirmation = receiveResponse(sock, 30);
-                if (confirmation == "reached") {
-                    cout << "[Info] Position reached" << endl;
+                gimbal.transmitterPointingToReceiver_New(-pos.x, -pos.y, pos.z); // coordinate adjustment with dynamic height
+                
+                // Wait briefly for transmitter positioning
+                Sleep(STABILIZATION_TIME_MS); // 1 second for stabilization
+                
+                // Allocate memory for DAQ data
+                float64* daq_data = new float64[nSamples];
+                
+                cout << "Acquiring data for " << ORIENTATION_TIME_SEC << " seconds for 'distance' scenario...\n";
+                
+                // Acquire data from DAQ
+                int read_samples = AcquireDataFromDAQ(nSamples, fSample, daq_data);
+                
+                if (read_samples > 0) {
+                    cout << "Successfully acquired " << read_samples << " samples.\n";
+                    
+                    // Save each sample to CSV file (same file as scenario 1)
+                    for (int j = 0; j < read_samples; j++) {
+                        csv_file << pos.x << "," 
+                                 << pos.y << "," 
+                                 << pos.z << "," 
+                                 << 0.0 << ","  // No inclination defined for this scenario
+                                 << 0.0 << ","  // No azimuth defined for this scenario
+                                 << "distance" << ","
+                                 << daq_data[j] << std::endl;
+                    }
                 } else {
-                    cout << "[Info] Position not reached" << endl;
+                    cout << "Error acquiring data from DAQ.\n";
+                    // Write a line with null value for this scenario
+                    csv_file << pos.x << "," 
+                             << pos.y << "," 
+                             << pos.z << "," 
+                             << 0.0 << ","  // No inclination defined for this scenario
+                             << 0.0 << ","  // No azimuth defined for this scenario
+                             << "distance" << ",NA" << std::endl;
                 }
-                // **********************************
+                
+                // Free memory
+                delete[] daq_data;
+                
+                // Close the CSV file after both scenarios are complete
+                csv_file.close();
+                cout << "Data acquisition complete. Data saved to: " << csv_filename << "\n";
                 cout << "Scenario 2: Ready!\n\n\n";
-
-
-
-
-                // ****************************************************************
-                // Scenario 3 - Pointing transmitter to floor and receiver to transmitter
-                // ****************************************************************
-                while (true) {
-                    cout << "Scenario 3 - Pointing transmitter to floor and receiver to transmitter\n";
-                    cout << "Press C to continue or Q to quit: ";
-                    cin >> option;
-                    option = toupper(option);
-                    if (option == 'C' || option == 'Q')
-                        break;
-                    cout << "Invalid option. Please try again." << endl;
-                }
-                if (option == 'Q') {
-                    cout << "Program terminated by user." << endl;
-                    break;
-                }
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-                cout << "\nScenario 3: Waiting for alignment...\n";
-                gimbal.transmitterPointingToFloor();
-                receiverFinished(sock);
-                cout << "Scenario 3: Ready!\n\n\n";
 
                 // ****************************************************************
                 // NEXT POSITION
                 // ****************************************************************
-
+                receiverFinished(sock);
 
                 // Actualizar la posición actual indicando que ya se completó
                 pos.done = 1;
@@ -268,11 +491,11 @@ int main()
                 if (posFile.is_open()) {
                     // Reescribir todas las posiciones actualizadas (suponiendo que 'positions' es el vector actualizado)
                     for (const auto& p : positions) {
-                        posFile << p.x << " " << p.y << " " << p.done << "\n";
+                        posFile << p.x << " " << p.y << " " << p.z << " " << p.done << "\n";
                     }
                     posFile.close();
                 } else {
-                    std::cerr << "[Error] No se pudo abrir el archivo de posiciones.\n";
+                    std::cerr << "[Error] Could not open positions file.\n";
                 }
                 // ------------------------------------------------------------------
 
@@ -300,6 +523,12 @@ int main()
     }
 
     // Cerrar socket, si es necesario
+    // Close serial port if it was opened
+    if (serialPort != INVALID_HANDLE_VALUE) {
+        cout << "Closing serial port...\n";
+        gimbal.closeSerialPort(serialPort);
+        cout << "Serial port closed.\n";
+    }
     closesocket(sock);
     WSACleanup();
 

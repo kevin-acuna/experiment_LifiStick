@@ -26,11 +26,11 @@ TRANSMITTER_X = 0.0
 TRANSMITTER_Y = 0.0
 TRANSMITTER_Z = 2.0
 
-# Height of the piece (end-effector extension)
-PIECE_HEIGHT = 0.035
+# Height of the piece (end-effector extension in meters)
+PIECE_HEIGHT = 0.085
 
 # Workspace 
 WS_R_INNER = 0.40 # Inner radius of the workspace
-WS_R_OUTER = 0.84 # Outer radius of the workspace
-WS_THETA_INIT = 30 # Initial angle of the workspace
-WS_THETA_FIN = 150 # Final angle of the workspace
+WS_R_OUTER = 0.80 # Outer radius of the workspace
+WS_THETA_INIT = 80 # Initial angle of the workspace
+WS_THETA_FIN = 190 # Final angle of the workspace
