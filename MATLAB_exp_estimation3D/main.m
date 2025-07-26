@@ -12,14 +12,15 @@ m = 3; % Orden Lambertiano (ajustar según sea necesario)
 % csv_file = '../dataset/data_0.000000_0.000000_1.000000.csv';
 % csv_file = '../dataset/data_-0.600000_0.600000_1.200000.csv';
 % csv_file = '../dataset/data_-0.600000_0.000000_1.200000.csv';
-csv_file = '../dataset/sabado26/data_-0.600000_0.400000_0.800000.csv';
+% csv_file = '../dataset/calibration/data_-0.600000_0.400000_0.800000.csv';
+csv_file = '../dataset/calibration/data_0.000000_0.000000_0.800000.csv';
 
 
 % ======================================================================
 % Vector de índices de orientaciones a utilizar (se ajustará después de identificar orientaciones)
 % Por ejemplo, K = [1,6,7,8,9] seleccionará las orientaciones en esas posiciones
-% K = [1,6,7,8,9]; % Por defecto, vacío significa usar todas las orientaciones
-K = [1,2,3,4,5]; % Por defecto, vacío significa usar todas las orientaciones
+% K = [1,7,8,9,10]; % Por defecto, vacío significa usar todas las orientaciones
+K = [1,2,4,5,6]; % Por defecto, vacío significa usar todas las orientaciones
 % K = []
 % ======================================================================
 
