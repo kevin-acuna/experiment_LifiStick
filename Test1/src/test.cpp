@@ -439,6 +439,18 @@ int main()
                 cout << "\nScenario 2: Waiting for alignment...\n";
                 gimbal.transmitterPointingToReceiver_New(-pos.x, -pos.y, pos.z); // coordinate adjustment with dynamic height
                 
+                // Robot apuntando al transmisor ==========================
+                cout << "[Info] Robot starting to move\n";
+                receiverPointingToTransmitter(sock); 
+
+                confirmation = receiveResponse(sock, 30);
+                if (confirmation == "reached") {
+                    cout << "[Info] Position reached" << endl;
+                } else {
+                    cout << "[Info] Position not reached" << endl;
+                }
+                // ========================================================
+
                 // Wait briefly for transmitter positioning
                 Sleep(STABILIZATION_TIME_MS); // 1 second for stabilization
                 

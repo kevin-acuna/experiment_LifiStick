@@ -30,7 +30,7 @@ TRANSMITTER_Z = 2.0
 PIECE_HEIGHT = 0.085
 
 # Workspace 
-WS_R_INNER = 0.40 # Inner radius of the workspace
+WS_R_INNER = 0.45 # Inner radius of the workspace
 WS_R_OUTER = 0.80 # Outer radius of the workspace
 WS_THETA_INIT = 80 # Initial angle of the workspace
 WS_THETA_FIN = 190 # Final angle of the workspace
