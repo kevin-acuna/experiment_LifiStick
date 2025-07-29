@@ -1,30 +1,29 @@
 % Main script for reading CSV data and processing for direction estimation
 
-% Configuración
+% Configuration
 clear;
-% close all;
+close all;
 clc;
 
-% Constantes
-m = 3; % Orden Lambertiano (ajustar según sea necesario)
+% Constants
+m = 3; % Lambertian order (adjust as needed)
 
-% Archivo CSV a leer
+% CSV file to read
 % csv_file = '../dataset/data_0.000000_0.000000_1.000000.csv';
 % csv_file = '../dataset/data_-0.600000_0.600000_1.200000.csv';
 % csv_file = '../dataset/data_-0.600000_0.000000_1.200000.csv';
-csv_file = '../dataset/sabado26/data_-0.600000_0.400000_0.800000.csv';
+csv_file = '../dataset_RA_50K/data_-0.200000_-0.200000_1.100000.csv';
 % csv_file = '../dataset/calibration/data_0.000000_0.000000_0.800000.csv';
 
-
 % ======================================================================
-% Vector de índices de orientaciones a utilizar (se ajustará después de identificar orientaciones)
-% Por ejemplo, K = [1,6,7,8,9] seleccionará las orientaciones en esas posiciones
-% K = [1,7,8,9,10]; % Por defecto, vacío significa usar todas las orientaciones
-K = [1,2,4,5,6]; % Por defecto, vacío significa usar todas las orientaciones
-% K = []
+% Vector of orientation indices to use (will be adjusted after identifying orientations)
+% For example, K = [1,6,7,8,9] will select orientations at those positions
+% K = [1,7,8,9,10]; % Default, empty means use all orientations
+K = [1,3,4,5,6]; % Default, empty means use all orientations
+% K = [1,3,4,5,6,7,8,9,10]
 % ======================================================================
 
-% Extraer posición del receptor del nombre del archivo CSV
+% Extract receiver position from CSV file name
 [~, filename, ~] = fileparts(csv_file);
 parts = split(filename, '_');
 if length(parts) >= 4
@@ -32,264 +31,263 @@ if length(parts) >= 4
     receiver_y = str2double(parts{3});
     receiver_z = str2double(parts{4});
     receiver_pos = [receiver_x, receiver_y, receiver_z];
-    transmitter_pos = [0, 0, 2]; % Posición fija del transmisor
+    transmitter_pos = [0, 0, 2]; % Fixed transmitter position
     
-    % Calcular vector unitario de dirección real (del transmisor al receptor)
+    % Calculate real unit direction vector (from transmitter to receiver)
     direction_vector = receiver_pos - transmitter_pos;
     direction_unit_vector = direction_vector / norm(direction_vector);
     
-    disp(['Posición del receptor: [' num2str(receiver_x) ', ' num2str(receiver_y) ', ' num2str(receiver_z) ']']);
-    disp(['Vector de dirección real (unitario): [' num2str(direction_unit_vector(1)) ', ' num2str(direction_unit_vector(2)) ', ' num2str(direction_unit_vector(3)) ']']);
+    disp(['Receiver position: [' num2str(receiver_x) ', ' num2str(receiver_y) ', ' num2str(receiver_z) ']']);
+    disp(['Real direction vector (unit): [' num2str(direction_unit_vector(1)) ', ' num2str(direction_unit_vector(2)) ', ' num2str(direction_unit_vector(3)) ']']);
 else
-    warning('No se pudo extraer la posición del receptor del nombre del archivo');
+    warning('Could not extract receiver position from file name');
     direction_unit_vector = [];
 end
 
-% Leer archivo CSV
-disp(['Leyendo archivo CSV: ' csv_file]);
+% Read CSV file
+disp(['Reading CSV file: ' csv_file]);
 try
     data = readtable(csv_file);
-    disp('CSV leído correctamente');
+    disp('CSV read successfully');
 catch e
-    error(['Error al leer CSV: ' e.message]);
+    error(['Error reading CSV: ' e.message]);
 end
 
-% Mostrar estructura del CSV
-disp('Estructura de los datos:');
+% Show CSV structure
+disp('Data structure:');
 disp(data(1:5,:));
 
-
-% Identificar orientaciones únicas
-disp('Identificando orientaciones únicas...');
+% Identify unique orientations
+disp('Identifying unique orientations...');
 orientaciones = unique(data(:, {'inclinacion', 'azimuth'}), 'rows');
 num_orientaciones = height(orientaciones);
-disp(['Se encontraron ' num2str(num_orientaciones) ' orientaciones diferentes.']);
+disp(['Found ' num2str(num_orientaciones) ' different orientations.']);
 
-% Mostrar las orientaciones disponibles
-disp('Orientaciones disponibles:');
+% Display available orientations
+disp('Available orientations:');
 for i = 1:num_orientaciones
-    disp([num2str(i) ': Inclinación = ' num2str(orientaciones.inclinacion(i)) ...
+    disp([num2str(i) ': Inclination = ' num2str(orientaciones.inclinacion(i)) ...
          '°, Azimuth = ' num2str(orientaciones.azimuth(i)) '°']);
 end
 
-% Solicitar al usuario las orientaciones a utilizar si no se han definido
+% Ask user for orientations to use if not defined
 if isempty(K)
-    disp('Usando todas las orientaciones disponibles');
+    disp('Using all available orientations');
     K = 1:num_orientaciones;
 else
-    % Validar que los índices estén dentro del rango
+    % Validate that indices are within range
     K = K(K >= 1 & K <= num_orientaciones);
     if isempty(K)
-        warning('Los índices de orientación seleccionados no son válidos. Usando todas las orientaciones.');
+        warning('Selected orientation indices are not valid. Using all orientations.');
         K = 1:num_orientaciones;
     else
-        disp(['Usando ' num2str(length(K)) ' orientaciones seleccionadas de ' num2str(num_orientaciones) ' disponibles.']);
+        disp(['Using ' num2str(length(K)) ' selected orientations out of ' num2str(num_orientaciones) ' available.']);
     end
 end
 
-% Separar datos de background
+% Separate background data
 background_data = data(strcmp(data.stage, 'background'), :);
-disp(['Datos de background: ' num2str(height(background_data)) ' muestras.']);
+disp(['Background data: ' num2str(height(background_data)) ' samples.']);
 
-% Calcular la media y varianza de las medidas de background
+% Calculate mean and variance of background measurements
 if ~isempty(background_data)
     background_values = background_data.medida_daq;
     background_mean = mean(background_values);
     background_var = var(background_values);
-    disp(['Media de las medidas de background: ' num2str(background_mean)]);
-    disp(['Varianza de las medidas de background: ' num2str(background_var)]);
+    disp(['Mean of background measurements: ' num2str(background_mean)]);
+    disp(['Variance of background measurements: ' num2str(background_var)]);
     
-    % Graficar la señal de background en una figura separada
+    % Plot background signal in a separate figure
     figure;
     plot(1:length(background_values), background_values, 'b', 'MarkerSize', 8);
     hold on;
     plot([1, length(background_values)], [background_mean, background_mean], 'r-', 'LineWidth', 2);
-    xlabel('Número de muestra');
-    ylabel('Valor medido');
-    title('Señal de Background');
+    xlabel('Sample Number');
+    ylabel('Measured Value');
+    title('Background Signal');
     axis([-inf inf 0 1])
-    legend('Medidas de background', ['Media (' num2str(background_mean, '%.4f') ')']);
+    legend('Background Measurements', ['Mean (' num2str(background_mean, '%.4f') ')']);
     grid on;
     hold off;
 else
-    warning('No se encontraron datos de background');
-    background_mean = 0; % Valor por defecto si no hay background
+    warning('No background data found');
+    background_mean = 0; % Default value if no background
     background_var = 0;
 end
 
-% Crear matriz nt (vectores de orientación) para las orientaciones seleccionadas
+% Create matrix nt (orientation vectors) for selected orientations
 nt = zeros(3, length(K));
 
-% Crear matriz para almacenar medidas (Praw)
+% Create matrix to store measurements (Praw)
 medidas_por_orientacion = {};
 max_samples = 0;
 
 
 
-% Procesar cada orientación seleccionada
+% Process each selected orientation
 for idx = 1:length(K)
-    i = K(idx); % Índice de la orientación seleccionada
+    i = K(idx); % Index of selected orientation
     
-    % Obtener ángulos de la orientación actual
+    % Get angles of current orientation
     inclinacion = orientaciones.inclinacion(i);
     azimuth = orientaciones.azimuth(i);
     
-    % Convertir ángulos a vector de orientación (coordenadas cartesianas)
-    % Inclinación desde la vertical (theta) y azimuth desde el eje X (phi)
+    % Convert angles to orientation vector (Cartesian coordinates)
+    % Inclination from vertical (theta) and azimuth from X axis (phi)
     theta = deg2rad(inclinacion);
     phi = deg2rad(azimuth);
     
-    % Convertir a vector unitario (coordenadas esféricas a cartesianas)
+    % Convert to unit vector (spherical to Cartesian coordinates)
     nt(:, idx) = [sin(theta)*cos(phi); sin(theta)*sin(phi); -cos(theta)];
     
-    % Filtrar datos para esta orientación
+    % Filter data for this orientation
     orientacion_data = data(data.inclinacion == inclinacion & ...
                             data.azimuth == azimuth & ...
                             strcmp(data.stage, 'direction'), :);
     
-    % Guardar medidas para esta orientación
+    % Save measurements for this orientation
     if ~isempty(orientacion_data)
         medidas_por_orientacion{idx} = orientacion_data.medida_daq;
         max_samples = max(max_samples, height(orientacion_data));
     else
-        warning(['No se encontraron muestras para orientación: inclinación = ' ...
+        warning(['No samples found for orientation: inclination = ' ...
                  num2str(inclinacion) ', azimuth = ' num2str(azimuth)]);
         medidas_por_orientacion{idx} = [];
     end
     
-    disp(['Orientación ' num2str(i) ' (índice ' num2str(idx) ' de ' num2str(length(K)) '): Inclinación = ' num2str(inclinacion) ...
-         '°, Azimuth = ' num2str(azimuth) '° -> ' num2str(length(medidas_por_orientacion{idx})) ' muestras.']);
+    disp(['Orientation ' num2str(i) ' (index ' num2str(idx) ' of ' num2str(length(K)) '): Inclination = ' num2str(inclinacion) ...
+         '°, Azimuth = ' num2str(azimuth) '° -> ' num2str(length(medidas_por_orientacion{idx})) ' samples.']);
 end
 
 
-% Crear matriz Praw (N x n) para las orientaciones seleccionadas
+% Create Praw matrix (N x n) for selected orientations
 Praw = zeros(max_samples, length(K));
 for idx = 1:length(K)
     medidas = medidas_por_orientacion{idx};
     if ~isempty(medidas)
-        % Llenar la columna correspondiente con las medidas disponibles
+        % Fill corresponding column with available measurements
         n_samples = length(medidas);
         Praw(1:n_samples, idx) = -(medidas - background_mean);
         
-        % Si hay menos muestras que el máximo, rellenar con el último valor
+        % If there are fewer samples than maximum, fill with last value
         if n_samples < max_samples
             Praw(n_samples+1:end, idx) = medidas(end);
         end
     else
-        % Si no hay medidas para esta orientación, rellenar con ceros o NaN
+        % If no measurements for this orientation, fill with zeros or NaN
         Praw(:, idx) = NaN;
     end
 end
 
 
-% Verificar si hay datos válidos para todas las orientaciones
+% Verify if there is valid data for all orientations
 valid_data = ~any(isnan(Praw), 1);
 if ~all(valid_data)
-    warning(['Faltan datos para ' num2str(sum(~valid_data)) ' orientaciones. Eliminando orientaciones sin datos.']);
+    warning(['Missing data for ' num2str(sum(~valid_data)) ' orientations. Removing orientations without data.']);
     nt = nt(:, valid_data);
     Praw = Praw(:, valid_data);
-    disp(['Procesando con ' num2str(size(nt, 2)) ' orientaciones válidas.']);
+    disp(['Processing with ' num2str(size(nt, 2)) ' valid orientations.']);
     
-    % Verificar si hay suficientes orientaciones para continuar
+    % Check if there are enough orientations to continue
     if size(nt, 2) < 2
-        error('Se necesitan al menos 2 orientaciones para estimar la dirección.');
+        error('At least 2 orientations are needed to estimate direction.');
     end
 end
 
-% Mostrar información de las matrices
-disp(['Dimensión de nt: ' num2str(size(nt, 1)) 'x' num2str(size(nt, 2))]);
-disp(['Dimensión de Praw: ' num2str(size(Praw, 1)) 'x' num2str(size(Praw, 2))]);
+% Show matrix information
+disp(['Dimension of nt: ' num2str(size(nt, 1)) 'x' num2str(size(nt, 2))]);
+disp(['Dimension of Praw: ' num2str(size(Praw, 1)) 'x' num2str(size(Praw, 2))]);
 
-% Visualizar los datos procesados (Praw) para cada orientación seleccionada
+% Visualize processed data (Praw) for each selected orientation
 figure;
 hold on;
-colors = hsv(length(K)); % Colores diferentes para cada orientación
+colors = hsv(length(K)); % Different colors for each orientation
 legendInfo = cell(length(K), 1);
 
-disp('\nVarianzas de las señales seleccionadas:');
+disp('\nVariances of selected signals:');
 disp('----------------------------------------');
 
 for idx = 1:length(K)
-    i = K(idx); % Índice original de la orientación
+    i = K(idx); % Original orientation index
     
-    % Extraer datos procesados de Praw para esta orientación
+    % Extract processed data from Praw for this orientation
     praw_data = Praw(:, idx);
     valid_data = ~isnan(praw_data);
-    praw_data = praw_data(valid_data); % Eliminar NaN
+    praw_data = praw_data(valid_data); % Remove NaN
     
     if ~isempty(praw_data)
-        % Calcular media y varianza de los datos procesados
+        % Calculate mean and variance of processed data
         media_praw = mean(praw_data);
         var_praw = var(praw_data);
         
-        % Mostrar varianza de Praw en la ventana de comandos
-        disp(['Praw Orientación ' num2str(i) ': Varianza = ' num2str(var_praw, '%.6f')]);
+        % Show Praw variance in command window
+        disp(['Praw Orientation ' num2str(i) ': Variance = ' num2str(var_praw, '%.6f')]);
         
-        % Graficar datos procesados de la orientación actual
+        % Plot processed data for current orientation
         plot(1:length(praw_data), praw_data, 'Color', colors(idx,:), 'MarkerSize', 4);
         
-        % Información para la leyenda
+        % Information for legend
         legendInfo{idx} = ['Ori. ' num2str(i) ': Inc=' num2str(orientaciones.inclinacion(i)) ...
                            '\circ, Az=' num2str(orientaciones.azimuth(i)) '\circ (media=' num2str(media_praw, '%.4f') ')'];
     else
-        legendInfo{idx} = ['Ori. ' num2str(i) ': No hay datos'];
+        legendInfo{idx} = ['Ori. ' num2str(i) ': No data'];
     end
 end
 disp('----------------------------------------');
-xlabel('Número de muestra');
-ylabel('Valor procesado (Praw)');
-title('Datos procesados (Praw) por orientación seleccionada');
+xlabel('Sample Number');
+ylabel('Processed Value (Praw)');
+title('Processed Data (Praw) by Selected Orientation');
 grid on;
 legend(legendInfo, 'Location', 'best');
 hold off;
 
-% Estimar dirección usando vlp_direction_cov_hetero
-disp('Estimando dirección del vector...');
+% Estimate direction using vlp_direction_cov_hetero
+disp('Estimating vector direction...');
 try
     %d_hat = vlp_direction_cov_hetero(nt, Praw, m);
     d_hat = vlp_gls(nt, Praw, m);
-    % Mostrar resultados
-    disp('Vector de dirección estimado (del transmisor al receptor):');
+    % Show results
+    disp('Estimated direction vector (from transmitter to receiver):');
     disp(d_hat);
     
-    % Convertir a ángulos para mejor interpretación
+    % Convert to angles for better interpretation
     [azimuth, elevation] = cart2sph(d_hat(1), d_hat(2), d_hat(3));
     azimuth = rad2deg(azimuth);
     elevation = rad2deg(elevation);
     
     disp(['Elevation: ' num2str(elevation) '°', 'Azimuth: ' num2str(azimuth) '°']);
     
-    % Comparar con vector real si está disponible
+    % Compare with real vector if available
     if ~isempty(direction_unit_vector)
-        disp('\nComparación con vector real:');
-        disp(['Vector real (unitario): [' num2str(direction_unit_vector(1), '%.4f') ', ' num2str(direction_unit_vector(2), '%.4f') ', ' num2str(direction_unit_vector(3), '%.4f') ']']);
-        disp(['Vector estimado: [' num2str(d_hat(1), '%.4f') ', ' num2str(d_hat(2), '%.4f') ', ' num2str(d_hat(3), '%.4f') ']']);
+        disp('\nComparison with real vector:');
+        disp(['Real vector (unit): [' num2str(direction_unit_vector(1), '%.4f') ', ' num2str(direction_unit_vector(2), '%.4f') ', ' num2str(direction_unit_vector(3), '%.4f') ']']);
+        disp(['Estimated vector: [' num2str(d_hat(1), '%.4f') ', ' num2str(d_hat(2), '%.4f') ', ' num2str(d_hat(3), '%.4f') ']']);
         
-        % Calcular error angular
+        % Calculate angular error
         dot_product = dot(direction_unit_vector, d_hat);
-        % Asegurar que el producto punto esté en el rango [-1, 1] para evitar errores numéricos
+        % Ensure dot product is in range [-1, 1] to avoid numerical errors
         dot_product = max(-1, min(1, dot_product));
         angular_error = acos(dot_product);
         angular_error_deg = rad2deg(angular_error);
         
-        disp(['Error angular: ' num2str(angular_error_deg, '%.2f') '°']);
+        disp(['Angular error: ' num2str(angular_error_deg, '%.2f') '°']);
         
-        % Calcular error euclidiano
+        % Calculate Euclidean error
         euclidean_error = norm(direction_unit_vector - d_hat);
-        disp(['Error euclidiano: ' num2str(euclidean_error, '%.4f')]);
+        disp(['Euclidean error: ' num2str(euclidean_error, '%.4f')]);
     end
     
-    % Visualización
+    % Visualization
     figure;
     quiver3(0, 0, 0, d_hat(1), d_hat(2), d_hat(3), 'LineWidth', 2, 'Color', 'r');
     hold on;
     
-    % Añadir vector de dirección real si está disponible
+    % Add real direction vector if available
     if ~isempty(direction_unit_vector)
         quiver3(0, 0, 0, direction_unit_vector(1), direction_unit_vector(2), direction_unit_vector(3), 'LineWidth', 2, 'Color', 'g');
     end
     
-    % Visualizar orientaciones de los LEDs
+    % Visualize LED orientations
     for i = 1:size(nt, 2)
         quiver3(0, 0, 0, nt(1,i), nt(2,i), nt(3,i), 'LineWidth', 1, 'Color', 'b');
     end
@@ -299,14 +297,14 @@ try
     xlabel('X');
     ylabel('Y');
     zlabel('Z');
-    title('Comparación: Dirección Real vs Estimada');
+    title('Comparison: Real Direction vs Estimated');
     if ~isempty(direction_unit_vector)
-        legend('Dirección Estimada', 'Dirección Real', 'Orientaciones de LED');
+        legend('Estimated Direction', 'Real Direction', 'LED Orientations');
     else
-        legend('Dirección Estimada', 'Orientaciones de LED');
+        legend('Estimated Direction', 'LED Orientations');
     end
     axis([-1 1 -1 1 -1 0])
     
 catch e
-    error(['Error en la estimación de dirección: ' e.message]);
+    error(['Error in direction estimation: ' e.message]);
 end
