@@ -127,17 +127,20 @@ int MOTOR_AXIS_Y = 27007072;  // Internal axis
 // Orientaciones predefinidas para el transmisor {inclinacion, azimuth}
 // inclinacion: angulo con respecto a la vertical (0-180 grados)
 // azimuth: angulo en el plano XY desde el eje X (0-360 grados)
+
+// 45° -- 2.4x2.4m
+// 35° -- 2.0x2.0m
 static const double PREDEFINED_ORIENTATIONS[][2] = {
     {30,30},
     {0,0},
-    {57.6,87.8},
-    {57.7,358.6},
-    {57.2,177.7},
-    {55.7,268.1},
-    {30,0},
-    {30,90},
-    {30,180},
-    {30,270},
+    {45,0}, 
+    {45,90},
+    {45,180},
+    {45,270},
+    {35,0},
+    {35,90},
+    {35,180},
+    {35,270},
 };
 
 
@@ -436,6 +439,18 @@ int main()
                 cout << "\nScenario 2: Waiting for alignment...\n";
                 gimbal.transmitterPointingToReceiver_New(-pos.x, -pos.y, pos.z); // coordinate adjustment with dynamic height
                 
+                // Robot apuntando al transmisor ==========================
+                cout << "[Info] Robot starting to move\n";
+                receiverPointingToTransmitter(sock); 
+
+                confirmation = receiveResponse(sock, 30);
+                if (confirmation == "reached") {
+                    cout << "[Info] Position reached" << endl;
+                } else {
+                    cout << "[Info] Position not reached" << endl;
+                }
+                // ========================================================
+
                 // Wait briefly for transmitter positioning
                 Sleep(STABILIZATION_TIME_MS); // 1 second for stabilization
                 
