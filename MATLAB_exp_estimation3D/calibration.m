@@ -9,7 +9,7 @@ clear; clc;
 
 % Definir rutas
 calibration_dir = '../dataset/calibration/';
-calibration_file = 'data_0.000000_0.000000_1.000000.csv';
+calibration_file = 'data_0.000000_0.000000_0.800000.csv';
 calibration_path = fullfile(calibration_dir, calibration_file);
 
 % Verificar que el archivo existe
@@ -80,10 +80,10 @@ direction_mean = mean(direction_data.medida_daq);
 background_mean = mean(background_data.medida_daq);
 
 % Calcular potencia recibida corregida
-Pr = direction_mean - background_mean;
+Pr = - (direction_mean - background_mean);
 
 % Calcular constante K
-K = d^2 * Pr;
+K_exp = d^2 * Pr;
 
 % Mostrar resultados
 fprintf('\n--- Resultados de Calibración ---\n');
@@ -93,11 +93,10 @@ fprintf('Media potencia direction: %.6f\n', direction_mean);
 fprintf('Media potencia background: %.6f\n', background_mean);
 fprintf('Potencia recibida corregida (Pr): %.6f\n', Pr);
 fprintf('Distancia (d): %.6f m\n', d);
-fprintf('Constante de calibración K = d² × Pr: %.6f\n', K);
+fprintf('Constante de calibración K = d² × Pr: %.6f\n', K_exp);
 
 % Guardar resultado en archivo
-save('calibration_results.mat', 'K', 'd', 'Pr', 'direction_mean', 'background_mean', ...
-     'x_recv', 'y_recv', 'z_recv');
+save('calibration_results.mat', 'K_exp');
 
 fprintf('\nResultados guardados en calibration_results.mat\n');
-fprintf('Variable K disponible en el workspace: %.6f\n', K);
+fprintf('Variable K disponible en el workspace: %.6f\n', K_exp);
