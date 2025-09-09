@@ -12,7 +12,7 @@ m = 3; % Lambertian order (adjust as needed)
 % csv_file = '../dataset/data_0.000000_0.000000_1.000000.csv';
 % csv_file = '../dataset/data_-0.600000_0.600000_1.200000.csv';
 % csv_file = '../dataset/data_-0.600000_0.000000_1.200000.csv';
-csv_file = '../dataset_RA_50K/data_-0.200000_-0.200000_1.100000.csv';
+csv_file = '../Database/dataset_RA_50K/data_-0.200000_-0.200000_1.100000.csv';
 % csv_file = '../dataset/calibration/data_0.000000_0.000000_0.800000.csv';
 
 % ======================================================================
@@ -244,7 +244,6 @@ hold off;
 % Estimate direction using vlp_direction_cov_hetero
 disp('Estimating vector direction...');
 try
-    %d_hat = vlp_direction_cov_hetero(nt, Praw, m);
     d_hat = vlp_gls(nt, Praw, m);
     % Show results
     disp('Estimated direction vector (from transmitter to receiver):');
