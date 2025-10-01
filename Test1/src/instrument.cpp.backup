@@ -39,12 +39,8 @@ instrument::instrument()
 instrument::~instrument()
 {
     cout << "***************************" << endl;
-}
-
-
-// ----------------------------------------------------------
 // Rotate motor to a specific angle (in degrees)
-// ----------------------------------------------------------
+// ------------------------------------------------
 int instrument::rotateMotor(int serialNo, double deg)
 {
     const double COUNTS_PER_DEGREE = 1919.5;     // For PRM1Z8 + KDC101
@@ -54,35 +50,17 @@ int instrument::rotateMotor(int serialNo, double deg)
     const int DEFAULT_VELOCITY = 1800000;          // Device units per second
 
     // Identifiers for axes with calibration offsets
-    // Sistema Gimbal 1 (antiguo)
-    const int MOTOR_AXIS_X_OLD = 27006796;  // External axis
-    const int MOTOR_AXIS_Y_OLD = 27007072;  // Internal axis
-    
-    // Sistema Gimbal 2 (nuevo)
-    const int MOTOR_AXIS_X_NEW = 27267164;  // External axis
-    const int MOTOR_AXIS_Y_NEW = 27602122;  // Internal axis
-    
-    // Offsets de calibración (misma lógica para ambos sistemas)
+    const int MOTOR_AXIS_X = 27267164;  // External axis
+    const int MOTOR_AXIS_Y = 27602122;  // Internal axis
     const double OFFSET_MOTOR_X = -1.0; // Offset calibration for motor X
     const double OFFSET_MOTOR_Y = +1.0; // Offset calibration for motor Y
 
     // Apply calibration offset based on motor
     double calibratedDeg = deg;
     std::string axisLabel = "Unknown Axis";
-    
-    if (serialNo == MOTOR_AXIS_X_OLD || serialNo == MOTOR_AXIS_X_NEW) {
+    if (serialNo == MOTOR_AXIS_X) {
         axisLabel = "Axis X";
         calibratedDeg = deg + OFFSET_MOTOR_X;
-    }
-    else if (serialNo == MOTOR_AXIS_Y_OLD || serialNo == MOTOR_AXIS_Y_NEW) {
-        axisLabel = "Axis Y";
-        calibratedDeg = deg + OFFSET_MOTOR_Y;
-    }
-
-    char testSerialNo[16];
-    sprintf_s(testSerialNo, "%d", serialNo);
-
-    // Clamp the angle to the allowed range
     if (deg < MIN_ALLOWED_DEG || deg > MAX_ALLOWED_DEG)
     {
         cerr << "[Warning] " << axisLabel << ": Requested angle " << deg
@@ -112,8 +90,8 @@ int instrument::rotateMotor(int serialNo, double deg)
     CC_SetRotationModes(testSerialNo, RotationalUnlimited, Quickest);
     CC_ClearMessageQueue(testSerialNo);
 
-    // Convert angle to device units (CCW = positive) using calibrated angle
-    int devicePosition = static_cast<int>((ZERO_REFERENCE_DEG - calibratedDeg) * COUNTS_PER_DEGREE);
+    // Convert angle to device units (CCW = positive)
+    int devicePosition = static_cast<int>((ZERO_REFERENCE_DEG - deg) * COUNTS_PER_DEGREE);
 
     // Set constant velocity
     int currentVelocity = 0;
@@ -123,7 +101,7 @@ int instrument::rotateMotor(int serialNo, double deg)
     //printf("[Info] %s: Velocity set to %d device units.\n", axisLabel.c_str(), DEFAULT_VELOCITY);
 
     // Rotate to position
-    printf("[Info] %s: Rotating to %.1f° (calibrated: %.1f°, %d device units)...\n", axisLabel.c_str(), deg, calibratedDeg, devicePosition);
+    printf("[Info] %s: Rotating to %.1f° (%d device units)...\n", axisLabel.c_str(), static_cast<double>(deg), devicePosition);
     CC_MoveToPosition(testSerialNo, devicePosition);
 
     // Wait for movement to complete

@@ -145,6 +145,20 @@ int main()
     int numSteps = static_cast<int>((ANGLE_END - ANGLE_START) / ANGLE_STEP) + 1;
     cout << "Total de pasos a realizar: " << numSteps << "\n\n";
 
+
+    // Configurar gimbal (control de motores)
+    instrument gimbal;
+    gimbal.setSerialNo_MotorX(MOTOR_AXIS_X);
+    gimbal.setSerialNo_MotorY(MOTOR_AXIS_Y);
+    gimbal.setTransmitterPosition(0, 0, TRANSMITTER_H);
+
+    // Mover ambos motores a la posición inicial (0°, 0°)
+    cout << "\nMoviendo motores a posición inicial (0°, 0°)...\n";
+    cout << "NOTA: Los offsets de calibración se aplican automáticamente.\n";
+    gimbal.rotateMotorsSimultaneously(MOTOR_AXIS_X, 0.0, MOTOR_AXIS_Y, 0.0);
+    cout << "Motores en posición inicial.\n";
+    Sleep(2000); // Esperar estabilización
+
     // Confirmación del usuario
     cout << "¿Desea continuar? (C para continuar, Q para salir): ";
     char option;
@@ -156,6 +170,8 @@ int main()
     }
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
+    // -- Voy a asumir que el LED esta encendido (previa verificacion) --
+    /*
     // Abrir puerto serial para control del LED
     cout << "\nAbriendo puerto serial " << COM_PORT_NAME << " para control del LED...\n";
     HANDLE serialPort = instrument::openSerialPort(L"COM4");
@@ -165,18 +181,12 @@ int main()
     }
     cout << "Puerto serial abierto exitosamente.\n";
 
-    // Configurar gimbal (control de motores)
-    instrument gimbal;
-    gimbal.setSerialNo_MotorX(MOTOR_AXIS_X);
-    gimbal.setSerialNo_MotorY(MOTOR_AXIS_Y);
-    gimbal.setTransmitterPosition(0, 0, TRANSMITTER_H);
-
-    // -- Voy a asumir que el LED esta encendido (previa verificacion) --
     // Encender LED
-    //cout << "Encendiendo LED...\n";
-    //gimbal.turnOn(serialPort);
-    //cout << "Esperando estabilización del LED (10 segundos)...\n";
-    //Sleep(10000); // Esperar 10 segundos para estabilización inicial del LED
+    cout << "Encendiendo LED...\n";
+    gimbal.turnOn(serialPort);
+    cout << "Esperando estabilización del LED (10 segundos)...\n";
+    Sleep(10000); // Esperar 10 segundos para estabilización inicial del LED
+    */
 
     // Crear archivo CSV para guardar los datos
     string csv_filename = "radiation_pattern_axis_" + string(1, SCAN_AXIS) + ".csv";
