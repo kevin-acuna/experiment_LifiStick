@@ -171,11 +171,12 @@ int main()
     gimbal.setSerialNo_MotorY(MOTOR_AXIS_Y);
     gimbal.setTransmitterPosition(0, 0, TRANSMITTER_H);
 
+    // -- Voy a asumir que el LED esta encendido (previa verificacion) --
     // Encender LED
-    cout << "Encendiendo LED...\n";
-    gimbal.turnOn(serialPort);
-    cout << "Esperando estabilización del LED (10 segundos)...\n";
-    Sleep(10000); // Esperar 10 segundos para estabilización inicial del LED
+    //cout << "Encendiendo LED...\n";
+    //gimbal.turnOn(serialPort);
+    //cout << "Esperando estabilización del LED (10 segundos)...\n";
+    //Sleep(10000); // Esperar 10 segundos para estabilización inicial del LED
 
     // Crear archivo CSV para guardar los datos
     string csv_filename = "radiation_pattern_axis_" + string(1, SCAN_AXIS) + ".csv";
