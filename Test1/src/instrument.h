@@ -58,6 +58,10 @@ public:
     void setSerialNo_MotorX(int serialNo);
     void setSerialNo_MotorY(int serialNo);
 
+    // Funciones para control directo de motores (útil para escaneos)
+    void rotateMotorX(double deg);  // Rota solo el motor X al ángulo especificado
+    void rotateMotorY(double deg);  // Rota solo el motor Y al ángulo especificado
+
     private:
         int serialNo_MotorX;
         int serialNo_MotorY;

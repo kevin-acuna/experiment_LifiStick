@@ -469,3 +469,18 @@ void instrument::setTransmitterOrientation(double inclination, double azimuth)
     // o enviarlos de forma sincronizada si el controlador lo permite.
     rotateMotorsSimultaneously(serialNo_MotorX, angleX_deg, serialNo_MotorY, angleY_deg);
 }
+// ----------------------------------------------------------------------
+// Control directo de motor X
+// ----------------------------------------------------------------------
+void instrument::rotateMotorX(double deg)
+{
+    rotateMotor(serialNo_MotorX, deg);
+}
+
+// ----------------------------------------------------------------------
+// Control directo de motor Y
+// ----------------------------------------------------------------------
+void instrument::rotateMotorY(double deg)
+{
+    rotateMotor(serialNo_MotorY, deg);
+}
