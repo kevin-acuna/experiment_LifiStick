@@ -32,13 +32,13 @@ using namespace std;
 #define COM_PORT_NAME "COM4"
 
 // Configuración del experimento de patrón de irradiación
-const int STABILIZATION_TIME_MS = 2000;       // Tiempo de estabilización después de mover el motor
+const int STABILIZATION_TIME_MS = 3000;       // Tiempo de estabilización después de mover el motor
 const int ACQUISITION_TIME_SEC = 10;          // Tiempo de adquisición por cada step (10 segundos)
 
 // Rango de escaneo del transmisor (en grados)
-const double ANGLE_START = -60.0;             // Ángulo inicial
-const double ANGLE_END = 60.0;                // Ángulo final
-const double ANGLE_STEP = 10.0;                // Step de escaneo en grados
+const double ANGLE_START = -90.0;             // Ángulo inicial
+const double ANGLE_END = 90.0;                // Ángulo final
+const double ANGLE_STEP = 1.0;                // Step de escaneo en grados
 
 // Eje a escanear: 'X' o 'Y'
 const char SCAN_AXIS = 'X';                   // Cambiar a 'Y' para escanear el otro eje
@@ -155,7 +155,9 @@ int main()
     // Mover ambos motores a la posición inicial (0°, 0°)
     cout << "\nMoviendo motores a posición inicial (0°, 0°)...\n";
     cout << "NOTA: Los offsets de calibración se aplican automáticamente.\n";
-    gimbal.rotateMotorsSimultaneously(MOTOR_AXIS_X, 0.0, MOTOR_AXIS_Y, 0.0);
+    gimbal.rotateMotorX(0.0);
+    Sleep(2000); // Esperar estabilización
+    gimbal.rotateMotorY(0.0);
     cout << "Motores en posición inicial.\n";
     Sleep(2000); // Esperar estabilización
 
@@ -193,7 +195,7 @@ int main()
     ofstream csv_file(csv_filename);
     if (!csv_file.is_open()) {
         cerr << "Error: No se pudo crear el archivo CSV: " << csv_filename << endl;
-        gimbal.closeSerialPort(serialPort);
+        //gimbal.closeSerialPort(serialPort);
         return -1;
     }
 
@@ -273,16 +275,19 @@ int main()
     cout << "Total de pasos realizados: " << stepCount << "\n";
     cout << "Datos guardados en: " << csv_filename << "\n\n";
 
+    /*
     // Apagar LED
     cout << "Apagando LED...\n";
     gimbal.turnOff(serialPort);
 
-    // Cerrar archivo CSV
-    csv_file.close();
-
     // Cerrar puerto serial
     cout << "Cerrando puerto serial...\n";
     gimbal.closeSerialPort(serialPort);
+    */
+    
+    // Cerrar archivo CSV
+    csv_file.close();
+
 
     cout << "\nExperimento finalizado exitosamente.\n";
     cout << "Presione Enter para salir...";

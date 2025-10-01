@@ -48,8 +48,8 @@ instrument::~instrument()
 int instrument::rotateMotor(int serialNo, double deg)
 {
     const double COUNTS_PER_DEGREE = 1919.5;     // For PRM1Z8 + KDC101
-    const int MIN_ALLOWED_DEG = -60;
-    const int MAX_ALLOWED_DEG = 60;
+    const int MIN_ALLOWED_DEG = -90;
+    const int MAX_ALLOWED_DEG = 90;
     const double ZERO_REFERENCE_DEG = 0.0;
     const int DEFAULT_VELOCITY = 1800000;          // Device units per second
 
@@ -63,8 +63,8 @@ int instrument::rotateMotor(int serialNo, double deg)
     const int MOTOR_AXIS_Y_NEW = 27602122;  // Internal axis
     
     // Offsets de calibración (misma lógica para ambos sistemas)
-    const double OFFSET_MOTOR_X = -1.0; // Offset calibration for motor X
-    const double OFFSET_MOTOR_Y = +1.0; // Offset calibration for motor Y
+    const double OFFSET_MOTOR_X = 0.0; // Offset calibration for motor X
+    const double OFFSET_MOTOR_Y = -2.0; // Offset calibration for motor Y
 
     // Apply calibration offset based on motor
     double calibratedDeg = deg;
