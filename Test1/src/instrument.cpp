@@ -63,7 +63,7 @@ int instrument::rotateMotor(int serialNo, double deg)
     const int MOTOR_AXIS_Y_NEW = 27602122;  // Internal axis
     
     // Offsets de calibración (misma lógica para ambos sistemas)
-    const double OFFSET_MOTOR_X = 0.0; // Offset calibration for motor X
+    const double OFFSET_MOTOR_X =  1.0; // Offset calibration for motor X
     const double OFFSET_MOTOR_Y = -2.0; // Offset calibration for motor Y
 
     // Apply calibration offset based on motor
