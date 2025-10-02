@@ -41,7 +41,7 @@ const double ANGLE_END = 90.0;                // Ángulo final
 const double ANGLE_STEP = 1.0;                // Step de escaneo en grados
 
 // Eje a escanear: 'X' o 'Y'
-const char SCAN_AXIS = 'X';                   // Cambiar a 'Y' para escanear el otro eje
+const char SCAN_AXIS = 'Y';                   // Cambiar a 'Y' para escanear el otro eje
 
 // Configuración para la adquisición de DAQ
 int32 fSample = 1000;                         // Frecuencia de muestreo: 1000 Hz
