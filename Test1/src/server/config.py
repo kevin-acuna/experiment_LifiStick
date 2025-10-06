@@ -11,7 +11,7 @@ ROBOT_PORT = 30002          # Robot's port
 # Motion parameters
 ACCELERATION = 1.0
 VELOCITY = 0.1
-MOVE_TIME = 5  # Estimated movement time
+MOVE_TIME = 8  # Estimated movement time
 
 # Robot base position in the global frame
 ROBOT_GLOBAL_X = 0
@@ -36,7 +36,7 @@ PIECE_HEIGHT = 0.085
 #WS_THETA_INIT = 80 # Initial angle of the workspace
 #WS_THETA_FIN = 190 # Final angle of the workspace
 
-WS_R_INNER = 0.50 # Inner radius of the workspace
-WS_R_OUTER = 0.82 # Outer radius of the workspace
+WS_R_INNER = 0.65 # Inner radius of the workspace
+WS_R_OUTER = 0.86 # Outer radius of the workspace
 WS_THETA_INIT = 190 # Initial angle of the workspace
 WS_THETA_FIN = 350 # Final angle of the workspace

@@ -155,8 +155,8 @@ static const double PREDEFINED_ORIENTATIONS[][2] = {
 */
 static const double PREDEFINED_ORIENTATIONS[][2] = {
     {0,0},
-    {20,0},
-    {20,90}, 
+    {20,180},
+    {20,270}, 
 };
 
 

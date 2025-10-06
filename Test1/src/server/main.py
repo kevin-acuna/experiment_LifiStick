@@ -65,7 +65,7 @@ def main():
             piece_x, piece_y, piece_z = piece_coords
             # 4) Compute the 'vertical' orientation
             pos_robot_vert, R_robot_vert = compute_pose_vertical(piece_x, piece_y, piece_z)
-
+            print(pos_robot_vert)
             # 5) Check workspace
             x_r, y_r, z_r = pos_robot_vert
             if check_workspace((x_r, y_r, z_r)):

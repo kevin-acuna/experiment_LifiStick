@@ -22,7 +22,7 @@ def send_move_command_time(sock, pose, acceleration, velocity, time_pos):
     The message format follows the robot's text-based command interface.
     """
     # Example: "movel(p[x,y,z,rx,ry,rz], a=..., v=..., t=...)\n"
-    message = f"movel(p{pose}, a={acceleration}, v={velocity}, t={time_pos})\n"
+    message = f"movej(p{pose}, a={acceleration}, v={velocity}, t={time_pos})\n"
     print("Sending command:", message.strip())
     sock.send(message.encode())
     print("Command sent.")

@@ -63,11 +63,11 @@ int instrument::rotateMotor(int serialNo, double deg)
     const int MOTOR_AXIS_Y_OWP = 27602122;  // Internal axis
     
     // Offsets de calibración (misma lógica para ambos sistemas)
-    const double OFFSET_MOTOR_X_CENTER = -2.0; // Offset calibration for motor X - External
-    const double OFFSET_MOTOR_Y_CENTER = 2.0; // Offset calibration for motor Y - Internal
+    const double OFFSET_MOTOR_X_CENTER = +2.0; // Offset calibration for motor X - External
+    const double OFFSET_MOTOR_Y_CENTER = -2.0; // Offset calibration for motor Y - Internal
 
-    const double OFFSET_MOTOR_X_OWP = -1.0; // Offset calibration for motor X - External
-    const double OFFSET_MOTOR_Y_OWP = 2.0; // Offset calibration for motor Y - Internal
+    const double OFFSET_MOTOR_X_OWP = 0.0; // Offset calibration for motor X - External
+    const double OFFSET_MOTOR_Y_OWP = -2.0; // Offset calibration for motor Y - Internal
 
     // Apply calibration offset based on motor
     double calibratedDeg = deg;
@@ -435,7 +435,7 @@ void instrument::transmitterPointingToReceiver(double rx, double ry, double rz)
 }
 
 
-void instrument::transmitterPointingToReceiver_OWP(double rx, double ry, double rz)
+void instrument::transmitterPointingToReceiver_New(double rx, double ry, double rz)
 {
     // Diferencias respecto a la posición del transmisor
     double dx = rx - transmitterPosX; // x_R

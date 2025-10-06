@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\instrument.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -27,7 +24,13 @@
     <ClCompile Include="src\network_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\led_radiation_pattern.cpp">
+    <ClCompile Include="src\exp_led_radiation_pattern.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\exp_owp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\exp_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
