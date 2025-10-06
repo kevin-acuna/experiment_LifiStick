@@ -2,23 +2,31 @@ clc, clear, close all
 
 % Parameters to set 
 % *******************************************************
-bed = [-1.2,1.2,-1.2,1.2, 0.9,1.1];
-step= 0.2;
+bed = [-0.75,0.75,-0.75,0.75, 0.75, 0.75];
+step= 0.25;
 % *******************************************************
 
 % *******************************************************
-graph = 0; % 1:yes, 0:no
+graph = 1; % 1:yes, 0:no
 save = 1; 
+axis_pattern = 0;   % 1: eje y
+                    % 0: eje x
 % *******************************************************
 
 
 [TbX,TbY] = meshgrid(bed(1):step:bed(2), bed(3):step:bed(4));
-
 % Invertir TbY
 TbY(:,2:2:end) = TbY(end:-1:1,2:2:end);
 
-x = reshape(TbX,[numel(TbX),1]);
-y = reshape(TbY,[numel(TbY),1]);
+if axis_pattern==1
+    x = reshape(TbX,[numel(TbX),1]);
+    y = reshape(TbY,[numel(TbY),1]);
+else
+    y = reshape(TbX,[numel(TbX),1]);
+    x = reshape(TbY,[numel(TbY),1]);
+end
+
+
 
 data=[];
 ii=0;
@@ -41,10 +49,13 @@ end
 fprintf("Nro of points: %d \n",length(data))
 if(graph)
     figure(1)
-    axis([-2 2 -2 2 0 2])
+    axis([-2, 2, -2, 2, 0, 2])
     view(45,45)
     grid minor
+    xlabel('x')
+    ylabel('y')
     hold on
+    
     for i=1: size(data,1)
         plot3(data(i,1),data(i,2),data(i,3),'ob','MarkerFaceColor','b','MarkerSize',4)
         pause(0.05)

@@ -55,30 +55,41 @@ int instrument::rotateMotor(int serialNo, double deg)
 
     // Identifiers for axes with calibration offsets
     // Sistema Gimbal 1 (antiguo)
-    const int MOTOR_AXIS_X_OLD = 27006796;  // External axis
-    const int MOTOR_AXIS_Y_OLD = 27007072;  // Internal axis
+    const int MOTOR_AXIS_X_CENTER = 27006796;  // External axis
+    const int MOTOR_AXIS_Y_CENTER = 27007072;  // Internal axis
     
     // Sistema Gimbal 2 (nuevo)
-    const int MOTOR_AXIS_X_NEW = 27267164;  // External axis
-    const int MOTOR_AXIS_Y_NEW = 27602122;  // Internal axis
+    const int MOTOR_AXIS_X_OWP = 27267164;  // External axis
+    const int MOTOR_AXIS_Y_OWP = 27602122;  // Internal axis
     
     // Offsets de calibración (misma lógica para ambos sistemas)
-    const double OFFSET_MOTOR_X =  1.0; // Offset calibration for motor X - External
-    const double OFFSET_MOTOR_Y = -2.0; // Offset calibration for motor Y - Internal
+    const double OFFSET_MOTOR_X_CENTER = -2.0; // Offset calibration for motor X - External
+    const double OFFSET_MOTOR_Y_CENTER = 2.0; // Offset calibration for motor Y - Internal
+
+    const double OFFSET_MOTOR_X_OWP = -1.0; // Offset calibration for motor X - External
+    const double OFFSET_MOTOR_Y_OWP = 2.0; // Offset calibration for motor Y - Internal
 
     // Apply calibration offset based on motor
     double calibratedDeg = deg;
     std::string axisLabel = "Unknown Axis";
     
-    if (serialNo == MOTOR_AXIS_X_OLD || serialNo == MOTOR_AXIS_X_NEW) {
+    if (serialNo == MOTOR_AXIS_X_CENTER) {
         axisLabel = "Axis X";
-        calibratedDeg = deg + OFFSET_MOTOR_X;
+        calibratedDeg = deg + OFFSET_MOTOR_X_CENTER;
     }
-    else if (serialNo == MOTOR_AXIS_Y_OLD || serialNo == MOTOR_AXIS_Y_NEW) {
+    else if (serialNo == MOTOR_AXIS_Y_CENTER) {
         axisLabel = "Axis Y";
-        calibratedDeg = deg + OFFSET_MOTOR_Y;
+        calibratedDeg = deg + OFFSET_MOTOR_Y_CENTER;
     }
-
+    else if (serialNo == MOTOR_AXIS_X_OWP) {
+        axisLabel = "Axis X";
+        calibratedDeg = deg + OFFSET_MOTOR_X_OWP;
+    }
+    else if (serialNo == MOTOR_AXIS_Y_OWP) {
+        axisLabel = "Axis Y";
+        calibratedDeg = deg + OFFSET_MOTOR_Y_OWP;
+    }
+    
     char testSerialNo[16];
     sprintf_s(testSerialNo, "%d", serialNo);
 
@@ -424,7 +435,7 @@ void instrument::transmitterPointingToReceiver(double rx, double ry, double rz)
 }
 
 
-void instrument::transmitterPointingToReceiver_New(double rx, double ry, double rz)
+void instrument::transmitterPointingToReceiver_OWP(double rx, double ry, double rz)
 {
     // Diferencias respecto a la posición del transmisor
     double dx = rx - transmitterPosX; // x_R

@@ -30,7 +30,13 @@ TRANSMITTER_Z = 2.0
 PIECE_HEIGHT = 0.085
 
 # Workspace 
-WS_R_INNER = 0.55 # Inner radius of the workspace
-WS_R_OUTER = 0.77 # Outer radius of the workspace
-WS_THETA_INIT = 80 # Initial angle of the workspace
-WS_THETA_FIN = 190 # Final angle of the workspace
+# Cuando se usa beamstearing en el UE y el robot tiene que moverse tmb
+#WS_R_INNER = 0.55 # Inner radius of the workspace
+#WS_R_OUTER = 0.77 # Outer radius of the workspace
+#WS_THETA_INIT = 80 # Initial angle of the workspace
+#WS_THETA_FIN = 190 # Final angle of the workspace
+
+WS_R_INNER = 0.50 # Inner radius of the workspace
+WS_R_OUTER = 0.82 # Outer radius of the workspace
+WS_THETA_INIT = 190 # Initial angle of the workspace
+WS_THETA_FIN = 350 # Final angle of the workspace
