@@ -13,6 +13,8 @@
 #include <NIDAQmx.h>   // Para la adquisición de datos DAQ
 #include <chrono>      // Para mediciones de tiempo
 #include <thread>      // Para sleep_for
+#include <iomanip>     // Para formatear timestamp
+#include <sstream>     // Para construir strings
 
 #include "stdafx.h"    // If using precompiled headers
 #include "instrument.h"
@@ -40,6 +42,9 @@ using namespace std;
 const bool USE_COM_PORT = false;            // Flag para activar/desactivar control del LED via COM
                                            // true: controla encendido/apagado del LED via COM
                                            // false: asume que el LED está encendido, no usa COM
+const bool AUTO_CONTINUE = false;           // Flag para modo automático
+                                           // true: requiere presionar C/Q entre posiciones (modo manual)
+                                           // false: continúa automáticamente sin intervención del usuario
 #define COM_PORT_NAME "COM4"           // Puerto serial para el control del LED (sin L prefix)
 const int STABILIZATION_TIME_MS = 2000;  // Tiempo de estabilización en milisegundos
 const int BACKGROUND_TIME_SEC = 10;      // Tiempo de adquisición de background en segundos
@@ -119,6 +124,19 @@ int AcquireDataFromDAQ(int32 nSamples, int32 fSample, float64* data) {
     }
     
     return read;
+}
+
+// Función para generar timestamp como string
+std::string getTimestamp() {
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    
+    std::tm timeinfo;
+    localtime_s(&timeinfo, &in_time_t);
+    
+    std::ostringstream oss;
+    oss << std::put_time(&timeinfo, "%Y%m%d_%H%M%S");
+    return oss.str();
 }
 
 // *****************************************************************************
@@ -296,6 +314,24 @@ int main()
     cout << "Motores en posición inicial.\n";
     Sleep(2000); // Esperar estabilización
 
+    // Crear archivo CSV único con timestamp para todas las mediciones
+    std::string csv_filename = "data_" + getTimestamp() + ".csv";
+    std::ofstream csv_file(csv_filename);
+    if (!csv_file.is_open()) {
+        std::cerr << "Error creating CSV file: " << csv_filename << std::endl;
+        // Close resources and exit
+        if (USE_COM_PORT && serialPort != INVALID_HANDLE_VALUE) {
+            gimbal.closeSerialPort(serialPort);
+        }
+        closesocket(sock);
+        WSACleanup();
+        return 1;
+    }
+    
+    // Write CSV header once
+    csv_file << "x,y,z,inclinacion,azimuth,mode,medida_daq" << std::endl;
+    cout << "CSV file created: " << csv_filename << "\n\n";
+
     for (auto& pos : positions) {
         if (!pos.done) {
 
@@ -316,22 +352,26 @@ int main()
                 // Scenario 1 - Transmitter orientations test with receiver pointing to ceiling
                 // ****************************************************************
                 
-                // Wait for a valid option (C to continue or Q to quit)
-                char option;
-                while (true) {
-                    cout << "Scenario 1 - Transmitter orientations test with receiver pointing to ceiling\n";
-                    cout << "Press C to continue or Q to quit: ";
-                    cin >> option;
-                    option = toupper(option);
-                    if (option == 'C' || option == 'Q')
+                // Wait for a valid option (C to continue or Q to quit) - only if AUTO_CONTINUE is true
+                char option = 'C'; // Default to continue
+                if (AUTO_CONTINUE) {
+                    while (true) {
+                        cout << "Scenario 1 - Transmitter orientations test with receiver pointing to ceiling\n";
+                        cout << "Press C to continue or Q to quit: ";
+                        cin >> option;
+                        option = toupper(option);
+                        if (option == 'C' || option == 'Q')
+                            break;
+                        cout << "Invalid option. Please try again." << endl;
+                    }
+                    if (option == 'Q') {
+                        cout << "Program terminated by user." << endl;
                         break;
-                    cout << "Invalid option. Please try again." << endl;
+                    }
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clean the input buffer
+                } else {
+                    cout << "[AUTO MODE] Starting Scenario 1 - Transmitter orientations test with receiver pointing to ceiling\n";
                 }
-                if (option == 'Q') {
-                    cout << "Program terminated by user." << endl;
-                    break;
-                }
-                cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clean the input buffer
 
                 // Turn off the LED for background acquisition
                 if (USE_COM_PORT) {
@@ -351,21 +391,6 @@ int main()
                     cout << "[Info] Position not reached" << endl;
                     continue; // If position was not reached, skip this iteration
                 }
-                
-                // Create CSV file for all measurements
-                std::string csv_filename = "data_" + 
-                                         std::to_string(pos.x) + "_" + 
-                                         std::to_string(pos.y) + "_" + 
-                                         std::to_string(pos.z) + ".csv";
-                                         
-                std::ofstream csv_file(csv_filename);
-                if (!csv_file.is_open()) {
-                    std::cerr << "Error creating CSV file: " << csv_filename << std::endl;
-                    continue;
-                }
-                
-                // Write CSV header
-                csv_file << "x,y,z,inclinacion,azimuth,stage,medida_daq" << std::endl;
                 
                 // Acquire background DAQ data only if USE_COM_PORT is enabled
                 if (USE_COM_PORT) {
@@ -449,7 +474,7 @@ int main()
                                      << pos.z << "," 
                                      << inclination << "," 
                                      << azimuth << ","
-                                     << "direction" << ","
+                                     << "r_vertical" << ","
                                      << daq_data[j] << std::endl;
                         }
                     } else {
@@ -460,7 +485,7 @@ int main()
                                  << pos.z << "," 
                                  << inclination << "," 
                                  << azimuth << ","
-                                 << "direction" << ",NA" << std::endl;
+                                 << "r_vertical" << ",NA" << std::endl;
                     }
                     
                     // Free memory
@@ -470,10 +495,6 @@ int main()
                 cout << "Orientation test completed.\n";
                 cout << "Scenario 1: Ready!\n\n\n";
                 
-                // Close the CSV file after scenario 1 is complete
-                csv_file.close();
-                cout << "Data acquisition complete. Data saved to: " << csv_filename << "\n";
-
                 // ****************************************************************
                 // NEXT POSITION
                 // ****************************************************************
@@ -495,20 +516,25 @@ int main()
                 }
                 // ------------------------------------------------------------------
 
-                while (true) {
-                    cout << "Next position? \n";
-                    cout << "Press C to continue or Q to quit: ";
-                    cin >> option;
-                    option = toupper(option);
-                    if (option == 'C' || option == 'Q')
+                if (AUTO_CONTINUE) {
+                    while (true) {
+                        cout << "Next position? \n";
+                        cout << "Press C to continue or Q to quit: ";
+                        cin >> option;
+                        option = toupper(option);
+                        if (option == 'C' || option == 'Q')
+                            break;
+                        cout << "Invalid option. Please try again." << endl;
+                    }
+                    if (option == 'Q') {
+                        cout << "Program terminated by user." << endl;
                         break;
-                    cout << "Invalid option. Please try again." << endl;
+                    }
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                } else {
+                    cout << "[AUTO MODE] Moving to next position automatically...\n";
+                    Sleep(2000); // Brief pause before moving to next position
                 }
-                if (option == 'Q') {
-                    cout << "Program terminated by user." << endl;
-                    break;
-                }
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 cout << endl;
                 system("cls");
 
@@ -517,6 +543,10 @@ int main()
             }
         }
     }
+
+    // Close CSV file at the end of all acquisitions
+    csv_file.close();
+    cout << "\nAll data acquisition complete. Data saved to: " << csv_filename << "\n";
 
     // Cerrar socket, si es necesario
     // Close serial port if it was opened
