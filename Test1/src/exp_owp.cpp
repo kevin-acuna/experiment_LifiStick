@@ -216,6 +216,15 @@ static const double PREDEFINED_POSITIONS[][2] = {
     { 1.5,  1.5}
 };
 
+// Estructura para almacenar coordenadas personalizadas
+struct CustomPosition {
+    double x;
+    double y;
+    bool isCustom;
+};
+
+CustomPosition customPos = {0.0, 0.0, false};
+
 int promptUserForRobotPositionIndex()
 {
     // Calculate the actual number of positions in the array
@@ -224,7 +233,7 @@ int promptUserForRobotPositionIndex()
     while (true) {
         cout << "\n"
         << "====================================================\n"
-        << " Select Robot Position [1.." << numPositions << "] or 'q' to quit\n"
+        << " Select Robot Position [1.." << numPositions << "], 'custom', or 'q' to quit\n"
         << "----------------------------------------------------\n";
         
         // Imprimir las posiciones de forma dinámica
@@ -234,6 +243,7 @@ int promptUserForRobotPositionIndex()
                     << PREDEFINED_POSITIONS[i][1] << ")\n";
         }
         
+        cout << " custom) Ingresar posición personalizada\n";
         cout << "----------------------------------------------------\n"
             << "Choose an option: ";
 
@@ -245,11 +255,38 @@ int promptUserForRobotPositionIndex()
             // Return a sentinel value (e.g., -1) indicating we should quit
             return -1;
         }
+        
+        // Check for custom position option
+        if (input == "custom" || input == "Custom" || input == "CUSTOM" || input == "c" || input == "C") {
+            cout << "\n[Posición Personalizada]\n";
+            cout << "Ingrese coordenada X (metros): ";
+            
+            while (!(cin >> customPos.x)) {
+                cout << "[Error] Valor inválido. Ingrese coordenada X (metros): ";
+                cin.clear();
+                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
+            
+            cout << "Ingrese coordenada Y (metros): ";
+            while (!(cin >> customPos.y)) {
+                cout << "[Error] Valor inválido. Ingrese coordenada Y (metros): ";
+                cin.clear();
+                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
+            
+            customPos.isCustom = true;
+            cout << "Posición personalizada establecida: (" << customPos.x << ", " << customPos.y << ")\n";
+            
+            // Return a special value to indicate custom position (e.g., -2)
+            return -2;
+        }
+        
         try {
             int index = std::stoi(input);
             // Use the actual number of positions for validation
             const size_t numPositions = sizeof(PREDEFINED_POSITIONS) / sizeof(PREDEFINED_POSITIONS[0]);
             if (index >= 1 && index <= static_cast<int>(numPositions)) {
+                customPos.isCustom = false;
                 return index;
             }
         } catch (...) {
@@ -278,9 +315,19 @@ int main()
         return 0;
     }
 
-    double robotX = PREDEFINED_POSITIONS[index - 1][0];
-    double robotY = PREDEFINED_POSITIONS[index - 1][1];
+    double robotX, robotY;
     double robotZ = 0.782; // Altura de la base
+    
+    // Check if custom position was selected
+    if (index == -2) {
+        cout << "\n[Info] Usando posición personalizada: (" << customPos.x << ", " << customPos.y << ")\n";
+        robotX = customPos.x;
+        robotY = customPos.y;
+    } else {
+        robotX = PREDEFINED_POSITIONS[index - 1][0];
+        robotY = PREDEFINED_POSITIONS[index - 1][1];
+    }
+    
     sendCoordinates(sock, robotX, robotY, robotZ); // Envía posicion
 
     // Clear the screen to proceed
