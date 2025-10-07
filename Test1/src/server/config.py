@@ -37,6 +37,6 @@ PIECE_HEIGHT = 0.085
 #WS_THETA_FIN = 190 # Final angle of the workspace
 
 WS_R_INNER = 0.65 # Inner radius of the workspace
-WS_R_OUTER = 0.86 # Outer radius of the workspace
+WS_R_OUTER = 0.85 # Outer radius of the workspace
 WS_THETA_INIT = 190 # Initial angle of the workspace
 WS_THETA_FIN = 350 # Final angle of the workspace
