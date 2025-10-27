@@ -170,16 +170,18 @@ static const double PREDEFINED_ORIENTATIONS[][2] = {
     {35,180},
     {35,270},
 };
-*/
+
+static const double PREDEFINED_ORIENTATIONS[][2] = {
+    {38,207},
+    {60,181},
+    {60,233}, 
+};*/
+
 static const double PREDEFINED_ORIENTATIONS[][2] = {
     {20,0},
     {20,120},
     {20,240}, 
 };
-
-
-
-
 
 
 // Número de orientaciones predefinidas

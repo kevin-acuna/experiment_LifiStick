@@ -12,24 +12,26 @@
 clc; clear;
 
 % Evaluation Parameters (ROBOT)
-min_distance = 0.40;         % Required minimum distance
-max_distance = 0.77;         % Required maximum distance
-min_angle = 80;              % Minimum angle in degrees
-max_angle = 190;             % Maximum angle in degrees
-
+min_distance = 0.65;         % Required minimum distance
+max_distance = 0.85;         % Required maximum distance
+min_angle = 180;              % Minimum angle in degrees
+max_angle = 360;             % Maximum angle in degrees
+filename = 'areas_Q.txt';   % Input file (ensure it is in the path)
 % Load Data (POINTS)
-filename = 'positions.txt';   % Input file (ensure it is in the path)
+
 data = load(filename);        % Expected to have three columns: [X, Y, label]
 X = data(:,1);
 Y = data(:,2);
-labels = data(:,3);
+labels = data(:,4);
 
 % Define the 25 reference pairs (Xr, Yr) , (Robot's positions)
 % ******************************************************************
-x_ref = [-0.5 ,0 ,0.5 ,1 ,1.5]; 
-y_ref = [-0.5 ,0 ,0.5 ,1 ,1.5];
-[X_ref, Y_ref] = meshgrid(x_ref, y_ref);
-references = [X_ref(:), Y_ref(:)];
+% x_ref = [-0.5 ,0 ,0.5 ,1 ,1.5]; 
+% y_ref = [-0.5 ,0 ,0.5 ,1 ,1.5];
+% [X_ref, Y_ref] = meshgrid(x_ref, y_ref);
+% references = [X_ref(:), Y_ref(:)];
+references = [-2 -0.5];
+
 % ******************************************************************
 
 numPoints = size(references,1)
