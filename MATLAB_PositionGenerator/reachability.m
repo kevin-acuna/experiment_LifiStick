@@ -16,7 +16,7 @@ min_distance = 0.65;         % Required minimum distance
 max_distance = 0.85;         % Required maximum distance
 min_angle = 180;              % Minimum angle in degrees
 max_angle = 360;             % Maximum angle in degrees
-filename = 'areas_Q.txt';   % Input file (ensure it is in the path)
+filename = 'positions3D.txt';   % Input file (ensure it is in the path)
 % Load Data (POINTS)
 
 data = load(filename);        % Expected to have three columns: [X, Y, label]
@@ -30,7 +30,7 @@ labels = data(:,4);
 % y_ref = [-0.5 ,0 ,0.5 ,1 ,1.5];
 % [X_ref, Y_ref] = meshgrid(x_ref, y_ref);
 % references = [X_ref(:), Y_ref(:)];
-references = [-2 -0.5];
+references = [0 0.4];
 
 % ******************************************************************
 
