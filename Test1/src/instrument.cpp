@@ -66,8 +66,8 @@ int instrument::rotateMotor(int serialNo, double deg)
     const double OFFSET_MOTOR_X_CENTER = +2.0; // Offset calibration for motor X - External
     const double OFFSET_MOTOR_Y_CENTER = -2.0; // Offset calibration for motor Y - Internal
 
-    const double OFFSET_MOTOR_X_OWP = 0.0; // Offset calibration for motor X - External
-    const double OFFSET_MOTOR_Y_OWP = -2.0; // Offset calibration for motor Y - Internal
+    const double OFFSET_MOTOR_X_OWP = 1.0; // Offset calibration for motor X - External
+    const double OFFSET_MOTOR_Y_OWP = -1.0; // Offset calibration for motor Y - Internal
 
     // Apply calibration offset based on motor
     double calibratedDeg = deg;

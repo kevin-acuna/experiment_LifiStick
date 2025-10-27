@@ -142,7 +142,7 @@ std::string getTimestamp() {
 // *****************************************************************************
 // Adjust according to your experiment
 // *****************************************************************************
-const char* PATH_POSITIONS_FILE = "src/positionsToSample/owp_pos.txt";
+const char* PATH_POSITIONS_FILE = "src/positionsToSample/icc2026_pos.txt";
 
 const double TRANSMITTER_H = 2.00; // altitude in meters
 
@@ -172,9 +172,9 @@ static const double PREDEFINED_ORIENTATIONS[][2] = {
 };
 */
 static const double PREDEFINED_ORIENTATIONS[][2] = {
-    {0,0},
-    {20,180},
-    {20,270}, 
+    {20,0},
+    {20,120},
+    {20,240}, 
 };
 
 
