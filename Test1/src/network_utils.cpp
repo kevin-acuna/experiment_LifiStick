@@ -87,6 +87,10 @@ void receiverPointingToCeil(SOCKET sock) {
     sendMessage(sock, "vertical");  
 }
 
+void receiverRandomOrientation(SOCKET sock) {
+    std::cout << "[Info] Sending command for receiver to face random orientation...\n";
+    sendMessage(sock, "random_n_r");  
+}
 
 void receiverPointingToTransmitter(SOCKET sock) {
     std::cout << "[Info] Sending command for receiver to face the transmitter (pointed)...\n";

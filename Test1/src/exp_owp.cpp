@@ -431,7 +431,8 @@ int main()
                 }
                     
                 cout << "[Info] Robot starting to move\n";
-                receiverPointingToCeil(sock); // Send command to receiver to point to ceiling
+                //receiverPointingToCeil(sock); // Send command to receiver to point to ceiling
+                receiverRandomOrientation(sock);
 
                 std::string confirmation = receiveResponse(sock, 30);
                 if (confirmation == "reached") {

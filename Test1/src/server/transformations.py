@@ -260,3 +260,52 @@ def compute_pose_vertical(piece_x, piece_y, piece_z):
     return pos_robot, R_robot
 
 
+def compute_pose_random_orientation(piece_x, piece_y, piece_z):
+    """
+    1) Build T^G_P with a random orientation within specified limits:
+       - Inclination (theta): 0 to THETA_MAX degrees from vertical
+       - Azimuth: 0 to 359 degrees
+    2) Compute T^R_E for the robot.
+    3) Return (pos_robot, R_robot, theta, azimuth) where theta and azimuth are the generated values.
+    """
+    # Generate random integers for theta and azimuth
+    theta_deg = np.random.randint(0, config.THETA_MAX + 1)  # 0 to THETA_MAX inclusive
+    azimuth_deg = np.random.randint(0, 360)  # 0 to 359 inclusive
+    
+    # Convert to radians for computation
+    theta_rad = np.deg2rad(theta_deg)
+    azimuth_rad = np.deg2rad(azimuth_deg)
+    
+    # Convert spherical coordinates to Cartesian orientation vector
+    # theta = 0 means vertical (0,0,1), theta = THETA_MAX means maximum inclination
+    n_x = np.sin(theta_rad) * np.cos(azimuth_rad)
+    n_y = np.sin(theta_rad) * np.sin(azimuth_rad)
+    n_z = np.cos(theta_rad)
+    
+    # 1) Build T^G_P
+    pos_piece = np.array([piece_x, piece_y, piece_z])
+    orient_vec = np.array([n_x, n_y, n_z])
+    T_G_P = build_global_pose_from_vector(pos_piece, orient_vec)
+
+    # 2) Robot pose in global
+    T_G_R = get_robot_pose_in_global(
+        config.ROBOT_GLOBAL_X,
+        config.ROBOT_GLOBAL_Y,
+        config.ROBOT_GLOBAL_Z,
+        config.ROBOT_YAW_DEG
+    )
+
+    # 3) T^E_P: piece offset from end-effector
+    T_E_P = np.eye(4)
+    T_E_P[2, 3] = config.PIECE_HEIGHT
+
+    # 4) T^R_E = (T^G_R)^-1 * T^G_P * (T^E_P)^-1
+    T_R_E = inv_se3(T_G_R) @ T_G_P @ inv_se3(T_E_P)
+
+    # Extract position/orientation
+    pos_robot = T_R_E[0:3, 3]
+    R_robot   = T_R_E[0:3, 0:3]
+    
+    return pos_robot, R_robot, theta_deg, azimuth_deg
+
+

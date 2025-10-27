@@ -29,6 +29,9 @@ TRANSMITTER_Z = 2.0
 # Height of the piece (end-effector extension in meters)
 PIECE_HEIGHT = 0.085
 
+# Maximum inclination angle for random orientation (in degrees)
+THETA_MAX = 20  # 0 = vertical, max inclination from vertical
+
 # Workspace 
 # Cuando se usa beamstearing en el UE y el robot tiene que moverse tmb
 #WS_R_INNER = 0.55 # Inner radius of the workspace

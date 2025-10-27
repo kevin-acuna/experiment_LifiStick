@@ -24,6 +24,7 @@ from workspace_utils import check_workspace
 from transformations import (
     compute_pose_vertical,
     compute_pose_pointed_to_transmitter,
+    compute_pose_random_orientation,
     rotation_matrix_to_axis_angle
 )
 
@@ -44,7 +45,9 @@ def main():
     try:
 
         print("Waiting to receive the robot's current (X, Y, Z) position from the client...")
+        # Coordenadas de la base del robot, es decir, su (0,0,0).
         robot_coords = process_coordinates(client_socket)   # Reuse same 24-byte struct logic if you want
+
         if not robot_coords:
             print("No data received for the robot's position. Closing.")
             return
@@ -92,6 +95,17 @@ def main():
                         rx2, ry2, rz2 = rotation_matrix_to_axis_angle(R_robot_ptr)
                         pose2 = [x_p, y_p, z_p, rx2, ry2, rz2]
                         send_move_command_time(robot_socket, pose2, config.ACCELERATION, config.VELOCITY, config.MOVE_TIME)
+
+                        time.sleep(config.MOVE_TIME + 2)
+                        send_text_message(client_socket, "reached")
+
+                    elif command_str == "random_n_r":
+                        pos_robot_rnd, R_robot_rnd, theta, azimuth = compute_pose_random_orientation(piece_x, piece_y, piece_z)
+                        x_rnd, y_rnd, z_rnd = pos_robot_rnd
+                        rx_rnd, ry_rnd, rz_rnd = rotation_matrix_to_axis_angle(R_robot_rnd)
+                        pose_rnd = [x_rnd, y_rnd, z_rnd, rx_rnd, ry_rnd, rz_rnd]
+                        print(f"Random orientation: theta={theta}°, azimuth={azimuth}°")
+                        send_move_command_time(robot_socket, pose_rnd, config.ACCELERATION, config.VELOCITY, config.MOVE_TIME)
 
                         time.sleep(config.MOVE_TIME + 2)
                         send_text_message(client_socket, "reached")
