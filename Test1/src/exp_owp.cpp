@@ -364,7 +364,8 @@ int main()
     Sleep(2000); // Esperar estabilización
 
     // Crear archivo CSV único con timestamp para todas las mediciones
-    std::string csv_filename = "data_" + getTimestamp() + ".csv";
+    std::string timestamp = getTimestamp();
+    std::string csv_filename = "data_" + timestamp + ".csv";
     std::ofstream csv_file(csv_filename);
     if (!csv_file.is_open()) {
         std::cerr << "Error creating CSV file: " << csv_filename << std::endl;
@@ -378,8 +379,11 @@ int main()
     }
     
     // Write CSV header once
-    csv_file << "x,y,z,inclinacion,azimuth,mode,medida_daq" << std::endl;
+    csv_file << "sample_id,x,y,z,inclinacion,azimuth,mode,medida_daq" << std::endl;
     cout << "CSV file created: " << csv_filename << "\n\n";
+    
+    // Initialize counter for unique sample identifier (timestamp_counter)
+    int sample_counter = 0;
 
     for (auto& pos : positions) {
         if (!pos.done) {
@@ -388,12 +392,16 @@ int main()
             std::string response = receiveResponse(sock, 2); // Recibe respuesta
             
             if (response == "reachable") {
+                // Increment counter and create unique sample identifier
+                sample_counter++;
+                std::string sample_id = timestamp + "_" + std::to_string(sample_counter);
 
                 // ****************************************************************
                 // Receiver Position Input
                 // ****************************************************************
                 cout << "*********************************************************\n";
-                cout << "SAMPLING POINT: X, Y, Z\n";
+                cout << "SAMPLING POINT: X, Y, Z (Sample ID: " << sample_id << ")\n";
+                cout << "Session: " << timestamp << ", Counter: " << sample_counter << "\n";
                 cout << "Receiver position set to: (" << pos.x << ", " << pos.y << ", " << pos.z << ")\n";
                 cout << "*********************************************************\n\n";
 
@@ -457,7 +465,8 @@ int main()
                         
                         // Save each background sample to CSV file
                         for (int j = 0; j < background_read; j++) {
-                            csv_file << pos.x << "," 
+                            csv_file << sample_id << ","
+                                     << pos.x << "," 
                                      << pos.y << "," 
                                      << pos.z << "," 
                                      << 0.0 << ","  // No inclination for background
@@ -468,7 +477,8 @@ int main()
                     } else {
                         cout << "Error acquiring background data from DAQ.\n";
                         // Write a line with null value for background
-                        csv_file << pos.x << "," 
+                        csv_file << sample_id << ","
+                                 << pos.x << "," 
                                  << pos.y << "," 
                                  << pos.z << "," 
                                  << 0.0 << ","
@@ -519,7 +529,8 @@ int main()
                         
                         // Save each sample to CSV file
                         for (int j = 0; j < read_samples; j++) {
-                            csv_file << pos.x << "," 
+                            csv_file << sample_id << ","
+                                     << pos.x << "," 
                                      << pos.y << "," 
                                      << pos.z << "," 
                                      << inclination << "," 
@@ -530,7 +541,8 @@ int main()
                     } else {
                         cout << "Error acquiring data from DAQ.\n";
                         // Write a line with null value for this orientation
-                        csv_file << pos.x << "," 
+                        csv_file << sample_id << ","
+                                 << pos.x << "," 
                                  << pos.y << "," 
                                  << pos.z << "," 
                                  << inclination << "," 
@@ -542,7 +554,7 @@ int main()
                     delete[] daq_data;
                 }
                 
-                cout << "Orientation test completed.\n";
+                cout << "Orientation test completed for Sample ID: " << sample_id << "\n";
                 cout << "Scenario 1: Ready!\n\n\n";
                 
                 // ****************************************************************
