@@ -80,7 +80,7 @@ def main():
 
                     if command_str == "vertical":
                         rx, ry, rz = rotation_matrix_to_axis_angle(R_robot_vert)
-                        pose = [x_r, y_r, z_r, rx, ry, 0.7854] #pi/4
+                        pose = [x_r, y_r, z_r, rx, ry, 0] #pi/4:0.7854
                         send_move_command_time(robot_socket, pose, config.ACCELERATION, config.VELOCITY, config.MOVE_TIME)
 
                         time.sleep(config.MOVE_TIME + 2)
