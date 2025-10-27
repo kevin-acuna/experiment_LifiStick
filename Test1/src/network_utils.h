@@ -23,6 +23,7 @@ std::string receiveResponse(SOCKET sock, int timeout_sec);
 void sendMessage(SOCKET sock, const std::string& message);
 
 void receiverPointingToCeil(SOCKET sock);
+void receiverRandomOrientation(SOCKET sock);
 
 void receiverPointingToTransmitter(SOCKET sock);
 
