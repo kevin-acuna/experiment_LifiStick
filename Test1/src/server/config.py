@@ -30,7 +30,7 @@ TRANSMITTER_Z = 2.0
 PIECE_HEIGHT = 0.085
 
 # Maximum inclination angle for random orientation (in degrees)
-THETA_MAX = 20  # 0 = vertical, max inclination from vertical
+THETA_MAX = 15  # 0 = vertical, max inclination from vertical
 
 # Workspace 
 # Cuando se usa beamstearing en el UE y el robot tiene que moverse tmb

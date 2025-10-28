@@ -9,7 +9,10 @@
 % - Unlabeled points (label 0) as red circles.
 % - Labeled points (label not 0) as dots with random colors.
 
-clc; clear;
+clc; clear; close all
+
+references = [0 0.4]; % Rotot position
+
 
 % Evaluation Parameters (ROBOT)
 min_distance = 0.65;         % Required minimum distance
@@ -30,7 +33,7 @@ labels = data(:,4);
 % y_ref = [-0.5 ,0 ,0.5 ,1 ,1.5];
 % [X_ref, Y_ref] = meshgrid(x_ref, y_ref);
 % references = [X_ref(:), Y_ref(:)];
-references = [0 0.4];
+
 
 % ******************************************************************
 
@@ -97,12 +100,19 @@ for k = 1:length(uniqueLabels)
     plot(X(idx), Y(idx), '.', 'Color', color, 'MarkerSize', 60);
 end
 
+
+viscircles(references(1:2), min_distance, 'Color', [0.2 0.2 0.2 0.5],'LineWidth',0.2);
+
+viscircles(references(1:2), max_distance, 'Color', [0.2 0.2 0.2 0.5],'LineWidth',0.2);
+plot(references(1),references(2),'x','MarkerSize',20)
+
 xlabel('X');
 ylabel('Y');
 title('Receiver positions sampled at each location of the robot platform');
 grid minor;
 grid on;
 hold off;
+
 
 % Save Results (Optional)
 % Save the updated matrix in a new text file.

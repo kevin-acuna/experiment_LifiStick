@@ -142,7 +142,7 @@ std::string getTimestamp() {
 // *****************************************************************************
 // Adjust according to your experiment
 // *****************************************************************************
-const char* PATH_POSITIONS_FILE = "src/positionsToSample/icc2026_pos.txt";
+const char* PATH_POSITIONS_FILE = "src/positionsToSample/icc_random.txt";
 
 const double TRANSMITTER_H = 2.00; // altitude in meters
 
