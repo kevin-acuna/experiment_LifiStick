@@ -1,27 +1,21 @@
-%% Program to Process Points from a TXT File with 25 References
-% Reads a file with data (X, Y, label). Then, for each of the 25 reference
-% pairs (Xr, Yr), it evaluates all points with label 0.
-% If for a given reference the point meets the conditions that its distance
-% is within the range [min_distance, max_distance] and its angle (calculated 
-% with respect to the Y-axis) is between [min_angle, max_angle],
-% the point is assigned the iteration number (1 to 25) as its label.
-% Finally, it plots:
-% - Unlabeled points (label 0) as red circles.
-% - Labeled points (label not 0) as dots with random colors.
-
 clc; clear; close all
-
-references = [0 0.4]; % Rotot position
-
+% =====================================================================
+% Configuration
+% =====================================================================
+references = [-0.5 0.4]; % Rotot position
 
 % Evaluation Parameters (ROBOT)
 min_distance = 0.65;         % Required minimum distance
 max_distance = 0.85;         % Required maximum distance
-min_angle = 180;              % Minimum angle in degrees
-max_angle = 360;             % Maximum angle in degrees
-filename = 'positions3D.txt';   % Input file (ensure it is in the path)
-% Load Data (POINTS)
+min_angle = 190;              % Minimum angle in degrees
+max_angle = 350;             % Maximum angle in degrees
+filename = 'positions_labeled.txt';   % Input file (ensure it is in the path)
 
+% =====================================================================
+% =====================================================================
+
+
+% Load Data (POINTS)
 data = load(filename);        % Expected to have three columns: [X, Y, label]
 X = data(:,1);
 Y = data(:,2);
@@ -34,10 +28,7 @@ labels = data(:,4);
 % [X_ref, Y_ref] = meshgrid(x_ref, y_ref);
 % references = [X_ref(:), Y_ref(:)];
 
-
-% ******************************************************************
-
-numPoints = size(references,1)
+numPoints = size(references, 1)
 numRefs = numPoints;  % Number of references (should be 25)
 
 % Processing: Evaluate each reference pair (Xr, Yr) sequentially
@@ -72,13 +63,13 @@ for i = 1:numRefs
 end
 
 % Update the data matrix with the modified labels
-data(:,3) = labels;
+data(:,4) = labels;
 
-numMissing = length(find(data(:,3)==0))
+numMissing = length(find(data(:,4)==0))
 
 samples_per_position = [];
 for k = 1:max(labels)
-    samples_per_position = [samples_per_position; length(find(data(:,3)==k))];
+    samples_per_position = [samples_per_position; length(find(data(:,4)==k))];
 end
 samples_per_position
 
@@ -97,7 +88,7 @@ for k = 1:length(uniqueLabels)
     color = rand(1,3);  % Generate a random color
     idx = labels == currentLabel;
     % Plot using dot marker; using plot instead of scatter to change the marker style.
-    plot(X(idx), Y(idx), '.', 'Color', color, 'MarkerSize', 60);
+    plot(X(idx), Y(idx), '.', 'Color', color, 'MarkerSize', 30);
 end
 
 
@@ -117,3 +108,17 @@ hold off;
 % Save Results (Optional)
 % Save the updated matrix in a new text file.
 save('positions_labeled.txt', 'data', '-ascii');
+
+
+% =====================================================================
+% Program to Process Points from a TXT File with 25 References
+% =====================================================================
+% Reads a file with data (X, Y, label). Then, for each of the 25 reference
+% pairs (Xr, Yr), it evaluates all points with label 0.
+% If for a given reference the point meets the conditions that its distance
+% is within the range [min_distance, max_distance] and its angle (calculated 
+% with respect to the Y-axis) is between [min_angle, max_angle],
+% the point is assigned the iteration number (1 to 25) as its label.
+% Finally, it plots:
+% - Unlabeled points (label 0) as red circles.
+% - Labeled points (label not 0) as dots with random colors.
