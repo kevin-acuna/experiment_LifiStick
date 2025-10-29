@@ -2,14 +2,14 @@ clc; clear; close all
 % =====================================================================
 % Configuration
 % =====================================================================
-references = [-0.5 0.4]; % Rotot position
+references = [-0.4 0.4]; % Rotot position
 
 % Evaluation Parameters (ROBOT)
 min_distance = 0.65;         % Required minimum distance
 max_distance = 0.85;         % Required maximum distance
 min_angle = 190;              % Minimum angle in degrees
 max_angle = 350;             % Maximum angle in degrees
-filename = 'positions_labeled.txt';   % Input file (ensure it is in the path)
+filename = 'icc_random.txt';   % Input file (ensure it is in the path)
 
 % =====================================================================
 % =====================================================================
