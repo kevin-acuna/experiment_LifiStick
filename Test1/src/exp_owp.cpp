@@ -48,7 +48,7 @@ const bool AUTO_CONTINUE = false;           // Flag para modo automático
 #define COM_PORT_NAME "COM4"           // Puerto serial para el control del LED (sin L prefix)
 const int STABILIZATION_TIME_MS = 2000;  // Tiempo de estabilización en milisegundos
 const int BACKGROUND_TIME_SEC = 10;      // Tiempo de adquisición de background en segundos
-const int ORIENTATION_TIME_SEC = 10;    // Tiempo de adquisición por cada orientación en segundos
+const int ORIENTATION_TIME_SEC = 1;    // Tiempo de adquisición por cada orientación en segundos
 
 // Configuración para la adquisición de DAQ
 int32 fSample = 1000;  // Frecuencia de muestreo: 1000 Hz
