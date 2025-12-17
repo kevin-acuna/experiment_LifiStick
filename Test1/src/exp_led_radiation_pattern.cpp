@@ -33,7 +33,7 @@ using namespace std;
 
 // Configuración del experimento de patrón de irradiación
 const int STABILIZATION_TIME_MS = 3000;       // Tiempo de estabilización después de mover el motor
-const int ACQUISITION_TIME_SEC = 10;          // Tiempo de adquisición por cada step (10 segundos)
+const int ACQUISITION_TIME_SEC = 1;          // Tiempo de adquisición por cada step (10 segundos)
 
 // Rango de escaneo del transmisor (en grados)
 const double ANGLE_START = -90.0;             // Ángulo inicial
