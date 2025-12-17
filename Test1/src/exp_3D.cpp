@@ -318,7 +318,7 @@ int main()
     }
 
     double robotX, robotY;
-    double robotZ = 0.653; // Altura de la base
+    double robotZ = 0.646; // Altura de la base
     
     // Check if custom position was selected
     if (index == -2) {
