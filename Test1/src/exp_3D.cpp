@@ -145,6 +145,8 @@ std::string getTimestamp() {
 const char* PATH_POSITIONS_FILE = "src/positionsToSample/journal_3D.txt";
 
 const double TRANSMITTER_H = 2.00; // altitude in meters
+const double ROBOT_OFFSET_X = 0.015; // offset en X del robot en metros
+const double ROBOT_OFFSET_Y = 0.010; // offset en Y del robot en metros
 
 
 int MOTOR_AXIS_X = MOTOR_AXIS_X_OWP;  // External axis
@@ -329,6 +331,10 @@ int main()
         robotX = PREDEFINED_POSITIONS[index - 1][0];
         robotY = PREDEFINED_POSITIONS[index - 1][1];
     }
+    
+    // Aplicar offsets del robot
+    robotX += ROBOT_OFFSET_X;
+    robotY += ROBOT_OFFSET_Y;
     
     sendCoordinates(sock, robotX, robotY, robotZ); // Envía posicion
 
