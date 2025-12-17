@@ -16,7 +16,7 @@ MOVE_TIME = 8  # Estimated movement time
 # Robot base position in the global frame
 ROBOT_GLOBAL_X = 0
 ROBOT_GLOBAL_Y = 0
-ROBOT_GLOBAL_Z = 0.782
+ROBOT_GLOBAL_Z = 0.653  #0.782 (with wheels)
 
 # Robot yaw orientation in degrees (around global Z)
 ROBOT_YAW_DEG = 90
@@ -27,7 +27,7 @@ TRANSMITTER_Y = 0.0
 TRANSMITTER_Z = 2.0
 
 # Height of the piece (end-effector extension in meters)
-PIECE_HEIGHT = 0.085
+PIECE_HEIGHT = 0.037 # previous piece
 
 # Maximum inclination angle for random orientation (in degrees)
 THETA_MAX = 15  # 0 = vertical, max inclination from vertical

@@ -42,7 +42,7 @@ using namespace std;
 const bool USE_COM_PORT = false;            // Flag para activar/desactivar control del LED via COM
                                            // true: controla encendido/apagado del LED via COM
                                            // false: asume que el LED está encendido, no usa COM
-const bool AUTO_CONTINUE = false;           // Flag para modo automático
+const bool AUTO_CONTINUE = true;           // Flag para modo automático
                                            // true: requiere presionar C/Q entre posiciones (modo manual)
                                            // false: continúa automáticamente sin intervención del usuario
 #define COM_PORT_NAME "COM4"           // Puerto serial para el control del LED (sin L prefix)
@@ -142,7 +142,7 @@ std::string getTimestamp() {
 // *****************************************************************************
 // Adjust according to your experiment
 // *****************************************************************************
-const char* PATH_POSITIONS_FILE = "src/positionsToSample/icc_random.txt";
+const char* PATH_POSITIONS_FILE = "src/positionsToSample/journal_3D.txt";
 
 const double TRANSMITTER_H = 2.00; // altitude in meters
 
@@ -439,8 +439,8 @@ int main()
                 }
                     
                 cout << "[Info] Robot starting to move\n";
-                //receiverPointingToCeil(sock); // Send command to receiver to point to ceiling
-                receiverRandomOrientation(sock);
+                receiverPointingToCeil(sock); // Send command to receiver to point to ceiling
+                //receiverRandomOrientation(sock);
 
                 std::string confirmation = receiveResponse(sock, 30);
                 if (confirmation == "reached") {
