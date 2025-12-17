@@ -2,14 +2,14 @@ clc; clear; close all
 % =====================================================================
 % Configuration
 % =====================================================================
-references = [-0.4 0.4]; % Rotot position
+references = [0.5 0.5; 0 0.5; -0.5 0.5]; % Rotot position
 
 % Evaluation Parameters (ROBOT)
-min_distance = 0.65;         % Required minimum distance
-max_distance = 0.85;         % Required maximum distance
+min_distance = 0.64;         % Required minimum distance
+max_distance = 0.74;         % Required maximum distance
 min_angle = 190;              % Minimum angle in degrees
 max_angle = 350;             % Maximum angle in degrees
-filename = 'icc_random.txt';   % Input file (ensure it is in the path)
+filename = 'positions3D.txt';   % Input file (ensure it is in the path)
 
 % =====================================================================
 % =====================================================================
@@ -92,10 +92,10 @@ for k = 1:length(uniqueLabels)
 end
 
 
-viscircles(references(1:2), min_distance, 'Color', [0.2 0.2 0.2 0.5],'LineWidth',0.2);
+viscircles(references(1,1:2), min_distance, 'Color', [0.2 0.2 0.2 0.5],'LineWidth',0.2);
 
-viscircles(references(1:2), max_distance, 'Color', [0.2 0.2 0.2 0.5],'LineWidth',0.2);
-plot(references(1),references(2),'x','MarkerSize',20)
+viscircles(references(1,1:2), max_distance, 'Color', [0.2 0.2 0.2 0.5],'LineWidth',0.2);
+plot(references(1,1),references(1,2),'x','MarkerSize',20)
 
 xlabel('X');
 ylabel('Y');

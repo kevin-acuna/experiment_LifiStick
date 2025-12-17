@@ -2,17 +2,17 @@ clc, clear, close all
 % =====================================================================
 % Configuration
 % =====================================================================
-bed = [0.1,0.7,0.1,0.7, 0.75, 0.75];
+bed = [-1.4 , 1.4, -1.4, 1.4, 0.4, 1.2];
 step= 0.2;
 
 graph = 1; % 1:yes, 0:no
 save = 1; 
 axis_pattern = 0;   % 1: eje y
                     % 0: eje x
-random_flag = 1;
+random_flag = 0;
 random_points = 20;
 
-number_repetition = 10;
+number_repetition = 1;
 % =====================================================================
 % =====================================================================
 
@@ -47,20 +47,20 @@ for i=1:numel(x)
 end
 
 % Funciona bien pero es para 3D con alturas distintas
-% data=[];
-% ii=0;
-% for k = bed(6):-step:bed(5)
-% 
-%     % Agregar los "0" ya que aun no se han registrado.
-%     if(mod(ii,2)==0)
-%         data = [data; x, y, k*ones(size(x)), zeros(size(x))];
-%         ii=ii+1;
-%     else
-%         data = [data; x(end:-1:1), y(end:-1:1), k*ones(size(x)), zeros(size(x))];
-%         ii=ii+1;
-%     end
-% 
-% end
+data=[];
+ii=0;
+for k = bed(6):-step:bed(5)
+
+    % Agregar los "0" ya que aun no se han registrado.
+    if(mod(ii,2)==0)
+        data = [data; x, y, k*ones(size(x)), zeros(size(x))];
+        ii=ii+1;
+    else
+        data = [data; x(end:-1:1), y(end:-1:1), k*ones(size(x)), zeros(size(x))];
+        ii=ii+1;
+    end
+
+end
 
 %%
 
@@ -77,7 +77,7 @@ if(graph)
     
     for i=1: size(data,1)
         plot3(data(i,1),data(i,2),data(i,3),'ob','MarkerFaceColor','b','MarkerSize',4)
-
+%         pause(0.01)
     end
     
 end

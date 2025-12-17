@@ -42,13 +42,13 @@ using namespace std;
 const bool USE_COM_PORT = false;            // Flag para activar/desactivar control del LED via COM
                                            // true: controla encendido/apagado del LED via COM
                                            // false: asume que el LED está encendido, no usa COM
-const bool AUTO_CONTINUE = true;           // Flag para modo automático
+const bool AUTO_CONTINUE = false;           // Flag para modo automático
                                            // true: requiere presionar C/Q entre posiciones (modo manual)
                                            // false: continúa automáticamente sin intervención del usuario
 #define COM_PORT_NAME "COM4"           // Puerto serial para el control del LED (sin L prefix)
 const int STABILIZATION_TIME_MS = 2000;  // Tiempo de estabilización en milisegundos
 const int BACKGROUND_TIME_SEC = 10;      // Tiempo de adquisición de background en segundos
-const int ORIENTATION_TIME_SEC = 1;    // Tiempo de adquisición por cada orientación en segundos
+const int ORIENTATION_TIME_SEC = 2;    // Tiempo de adquisición por cada orientación en segundos
 
 // Configuración para la adquisición de DAQ
 int32 fSample = 1000;  // Frecuencia de muestreo: 1000 Hz
@@ -142,7 +142,7 @@ std::string getTimestamp() {
 // *****************************************************************************
 // Adjust according to your experiment
 // *****************************************************************************
-const char* PATH_POSITIONS_FILE = "src/positionsToSample/journal_3D.txt";
+const char* PATH_POSITIONS_FILE = "src/positionsToSample/positions3D.txt";
 
 const double TRANSMITTER_H = 2.00; // altitude in meters
 const double ROBOT_OFFSET_X = -0.005; // offset en X del robot en metros
@@ -177,12 +177,25 @@ static const double PREDEFINED_ORIENTATIONS[][2] = {
     {38,207},
     {60,181},
     {60,233}, 
-};*/
+};
 
 static const double PREDEFINED_ORIENTATIONS[][2] = {
     {20,0},
     {20,120},
     {20,240}, 
+};
+*/
+
+static const double PREDEFINED_ORIENTATIONS[][2] = {
+    {0,0},
+    {34,182},
+    {37,267},
+    {37,355},
+    {42,78},
+    {53,97},
+    {57,179},
+    {58,360},
+    {58,272},
 };
 
 
