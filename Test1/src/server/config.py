@@ -39,7 +39,16 @@ THETA_MAX = 15  # 0 = vertical, max inclination from vertical
 #WS_THETA_INIT = 80 # Initial angle of the workspace
 #WS_THETA_FIN = 190 # Final angle of the workspace
 
-WS_R_INNER = 0.65 # Inner radius of the workspace
-WS_R_OUTER = 0.85 # Outer radius of the workspace
+WS_R_INNER = 0.65 # Default inner radius of the workspace
+WS_R_OUTER = 0.85 # Default outer radius of the workspace
 WS_THETA_INIT = 190 # Initial angle of the workspace
 WS_THETA_FIN = 350 # Final angle of the workspace
+
+# Height-dependent workspace radii
+WS_HEIGHT_RADII = {
+    0.4: {'inner': 0.64, 'outer': 0.74},
+    0.6: {'inner': 0.62, 'outer': 0.82},
+    0.8: {'inner': 0.50, 'outer': 0.86},
+    1.0: {'inner': 0.44, 'outer': 0.84},
+    1.2: {'inner': 0.40, 'outer': 0.80}
+}

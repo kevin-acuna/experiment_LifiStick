@@ -71,7 +71,7 @@ def main():
             print(pos_robot_vert)
             # 5) Check workspace
             x_r, y_r, z_r = pos_robot_vert
-            if check_workspace((x_r, y_r, z_r)):
+            if check_workspace((x_r, y_r, z_r), piece_z):
                 send_text_message(client_socket, "reachable")
 
                 while True:
