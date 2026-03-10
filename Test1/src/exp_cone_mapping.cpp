@@ -41,9 +41,11 @@ int MOTOR_AXIS_Y = MOTOR_AXIS_Y_OWP;  // Internal axis
 
 // Altura del transmisor
 const double TRANSMITTER_H = 2.00; // metros
+const double ROBOT_OFFSET_X = -0.01; // offset en X del robot en metros
+const double ROBOT_OFFSET_Y = 0.012; // offset en Y del robot en metros
 
 // Altura de la base del robot
-const double ROBOT_BASE_Z = 0.653;
+const double ROBOT_BASE_Z = 0.646;
 
 // Posición del receptor (end-effector del brazo robótico)
 const double RECEIVER_X = 0.0;
@@ -57,19 +59,19 @@ const double RECEIVER_Z = 1.0;  // end-effector en [0, 0, 1]
 //   Ejemplo: 2.0 significa que se muestrea cada 2° de inclinación.
 //   El rango va de INCLINATION_START a INCLINATION_END inclusive.
 const double INCLINATION_START = 0.0;   // grados (0 = apuntando hacia abajo / vertical)
-const double INCLINATION_END   = 30.0;  // grados
-const double INCLINATION_STEP  = 15.0;   // resolución de inclinación en grados
+const double INCLINATION_END   = 60.0;  // grados
+const double INCLINATION_STEP  = 1.0;   // resolución de inclinación en grados
 
 // AZIMUTH_STEP: resolución de azimuth en grados.
 //   Ejemplo: 5.0 significa que se muestrea cada 5° de azimuth.
 //   El rango de azimuth es siempre de 0° a 360° (exclusive de 360° ya que 360°=0°).
 //   En inclinación 0° el azimuth es irrelevante, solo se toma una medición.
-const double AZIMUTH_STEP = 45.0;        // resolución de azimuth en grados
+const double AZIMUTH_STEP = 1.0;        // resolución de azimuth en grados
 
 // ---------------------------------------------------------------------------
 // Tiempos
 // ---------------------------------------------------------------------------
-const int STABILIZATION_TIME_MS = 1000;  // estabilización después de mover motores (ms)
+const int STABILIZATION_TIME_MS = 500;  // estabilización después de mover motores (ms)
 const int ACQUISITION_TIME_SEC  = 1;     // adquisición por orientación: 1s -> 1K muestras a 1kHz
 
 // ---------------------------------------------------------------------------
@@ -357,7 +359,7 @@ int main()
     }
 
     double robotX, robotY;
-    
+
     // Check if custom position was selected
     if (index == -2) {
         cout << "\n[Info] Usando posición personalizada: (" << customPos.x << ", " << customPos.y << ")\n";
@@ -367,6 +369,9 @@ int main()
         robotX = PREDEFINED_POSITIONS[index - 1][0];
         robotY = PREDEFINED_POSITIONS[index - 1][1];
     }
+    
+    robotX += ROBOT_OFFSET_X;
+    robotY += ROBOT_OFFSET_Y;
     
     // Enviar posición base del robot
     sendCoordinates(sock, robotX, robotY, ROBOT_BASE_Z);
