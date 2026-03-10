@@ -21,6 +21,7 @@
 
 #include "stdafx.h"
 #include "instrument.h"
+#include "positions.h"
 #include "network_utils.h"
 
 using namespace std;
@@ -33,11 +34,16 @@ using namespace std;
 // *****************************************************************************
 
 // Sistema Gimbal (IDs de motores)
-int MOTOR_AXIS_X = 27267164;  // External axis
-int MOTOR_AXIS_Y = 27602122;  // Internal axis
+#define MOTOR_AXIS_X_OWP 27267164  // External axis
+#define MOTOR_AXIS_Y_OWP 27602122  // Internal axis
+int MOTOR_AXIS_X = MOTOR_AXIS_X_OWP;  // External axis
+int MOTOR_AXIS_Y = MOTOR_AXIS_Y_OWP;  // Internal axis
 
 // Altura del transmisor
 const double TRANSMITTER_H = 2.00; // metros
+
+// Altura de la base del robot
+const double ROBOT_BASE_Z = 0.653;
 
 // Posición del receptor (end-effector del brazo robótico)
 const double RECEIVER_X = 0.0;
@@ -72,6 +78,120 @@ const int ACQUISITION_TIME_SEC  = 1;     // adquisición por orientación: 1s ->
 int32 fSample  = 1000;                              // Frecuencia de muestreo: 1000 Hz
 int32 nSamples = ACQUISITION_TIME_SEC * fSample;     // Muestras por adquisición (1000)
 
+
+// *****************************************************************************
+// Posiciones predefinidas del robot base (X, Y)
+// *****************************************************************************
+static const double PREDEFINED_POSITIONS[][2] = {
+    {-0.5, -0.5},
+    {-0.5,  0.0},
+    {-0.5,  0.5},
+    {-0.5,  1.0},
+    {-0.5,  1.5},
+    { 0.0, -0.5},
+    { 0.0,  0.0},
+    { 0.0,  0.5},
+    { 0.0,  1.0},
+    { 0.0,  1.5},
+    { 0.5, -0.5},
+    { 0.5,  0.0},
+    { 0.5,  0.5},
+    { 0.5,  1.0},
+    { 0.5,  1.5},
+    { 1.0, -0.5},
+    { 1.0,  0.0},
+    { 1.0,  0.5},
+    { 1.0,  1.0},
+    { 1.0,  1.5},
+    { 1.5, -0.5},
+    { 1.5,  0.0},
+    { 1.5,  0.5},
+    { 1.5,  1.0},
+    { 1.5,  1.5}
+};
+
+// Estructura para almacenar coordenadas personalizadas
+struct CustomPosition {
+    double x;
+    double y;
+    bool isCustom;
+};
+
+CustomPosition customPos = {0.0, 0.0, false};
+
+int promptUserForRobotPositionIndex()
+{
+    // Calculate the actual number of positions in the array
+    const size_t numPositions = sizeof(PREDEFINED_POSITIONS) / sizeof(PREDEFINED_POSITIONS[0]);
+    
+    while (true) {
+        cout << "\n"
+        << "====================================================\n"
+        << " Select Robot Position [1.." << numPositions << "], 'custom', or 'q' to quit\n"
+        << "----------------------------------------------------\n";
+        
+        // Imprimir las posiciones de forma dinámica
+        for (size_t i = 0; i < numPositions; i++) {
+            cout << " " << (i + 1) << ")  ("
+                    << PREDEFINED_POSITIONS[i][0] << ", " 
+                    << PREDEFINED_POSITIONS[i][1] << ")\n";
+        }
+        
+        cout << " custom) Ingresar posición personalizada\n";
+        cout << "----------------------------------------------------\n"
+            << "Choose an option: ";
+
+
+        std::string input;
+        cin >> input;
+
+        if (input == "q" || input == "Q") {
+            // Return a sentinel value (e.g., -1) indicating we should quit
+            return -1;
+        }
+        
+        // Check for custom position option
+        if (input == "custom" || input == "Custom" || input == "CUSTOM" || input == "c" || input == "C") {
+            cout << "\n[Posición Personalizada]\n";
+            cout << "Ingrese coordenada X (metros): ";
+            
+            while (!(cin >> customPos.x)) {
+                cout << "[Error] Valor inválido. Ingrese coordenada X (metros): ";
+                cin.clear();
+                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
+            
+            cout << "Ingrese coordenada Y (metros): ";
+            while (!(cin >> customPos.y)) {
+                cout << "[Error] Valor inválido. Ingrese coordenada Y (metros): ";
+                cin.clear();
+                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
+            
+            customPos.isCustom = true;
+            cout << "Posición personalizada establecida: (" << customPos.x << ", " << customPos.y << ")\n";
+            
+            // Return a special value to indicate custom position (e.g., -2)
+            return -2;
+        }
+        
+        try {
+            int index = std::stoi(input);
+            // Use the actual number of positions for validation
+            const size_t numPositions = sizeof(PREDEFINED_POSITIONS) / sizeof(PREDEFINED_POSITIONS[0]);
+            if (index >= 1 && index <= static_cast<int>(numPositions)) {
+                customPos.isCustom = false;
+                return index;
+            }
+        } catch (...) {
+            // Conversion failed
+        }
+        cout << "[Error] Invalid selection. Please try again.\n";
+        // Clear any extra input
+        cin.clear();
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+}
 
 // *****************************************************************************
 // Función para adquirir datos de la DAQ
@@ -225,8 +345,39 @@ int main()
     initializeWinsock();
     SOCKET sock = connectToServer("127.0.0.1", 12345);
 
-    // Enviar al receptor a la posición del end-effector [0, 0, 1]
-    cout << "Enviando receptor a posición (" 
+    // =========================================================================
+    // Selección de posición base del robot (igual que exp_owp.cpp)
+    // =========================================================================
+    int index = promptUserForRobotPositionIndex();
+    if (index == -1) {
+        cout << "User selected 'q' to quit. Exiting.\n";
+        closesocket(sock);
+        WSACleanup();
+        return 0;
+    }
+
+    double robotX, robotY;
+    
+    // Check if custom position was selected
+    if (index == -2) {
+        cout << "\n[Info] Usando posición personalizada: (" << customPos.x << ", " << customPos.y << ")\n";
+        robotX = customPos.x;
+        robotY = customPos.y;
+    } else {
+        robotX = PREDEFINED_POSITIONS[index - 1][0];
+        robotY = PREDEFINED_POSITIONS[index - 1][1];
+    }
+    
+    // Enviar posición base del robot
+    sendCoordinates(sock, robotX, robotY, ROBOT_BASE_Z);
+
+    // Clear the screen to proceed
+    system("cls");
+
+    // =========================================================================
+    // Enviar posición del end-effector y orientar receptor
+    // =========================================================================
+    cout << "Enviando end-effector a posición (" 
          << RECEIVER_X << ", " << RECEIVER_Y << ", " << RECEIVER_Z << ")...\n";
     sendCoordinates(sock, RECEIVER_X, RECEIVER_Y, RECEIVER_Z);
     std::string response = receiveResponse(sock, 2);
