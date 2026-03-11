@@ -7,5 +7,4 @@ Test1/x64/
 Test1/Debug
 Test1/src/server/__pycache__
 
-Test1/src/output/*
-!Test1/src/output/.gitkeep
+Test1/output/*
