@@ -58,8 +58,8 @@ const double RECEIVER_Z = 1.0;  // end-effector en [0, 0, 1]
 // INCLINATION_STEP: resolución de inclinación en grados.
 //   Ejemplo: 2.0 significa que se muestrea cada 2° de inclinación.
 //   El rango va de INCLINATION_START a INCLINATION_END inclusive.
-const double INCLINATION_START = 0.0;   // grados (0 = apuntando hacia abajo / vertical)
-const double INCLINATION_END   = 60.0;  // grados
+const double INCLINATION_START = 7.0;   // grados (0 = apuntando hacia abajo / vertical)
+const double INCLINATION_END   = 45.0;  // grados
 const double INCLINATION_STEP  = 1.0;   // resolución de inclinación en grados
 
 // AZIMUTH_STEP: resolución de azimuth en grados.
