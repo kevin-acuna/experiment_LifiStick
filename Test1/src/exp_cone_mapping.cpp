@@ -279,7 +279,16 @@ double computeMedian(float64* data, int n) {
 }
 
 // *****************************************************************************
-// Función para generar timestamp como string
+// Función para calcular la media de un array de muestras
+// *****************************************************************************
+double computeMean(float64* data, int n) {
+    double sum = 0.0;
+    for (int i = 0; i < n; i++) sum += data[i];
+    return sum / n;
+}
+
+// *****************************************************************************
+// Función para generar timestamp como string (para nombres de archivo)
 // *****************************************************************************
 std::string getTimestamp() {
     auto now = std::chrono::system_clock::now();
@@ -293,6 +302,73 @@ std::string getTimestamp() {
     return oss.str();
 }
 
+// *****************************************************************************
+// Funciones para obtener fecha y hora actuales por separado
+// *****************************************************************************
+std::string getCurrentDate() {
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    std::tm timeinfo;
+    localtime_s(&timeinfo, &in_time_t);
+    std::ostringstream oss;
+    oss << std::put_time(&timeinfo, "%Y-%m-%d");
+    return oss.str();
+}
+
+std::string getCurrentTime() {
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    std::tm timeinfo;
+    localtime_s(&timeinfo, &in_time_t);
+    std::ostringstream oss;
+    oss << std::put_time(&timeinfo, "%H:%M:%S");
+    return oss.str();
+}
+
+
+// *****************************************************************************
+// Estado de progreso: guardar/cargar/eliminar
+// *****************************************************************************
+const std::string STATE_FILE = "output/cone_mapping_state.txt";
+
+struct ResumeState {
+    int nextOrientationIndex;  // 0-based: próxima orientación a procesar
+    std::string csv_filename;
+    std::string timestamp;
+    int sample_counter;
+    bool valid;
+};
+
+void saveState(int nextOrientationIndex, const std::string& csv_filename, 
+               const std::string& ts, int sample_counter) {
+    std::ofstream f(STATE_FILE);
+    if (f.is_open()) {
+        f << nextOrientationIndex << "\n"
+          << csv_filename << "\n"
+          << ts << "\n"
+          << sample_counter << "\n";
+        f.close();
+    }
+}
+
+ResumeState loadState() {
+    ResumeState state = {0, "", "", 0, false};
+    std::ifstream f(STATE_FILE);
+    if (f.is_open()) {
+        std::string line;
+        if (std::getline(f, line)) state.nextOrientationIndex = std::stoi(line);
+        if (std::getline(f, line)) state.csv_filename = line;
+        if (std::getline(f, line)) state.timestamp = line;
+        if (std::getline(f, line)) state.sample_counter = std::stoi(line);
+        state.valid = true;
+        f.close();
+    }
+    return state;
+}
+
+void deleteState() {
+    std::remove(STATE_FILE.c_str());
+}
 
 // *****************************************************************************
 // MAIN
@@ -415,17 +491,42 @@ int main()
     gimbal.setSerialNo_MotorY(MOTOR_AXIS_Y);
     gimbal.setTransmitterPosition(0, 0, TRANSMITTER_H);
 
-    // Mover ambos motores a la posición inicial (0°, 0°)
-    cout << "Moviendo motores a posición inicial (0°, 0°)...\n";
-    cout << "NOTA: Los offsets de calibración se aplican automáticamente.\n";
-    gimbal.rotateMotorX(0.0);
-    Sleep(2000);
-    gimbal.rotateMotorY(0.0);
-    Sleep(2000);
-    cout << "Motores en posición inicial.\n\n";
+    // =========================================================================
+    // Verificar si hay un estado previo para reanudar
+    // =========================================================================
+    std::string output_dir = "output";
+    _mkdir(output_dir.c_str());
 
-    // Confirmación del usuario antes de iniciar
-    cout << "¿Desea iniciar el mapeo del cono? (C para continuar, Q para salir): ";
+    ResumeState resumeState = loadState();
+    bool resuming = false;
+    int startIndex = 0;
+    int sample_counter = 0;
+    std::string timestamp;
+    std::string csv_filename;
+    std::ofstream csv_file;
+
+    if (resumeState.valid) {
+        cout << "=========================================================\n";
+        cout << " ESTADO PREVIO ENCONTRADO\n";
+        cout << "=========================================================\n";
+        cout << "  Archivo CSV: " << resumeState.csv_filename << "\n";
+        cout << "  Orientaciones completadas: " << resumeState.nextOrientationIndex 
+             << "/" << totalOrientations << "\n";
+        cout << "  Restantes: " << (totalOrientations - resumeState.nextOrientationIndex) << "\n";
+        cout << "=========================================================\n\n";
+        cout << "Opciones:\n";
+        cout << "  R = Resetear gimbal a (0,0) e iniciar experimento nuevo\n";
+        cout << "  C = Continuar desde donde se quedo\n";
+        cout << "  Q = Salir\n";
+        cout << "Elija una opcion: ";
+    } else {
+        cout << "\nOpciones:\n";
+        cout << "  R = Resetear gimbal a (0,0) antes de iniciar\n";
+        cout << "  C = Iniciar sin mover el gimbal (usar posicion actual)\n";
+        cout << "  Q = Salir\n";
+        cout << "Elija una opcion: ";
+    }
+
     char option;
     cin >> option;
     option = toupper(option);
@@ -438,39 +539,101 @@ int main()
     }
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-    // =========================================================================
-    // Crear archivo CSV
-    // =========================================================================
-    std::string timestamp = getTimestamp();
-    std::string output_dir = "output";
-    _mkdir(output_dir.c_str());
-    std::string csv_filename = output_dir + "/cone_mapping_" + timestamp + ".csv";
-    std::ofstream csv_file(csv_filename);
-    if (!csv_file.is_open()) {
-        cerr << "Error: No se pudo crear el archivo CSV: " << csv_filename << endl;
-        receiverFinished(sock);
-        closesocket(sock);
-        WSACleanup();
-        return 1;
+    if (option == 'R') {
+        // Resetear gimbal a (0°, 0°)
+        cout << "\nMoviendo motores a posición inicial (0°, 0°)...\n";
+        cout << "NOTA: Los offsets de calibración se aplican automáticamente.\n";
+        gimbal.rotateMotorX(0.0);
+        Sleep(2000);
+        gimbal.rotateMotorY(0.0);
+        Sleep(2000);
+        cout << "Motores en posición inicial.\n\n";
+
+        // Inicio fresco: nuevo CSV
+        deleteState();
+        timestamp = getTimestamp();
+        csv_filename = output_dir + "/cone_mapping_" + timestamp + ".csv";
+        csv_file.open(csv_filename);
+        if (!csv_file.is_open()) {
+            cerr << "Error: No se pudo crear el archivo CSV: " << csv_filename << endl;
+            receiverFinished(sock);
+            closesocket(sock);
+            WSACleanup();
+            return 1;
+        }
+        csv_file << "sample_id,date,time,x,y,z,inclinacion,azimuth,mode,median,mean" << endl;
+        cout << "Archivo CSV creado: " << csv_filename << "\n";
+
+        // Confirmación antes de iniciar
+        cout << "¿Iniciar mapeo? (C para continuar, Q para salir): ";
+        char confirm;
+        cin >> confirm;
+        confirm = toupper(confirm);
+        if (confirm == 'Q') {
+            csv_file.close();
+            receiverFinished(sock);
+            closesocket(sock);
+            WSACleanup();
+            return 0;
+        }
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        startIndex = 0;
+        sample_counter = 0;
+        resuming = false;
+
+    } else {
+        // Continuar: no mover gimbal
+        if (resumeState.valid) {
+            // Reanudar sesión previa
+            resuming = true;
+            startIndex = resumeState.nextOrientationIndex;
+            sample_counter = resumeState.sample_counter;
+            timestamp = resumeState.timestamp;
+            csv_filename = resumeState.csv_filename;
+
+            // Abrir CSV en modo append
+            csv_file.open(csv_filename, std::ios::app);
+            if (!csv_file.is_open()) {
+                cerr << "Error: No se pudo abrir el archivo CSV para append: " << csv_filename << endl;
+                receiverFinished(sock);
+                closesocket(sock);
+                WSACleanup();
+                return 1;
+            }
+            cout << "\nReanudando desde orientación " << (startIndex + 1) << "/" << totalOrientations << "\n";
+            cout << "Archivo CSV (append): " << csv_filename << "\n";
+        } else {
+            // Sin estado previo: inicio fresco sin mover gimbal
+            deleteState();
+            timestamp = getTimestamp();
+            csv_filename = output_dir + "/cone_mapping_" + timestamp + ".csv";
+            csv_file.open(csv_filename);
+            if (!csv_file.is_open()) {
+                cerr << "Error: No se pudo crear el archivo CSV: " << csv_filename << endl;
+                receiverFinished(sock);
+                closesocket(sock);
+                WSACleanup();
+                return 1;
+            }
+            csv_file << "sample_id,date,time,x,y,z,inclinacion,azimuth,mode,median,mean" << endl;
+            cout << "\nArchivo CSV creado: " << csv_filename << "\n";
+            startIndex = 0;
+            sample_counter = 0;
+        }
     }
-
-    // Encabezado del CSV (mismo formato que exp_3D)
-    csv_file << "sample_id,x,y,z,inclinacion,azimuth,mode,medida_daq" << endl;
-    cout << "Archivo CSV creado: " << csv_filename << "\n\n";
-
-    // Contador para identificador único de muestra
-    int sample_counter = 0;
 
     // =========================================================================
     // Bucle principal: mapeo del cono
     // =========================================================================
-    cout << "=========================================================\n";
+    cout << "\n=========================================================\n";
     cout << " INICIANDO MAPEO DEL CONO\n";
     cout << "=========================================================\n\n";
 
-    int orientationCount = 0;
+    int orientationCount = startIndex;
 
-    for (const auto& ori : orientations) {
+    for (int i = startIndex; i < totalOrientations; i++) {
+        const auto& ori = orientations[i];
         orientationCount++;
         sample_counter++;
         std::string sample_id = timestamp + "_" + std::to_string(sample_counter);
@@ -488,14 +651,10 @@ int main()
                  << "). Abortando experimento.\n";
             cerr << "Orientaciones completadas: " << (orientationCount - 1) << "/" << totalOrientations << "\n";
             csv_file.close();
+            // Guardar estado para poder reanudar desde esta orientación
+            saveState(i, csv_filename, timestamp, sample_counter - 1);
             cout << "Datos parciales guardados en: " << csv_filename << "\n";
-
-            // Intentar regresar motores a posición segura
-            cout << "Intentando regresar motores a posición inicial (0°, 0°)...\n";
-            gimbal.rotateMotorX(0.0);
-            Sleep(1000);
-            gimbal.rotateMotorY(0.0);
-            Sleep(1000);
+            cout << "Estado guardado. Puede reanudar en la proxima ejecucion.\n";
 
             receiverFinished(sock);
             closesocket(sock);
@@ -515,57 +674,63 @@ int main()
         int read_samples = AcquireDataFromDAQ(nSamples, fSample, daq_data);
 
         if (read_samples > 0) {
-            // Guardar cada muestra en el CSV (formato exp_3D)
-            for (int j = 0; j < read_samples; j++) {
-                csv_file << sample_id << ","
-                         << RECEIVER_X << "," 
-                         << RECEIVER_Y << "," 
-                         << RECEIVER_Z << "," 
-                         << ori.inclination << "," 
-                         << ori.azimuth << ","
-                         << "r_vertical" << ","
-                         << daq_data[j] << "\n";
-            }
-            csv_file.flush(); // Flush para no perder datos si se interrumpe
-
-            // Calcular y mostrar la mediana como feedback
+            // Calcular mediana y media
             double median = computeMedian(daq_data, read_samples);
-            cout << "OK (" << read_samples << " muestras)  ->  Mediana: " 
-                 << fixed << setprecision(6) << median << " V\n\n";
-        } else {
-            cout << "ERROR en la adquisición de datos.\n\n";
+            double mean = computeMean(daq_data, read_samples);
+
+            // Guardar una sola fila con mediana y media
+            std::string date_str = getCurrentDate();
+            std::string time_str = getCurrentTime();
             csv_file << sample_id << ","
+                     << date_str << ","
+                     << time_str << ","
                      << RECEIVER_X << "," 
                      << RECEIVER_Y << "," 
                      << RECEIVER_Z << "," 
                      << ori.inclination << "," 
                      << ori.azimuth << ","
-                     << "r_vertical" << ",NA\n";
+                     << "r_vertical" << ","
+                     << fixed << setprecision(6) << median << ","
+                     << fixed << setprecision(6) << mean << "\n";
+            csv_file.flush();
+
+            cout << "OK (" << read_samples << " muestras)  ->  Mediana: " 
+                 << fixed << setprecision(6) << median 
+                 << "  Media: " << mean << " V\n\n";
+        } else {
+            cout << "ERROR en la adquisición de datos.\n\n";
+            std::string date_str = getCurrentDate();
+            std::string time_str = getCurrentTime();
+            csv_file << sample_id << ","
+                     << date_str << ","
+                     << time_str << ","
+                     << RECEIVER_X << "," 
+                     << RECEIVER_Y << "," 
+                     << RECEIVER_Z << "," 
+                     << ori.inclination << "," 
+                     << ori.azimuth << ","
+                     << "r_vertical" << ",NA,NA\n";
             csv_file.flush();
         }
 
         // Liberar memoria
         delete[] daq_data;
+
+        // Guardar estado de progreso (próxima orientación a procesar)
+        saveState(i + 1, csv_filename, timestamp, sample_counter);
     }
 
     // =========================================================================
     // Finalización
     // =========================================================================
     csv_file.close();
+    deleteState(); // Experimento completado: eliminar estado de progreso
 
     cout << "=========================================================\n";
     cout << " MAPEO DEL CONO COMPLETADO\n";
     cout << "=========================================================\n";
     cout << "Orientaciones registradas: " << orientationCount << "/" << totalOrientations << "\n";
     cout << "Datos guardados en: " << csv_filename << "\n\n";
-
-    // Regresar motores a posición inicial
-    cout << "Regresando motores a posición inicial (0°, 0°)...\n";
-    gimbal.rotateMotorX(0.0);
-    Sleep(1000);
-    gimbal.rotateMotorY(0.0);
-    Sleep(1000);
-    cout << "Motores en posición inicial.\n";
 
     // Señalar al robot que terminó
     receiverFinished(sock);
