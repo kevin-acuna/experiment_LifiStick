@@ -11,6 +11,7 @@
 #include <math.h>       
 #include <windows.h>
 #include <thread> // Asegúrate de incluir esto para usar std::thread
+#include <chrono>
 
 #define PI 3.14159265
 
@@ -137,13 +138,52 @@ int instrument::rotateMotor(int serialNo, double deg)
     printf("[Info] %s: Rotating to %.1f° (calibrated: %.1f°, %d device units)...\n", axisLabel.c_str(), deg, calibratedDeg, devicePosition);
     CC_MoveToPosition(testSerialNo, devicePosition);
 
-    // Wait for movement to complete
+    // Wait for movement to complete (with timeout and retry)
     WORD messageType;
     WORD messageId;
     DWORD messageData;
-    do {
-        CC_WaitForMessage(testSerialNo, &messageType, &messageId, &messageData);
-    } while (messageType != 2 || messageId != 1);
+    const int MOVE_TIMEOUT_MS = 15000;      // 15 seconds timeout per attempt
+    const int MAX_RETRIES = 3;              // Max retry attempts
+    bool moveCompleted = false;
+
+    for (int attempt = 0; attempt < MAX_RETRIES && !moveCompleted; attempt++) {
+        if (attempt > 0) {
+            printf("[Warning] %s: Retry %d/%d - Re-issuing move command...\n", axisLabel.c_str(), attempt, MAX_RETRIES - 1);
+            CC_ClearMessageQueue(testSerialNo);
+            CC_MoveToPosition(testSerialNo, devicePosition);
+        }
+
+        auto startTime = std::chrono::steady_clock::now();
+        while (!moveCompleted) {
+            // Check elapsed time
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - startTime).count();
+            if (elapsed > MOVE_TIMEOUT_MS) {
+                printf("[Warning] %s: Timeout after %d ms waiting for move completion.\n", axisLabel.c_str(), MOVE_TIMEOUT_MS);
+                break;
+            }
+
+            // Non-blocking check: poll with short sleep
+            CC_RequestStatusBits(testSerialNo);
+            Sleep(100);
+
+            // Try to get a message (check if available)
+            BOOL hasMessage = CC_MessageQueueSize(testSerialNo) > 0;
+            if (hasMessage) {
+                CC_GetNextMessage(testSerialNo, &messageType, &messageId, &messageData);
+                if (messageType == 2 && messageId == 1) {
+                    moveCompleted = true;
+                }
+            }
+        }
+    }
+
+    if (!moveCompleted) {
+        printf("[Error] %s: Motor did not confirm move after %d retries.\n", axisLabel.c_str(), MAX_RETRIES);
+        CC_StopPolling(testSerialNo);
+        CC_Close(testSerialNo);
+        return -4;
+    }
 
     Sleep(500); // Small buffer
 
@@ -160,20 +200,24 @@ int instrument::rotateMotor(int serialNo, double deg)
 // ----------------------------------------------------------
 int instrument::rotateMotorsSimultaneously(int serialNo1, double deg1, int serialNo2, double deg2)
 {
-    // Define lambda that calls rotateMotor
-    auto rotate = [this](int serial, double deg) {
-        this->rotateMotor(serial, deg);
+    int result1 = 0, result2 = 0;
+
+    // Define lambda that calls rotateMotor and captures result
+    auto rotate = [this](int serial, double deg, int* result) {
+        *result = this->rotateMotor(serial, deg);
     };
 
     // Create threads
-    std::thread motorThread1(rotate, serialNo1, deg1);
-    std::thread motorThread2(rotate, serialNo2, deg2);
+    std::thread motorThread1(rotate, serialNo1, deg1, &result1);
+    std::thread motorThread2(rotate, serialNo2, deg2, &result2);
 
     // Wait for both to finish
     motorThread1.join();
     motorThread2.join();
 
-    // Optional: you could return error codes from each if needed in the future
+    // Return first error found, or 0 if both succeeded
+    if (result1 != 0) return result1;
+    if (result2 != 0) return result2;
     return 0;
 }
 
@@ -466,7 +510,7 @@ void instrument::transmitterPointingToReceiver_New(double rx, double ry, double 
 // inclination: ángulo entre el vector de orientación y el eje vertical (0-180 grados)
 // azimuth: ángulo en el plano XY medido desde el eje X (0-360 grados)
 // ----------------------------------------------------------------------
-void instrument::setTransmitterOrientation(double inclination, double azimuth)
+int instrument::setTransmitterOrientation(double inclination, double azimuth)
 {
     // Convertir ángulos de grados a radianes
     double inclination_rad = inclination * PI / 180.0;
@@ -493,7 +537,7 @@ void instrument::setTransmitterOrientation(double inclination, double azimuth)
 
     // Se recomienda rotar primero el motor del eje X y luego el de Y, 
     // o enviarlos de forma sincronizada si el controlador lo permite.
-    rotateMotorsSimultaneously(serialNo_MotorX, angleX_deg, serialNo_MotorY, angleY_deg);
+    return rotateMotorsSimultaneously(serialNo_MotorX, angleX_deg, serialNo_MotorY, angleY_deg);
 }
 // ----------------------------------------------------------------------
 // Control directo de motor X

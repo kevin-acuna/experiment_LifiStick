@@ -53,7 +53,7 @@ public:
     void transmitterPointingToReceiver(double rx, double ry, double rz); // Apunta el transmisor al receptor
     void transmitterPointingToReceiver_simple(double rx, double ry, double rz); // Apunta el transmisor al receptor
     void transmitterPointingToReceiver_New(double rx, double ry, double rz);
-    void setTransmitterOrientation(double inclination, double azimuth); // Define orientación usando ángulos de inclinación y azimuth
+    int setTransmitterOrientation(double inclination, double azimuth); // Define orientación usando ángulos de inclinación y azimuth (retorna 0 si OK, <0 si error)
 
     void setSerialNo_MotorX(int serialNo);
     void setSerialNo_MotorY(int serialNo);

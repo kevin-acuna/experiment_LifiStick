@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
+#include <direct.h>
 
 #include "stdafx.h"
 #include "instrument.h"
@@ -441,7 +442,9 @@ int main()
     // Crear archivo CSV
     // =========================================================================
     std::string timestamp = getTimestamp();
-    std::string csv_filename = "cone_mapping_" + timestamp + ".csv";
+    std::string output_dir = "output";
+    _mkdir(output_dir.c_str());
+    std::string csv_filename = output_dir + "/cone_mapping_" + timestamp + ".csv";
     std::ofstream csv_file(csv_filename);
     if (!csv_file.is_open()) {
         cerr << "Error: No se pudo crear el archivo CSV: " << csv_filename << endl;
@@ -473,13 +476,34 @@ int main()
         std::string sample_id = timestamp + "_" + std::to_string(sample_counter);
 
         cout << "---------------------------------------------------\n";
-        cout << "Orientación " << orientationCount << "/" << totalOrientations
+        cout << "[" << getTimestamp() << "]  Orientación " << orientationCount << "/" << totalOrientations
              << "  |  Inclinación: " << ori.inclination 
              << "°  |  Azimuth: " << ori.azimuth << "°\n";
         cout << "---------------------------------------------------\n";
 
         // Aplicar orientación al transmisor (con offset de 180° en azimuth, igual que exp_3D)
-        gimbal.setTransmitterOrientation(ori.inclination, fmod(ori.azimuth + 180.0, 360.0));
+        int motorResult = gimbal.setTransmitterOrientation(ori.inclination, fmod(ori.azimuth + 180.0, 360.0));
+        if (motorResult != 0) {
+            cerr << "\n[ABORT] Error critico en motores (código: " << motorResult 
+                 << "). Abortando experimento.\n";
+            cerr << "Orientaciones completadas: " << (orientationCount - 1) << "/" << totalOrientations << "\n";
+            csv_file.close();
+            cout << "Datos parciales guardados en: " << csv_filename << "\n";
+
+            // Intentar regresar motores a posición segura
+            cout << "Intentando regresar motores a posición inicial (0°, 0°)...\n";
+            gimbal.rotateMotorX(0.0);
+            Sleep(1000);
+            gimbal.rotateMotorY(0.0);
+            Sleep(1000);
+
+            receiverFinished(sock);
+            closesocket(sock);
+            WSACleanup();
+            cout << "Experimento abortado. Presione Enter para salir...";
+            cin.get();
+            return 1;
+        }
 
         // Esperar estabilización del motor
         cout << "Estabilización (" << STABILIZATION_TIME_MS << " ms)...\n";
