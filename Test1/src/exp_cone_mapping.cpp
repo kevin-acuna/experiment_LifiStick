@@ -67,7 +67,7 @@ const double INCLINATION_STEP  = 1.0;   // resolución de inclinación en grados
 //   Ejemplo: 5.0 significa que se muestrea cada 5° de azimuth.
 //   El rango de azimuth es siempre de 0° a 360° (exclusive de 360° ya que 360°=0°).
 //   En inclinación 0° el azimuth es irrelevante, solo se toma una medición.
-const double AZIMUTH_STEP = 5.0;        // resolución de azimuth en grados
+const double AZIMUTH_STEP = 1.0;        // resolución de azimuth en grados
 
 // ---------------------------------------------------------------------------
 // Tiempos

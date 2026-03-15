@@ -60,7 +60,7 @@ const double RECEIVER_Z = 1.0;  // end-effector en [0, 0, 1]
 //   Ejemplo: 2.0 significa que se muestrea cada 2° de inclinación.
 //   El rango va de INCLINATION_START a INCLINATION_END inclusive.
 const double INCLINATION_START = 0.0;   // grados (0 = apuntando hacia abajo / vertical)
-const double INCLINATION_END   = 60.0;  // grados
+const double INCLINATION_END   = 90.0;  // grados
 const double INCLINATION_STEP  = 1.0;   // resolución de inclinación en grados
 
 // SCAN_AZIMUTHS: ejes de azimuth a escanear (en grados).
@@ -72,7 +72,7 @@ const double INCLINATION_STEP  = 1.0;   // resolución de inclinación en grados
 //     {90.0}         -> eje 90°/270° completo
 //     {0.0, 90.0}    -> ambos ejes completos
 //   El punto central (inclinación 0°) se mide una sola vez.
-static const double SCAN_AZIMUTHS[] = {0.0};
+static const double SCAN_AZIMUTHS[] = {90.0};
 #define NUM_SCAN_AZIMUTHS (sizeof(SCAN_AZIMUTHS) / sizeof(SCAN_AZIMUTHS[0]))
 
 // ---------------------------------------------------------------------------
