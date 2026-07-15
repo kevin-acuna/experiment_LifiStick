@@ -6,6 +6,8 @@
 #include <iomanip>
 #include <sstream>
 #include <filesystem>
+#include <iostream>
+#include <streambuf>
 
 namespace fs = std::filesystem;
 
@@ -94,6 +96,55 @@ bool CsvWriter::open(const std::string& path, const std::string& header, bool ap
     }
     return f_.is_open();
 }
+
+// -----------------------------------------------------------------------------
+// Console logger (tee: consola + archivo)
+// -----------------------------------------------------------------------------
+class TeeBuf : public std::streambuf {
+public:
+    TeeBuf(std::streambuf* a, std::streambuf* b) : a_(a), b_(b) {}
+protected:
+    int overflow(int c) override {
+        if (c == std::char_traits<char>::eof()) return c;
+        const int r1 = a_ ? a_->sputc(static_cast<char>(c)) : c;
+        const int r2 = b_ ? b_->sputc(static_cast<char>(c)) : c;
+        return (r1 == std::char_traits<char>::eof() || r2 == std::char_traits<char>::eof())
+               ? std::char_traits<char>::eof() : c;
+    }
+    int sync() override {
+        const int r1 = a_ ? a_->pubsync() : 0;
+        const int r2 = b_ ? b_->pubsync() : 0;
+        return (r1 == 0 && r2 == 0) ? 0 : -1;
+    }
+private:
+    std::streambuf* a_;
+    std::streambuf* b_;
+};
+
+ConsoleLogger::~ConsoleLogger() { stop(); }
+
+bool ConsoleLogger::start(const std::string& path, bool append) {
+    if (file_.is_open()) return true;
+    file_.open(path, append ? std::ios::app : std::ios::out);
+    if (!file_.is_open()) return false;
+    oldCout_ = std::cout.rdbuf();
+    oldCerr_ = std::cerr.rdbuf();
+    outTee_  = std::make_unique<TeeBuf>(oldCout_, file_.rdbuf());
+    errTee_  = std::make_unique<TeeBuf>(oldCerr_, file_.rdbuf());
+    std::cout.rdbuf(outTee_.get());
+    std::cerr.rdbuf(errTee_.get());
+    return true;
+}
+
+void ConsoleLogger::stop() {
+    if (oldCout_) { std::cout.rdbuf(oldCout_); oldCout_ = nullptr; }
+    if (oldCerr_) { std::cerr.rdbuf(oldCerr_); oldCerr_ = nullptr; }
+    outTee_.reset();
+    errTee_.reset();
+    if (file_.is_open()) file_.close();
+}
+
+bool ConsoleLogger::isOpen() const { return file_.is_open(); }
 
 // -----------------------------------------------------------------------------
 // Estado de reanudacion

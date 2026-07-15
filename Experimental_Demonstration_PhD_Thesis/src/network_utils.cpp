@@ -123,7 +123,7 @@ RobotPose receivePose(SOCKET sock, int timeout_sec) {
     std::string tag;
     iss >> tag;
     if (tag != "reached") {
-        std::cerr << "[Error] receivePose: respuesta inesperada: '" << resp << "'\n";
+        std::cerr << "[Error] receivePose: unexpected response: '" << resp << "'\n";
         return pose;  // valid = false
     }
 
@@ -132,7 +132,7 @@ RobotPose receivePose(SOCKET sock, int timeout_sec) {
             >> pose.nr_incl >> pose.nr_az) {
         pose.valid = true;
     } else {
-        std::cerr << "[Error] receivePose: no se pudo parsear la pose de: '" << resp << "'\n";
+        std::cerr << "[Error] receivePose: could not parse pose from: '" << resp << "'\n";
     }
     return pose;
 }

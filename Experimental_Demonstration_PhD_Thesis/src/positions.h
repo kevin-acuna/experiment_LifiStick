@@ -21,4 +21,9 @@ struct Position {
 // z y done son opcionales (valores por defecto: z=0.96, done=false)
 void loadPositions(const std::string& filePath, std::vector<Position>& positions);
 
+// Rewrites the positions file with the current 'done' state.
+// Line format: "x y z done" (done = 0/1). Used to mark points already recorded
+// so the campaign can be resumed and the operator can see progress in the file.
+void savePositions(const std::string& filePath, const std::vector<Position>& positions);
+
 #endif // POSITIONS_H

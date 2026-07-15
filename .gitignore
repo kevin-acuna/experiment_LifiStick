@@ -43,4 +43,9 @@ __pycache__/
 # ============================================================
 # Salidas de datos generadas por los experimentos
 # ============================================================
+# Por defecto se ignora cualquier carpeta output/ (p. ej. Test1/output)
 output/
+# Excepcion: SI se versiona la salida del proyecto nuevo
+# (datos de la tesis: CSV de estadisticas, metadata.txt y run.log)
+!Experimental_Demonstration_PhD_Thesis/output/
+!Experimental_Demonstration_PhD_Thesis/output/**

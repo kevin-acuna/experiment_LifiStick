@@ -29,6 +29,7 @@
 #include <vector>
 #include <cmath>
 #include <iomanip>
+#include <sstream>
 #include <random>
 
 #include "stdafx.h"
@@ -73,20 +74,20 @@ int main() {
     vector<Position> positions;
     loadPositions(cfg::S3_POSITIONS_FILE, positions);
     if (positions.empty()) {
-        cerr << "Error: no se cargaron posiciones desde " << cfg::S3_POSITIONS_FILE << "\n";
+        cerr << "Error: could not load positions from " << cfg::S3_POSITIONS_FILE << "\n";
         return 1;
     }
 
     cout << "=========================================================\n";
-    cout << " SUB-DATASET 3: Campana espacial principal\n";
+    cout << " SUB-DATASET 3: Main spatial campaign\n";
     cout << "=========================================================\n";
-    cout << "  Puntos cargados: " << positions.size() << "\n";
-    cout << "  K (codebook): " << cfg::K_ORIENTATIONS << "\n";
-    cout << "  M_repeats: " << cfg::M_REPEATS << "\n";
-    cout << "  Scans con tilt por punto: " << cfg::N_TILT_SCANS_PER_POINT
-         << " (tilt uniforme 0-" << cfg::TILT_MAX_DEG << " deg)\n";
-    cout << "  Adquisicion: " << cfg::DAQ_ACQ_TIME_SEC << " s (" << cfg::DAQ_N_SAMPLES
-         << " muestras a " << cfg::DAQ_FSAMPLE << " Hz)\n";
+    cout << "  Points loaded:      " << positions.size() << "\n";
+    cout << "  K (codebook):       " << cfg::K_ORIENTATIONS << "\n";
+    cout << "  M_repeats:          " << cfg::M_REPEATS << "\n";
+    cout << "  Tilt scans / point: " << cfg::N_TILT_SCANS_PER_POINT
+         << " (uniform tilt 0-" << cfg::TILT_MAX_DEG << " deg)\n";
+    cout << "  Acquisition:        " << cfg::DAQ_ACQ_TIME_SEC << " s (" << cfg::DAQ_N_SAMPLES
+         << " samples @ " << cfg::DAQ_FSAMPLE << " Hz)\n";
     cout << "=========================================================\n\n";
 
     // -------------------------------------------------------------------------
@@ -95,14 +96,14 @@ int main() {
     initializeWinsock();
     SOCKET sock = connectToServer(cfg::SERVER_IP, cfg::SERVER_PORT);
 
-    cout << "Posicion base del robot en el marco global.\n";
+    cout << "Robot base position in the global frame.\n";
     double baseX = 0.0, baseY = 0.0;
     { string s = promptLine("  Base X [m] (Enter=0)"); if (s != "NA") baseX = std::stod(s); }
     { string s = promptLine("  Base Y [m] (Enter=0)"); if (s != "NA") baseY = std::stod(s); }
     baseX += cfg::ROBOT_OFFSET_X;
     baseY += cfg::ROBOT_OFFSET_Y;
     sendCoordinates(sock, baseX, baseY, cfg::ROBOT_BASE_Z);
-    cout << "Base enviada: (" << baseX << ", " << baseY << ", " << cfg::ROBOT_BASE_Z << ")\n\n";
+    cout << "Base sent: (" << baseX << ", " << baseY << ", " << cfg::ROBOT_BASE_Z << ")\n\n";
 
     // -------------------------------------------------------------------------
     // Gimbal del transmisor
@@ -136,8 +137,8 @@ int main() {
 
     bool resuming = rs.valid;
     if (resuming) {
-        cout << "Estado previo (punto " << rs.nextIndex << "/" << positions.size()
-             << "). C = continuar, R = reiniciar, Q = salir: ";
+        cout << "Previous state found (point " << rs.nextIndex << "/" << positions.size()
+             << "). C = continue, R = restart, Q = quit: ";
         char op; cin >> op; op = toupper(op);
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
         if (op == 'Q') { receiverFinished(sock); closesocket(sock); WSACleanup(); return 0; }
@@ -152,20 +153,20 @@ int main() {
     }
 
     if (!resuming) {
-        cout << "\n--- Metadata de sesion (Enter para omitir) ---\n";
+        cout << "\n--- Session metadata (press Enter to skip a field) ---\n";
         datalog::Metadata meta;
         meta.set("session_date", datalog::date());
         meta.set("session_time", datalog::clockTime());
         meta.set("subdataset", std::string("3_spatial_campaign"));
-        meta.set("operator", promptLine("Operador"));
+        meta.set("operator", promptLine("Operator"));
         meta.set("LED_serial", promptLine("LED serial"));
         meta.set("PD_serial", promptLine("PD serial"));
-        meta.set("amp_gain", promptLine("Ganancia TIA+OPAM"));
-        meta.set("ambient_light_state", promptLine("Luz ambiente (on/off/nivel)"));
+        meta.set("amp_gain", promptLine("Amplifier gain (TIA+OPAM)"));
+        meta.set("ambient_light_state", promptLine("Ambient light (on/off/level)"));
         meta.set("I_LED", promptLine("I_LED [mA] (manual)"));
         meta.set("T_ambient", promptLine("T_ambient [C] (manual)"));
-        meta.set("robot_repeatability_mm", promptLine("Repetibilidad UR5 [mm] (datasheet)"));
-        meta.set("codebook_id", promptLine("ID del codebook (Enter=TCOM_K9)"));
+        meta.set("robot_repeatability_mm", promptLine("UR5 repeatability [mm] (datasheet)"));
+        meta.set("codebook_id", promptLine("Codebook ID (Enter=TCOM_K9)"));
         meta.set("K_orientations", cfg::K_ORIENTATIONS);
         meta.set("M_repeats", cfg::M_REPEATS);
         meta.set("n_tilt_scans_per_point", cfg::N_TILT_SCANS_PER_POINT);
@@ -179,15 +180,15 @@ int main() {
         meta.set("daq_sample_rate_hz", cfg::DAQ_FSAMPLE);
         meta.set("n_samples", cfg::DAQ_N_SAMPLES);
 
-        // V_dark: una sola medida por sesion (LED apagado). Metadata, no por fila.
-        cout << "\n[V_dark] APAGUE el LED y pulse Enter para medir la linea base (s = saltar)...";
+        // V_dark: measured once per session (LED off). Stored in metadata, not per row.
+        cout << "\n[V_dark] Turn the LED OFF and press Enter to measure the baseline (s = skip)...";
         { string tmp; getline(cin, tmp);
           if (tmp != "s" && tmp != "S") {
               DaqStats dark = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
               if (dark.ok) { meta.set("v_dark_mean", dark.mean); meta.set("v_dark_median", dark.median); meta.set("v_dark_std", dark.std); }
               else meta.set("v_dark_mean", std::string("NA"));
-              cout << "  V_dark media=" << (dark.ok ? dark.mean : 0.0) << " V\n";
-              cout << "[V_dark] ENCIENDA el LED y pulse Enter para iniciar...";
+              cout << "  V_dark mean = " << (dark.ok ? dark.mean : 0.0) << " V\n";
+              cout << "[V_dark] Turn the LED ON and press Enter to start...";
               { string t2; getline(cin, t2); }
           } else {
               meta.set("v_dark_mean", std::string("NA"));
@@ -201,26 +202,41 @@ int main() {
         master.open(sessionDir + "/master.csv", masterHeader);
         kp1.open(sessionDir + "/kp1.csv", kp1Header);
 
-        cout << "Reseteando gimbal a (0,0)...\n";
+        cout << "Resetting gimbal to (0,0)...\n";
         gimbal.rotateMotorX(0.0); Sleep(2000);
         gimbal.rotateMotorY(0.0); Sleep(2000);
         startIndex = 0; pointCounter = 0;
     }
 
     if (!master.isOpen() || !kp1.isOpen()) {
-        cerr << "Error: no se pudieron abrir los CSV de la sesion.\n";
+        cerr << "Error: could not open the session CSV files.\n";
         receiverFinished(sock); closesocket(sock); WSACleanup(); return 1;
     }
     master.stream() << std::setprecision(8);
     kp1.stream() << std::setprecision(8);
-    cout << "\nSesion: " << sessionDir << "\n\n";
 
-    // Generador de tilt aleatorio (uniforme)
+    // Console logger: mirror everything printed to the console into <session>/run.log
+    // so there is a record of the run in case it is interrupted. Restored on exit.
+    datalog::ConsoleLogger logger;
+    logger.start(sessionDir + "/run.log", resuming);
+
+    cout << "\nSession folder: " << sessionDir << "\n";
+    cout << "Console log:    " << sessionDir << "/run.log\n\n";
+
+    // Uniform random tilt generator
     std::mt19937 rng(std::random_device{}());
     std::uniform_real_distribution<double> tiltDist(0.0, cfg::TILT_MAX_DEG);
     std::uniform_real_distribution<double> azDist(0.0, 360.0);
 
-    // Helpers de escritura ----------------------------------------------------
+    // Human-readable voltage for console/log (mean of the acquisition window).
+    auto vStr = [](const DaqStats& st) -> string {
+        if (!st.ok) return std::string("ACQ_FAIL");
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(6) << st.mean << " V";
+        return oss.str();
+    };
+
+    // CSV writing helpers -----------------------------------------------------
     auto writeStats = [](datalog::CsvWriter& w, const DaqStats& st) {
         if (st.ok) w.stream() << st.mean << "," << st.median << "," << st.std << "," << st.n << "," << cfg::DAQ_FSAMPLE << "\n";
         else       w.stream() << "NA,NA,NA,0," << cfg::DAQ_FSAMPLE << "\n";
@@ -248,7 +264,7 @@ int main() {
         writeStats(kp1, st);
     };
 
-    // Mueve el gimbal a la orientacion i del codebook. Devuelve false si error de motor.
+    // Moves the gimbal to codebook orientation i. Returns false on motor error.
     auto setCodebook = [&](int i, double& ntIncl, double& ntAz) -> bool {
         ntIncl = cfg::CODEBOOK[i][0];
         ntAz   = cfg::CODEBOOK[i][1];
@@ -257,26 +273,40 @@ int main() {
     };
 
     // -------------------------------------------------------------------------
-    // Bucle principal por punto
+    // Main loop over points
     // -------------------------------------------------------------------------
-    for (int idx = startIndex; idx < static_cast<int>(positions.size()); idx++) {
+    const int totalPoints = static_cast<int>(positions.size());
+    for (int idx = startIndex; idx < totalPoints; idx++) {
         Position& p = positions[idx];
-        if (p.done) { datalog::saveState(stateFile, { idx + 1, "", sessionStamp, pointCounter, true }); continue; }
-
-        sendCoordinates(sock, p.x, p.y, p.z);
-        string reach = receiveResponse(sock, 3);
-        if (reach != "reachable") {
-            cout << "[skip] Punto (" << p.x << "," << p.y << "," << p.z << ") no alcanzable (" << reach << ")\n";
+        if (p.done) {
+            cout << "[" << datalog::clockTime() << "] Point " << (idx + 1) << "/" << totalPoints
+                 << " already marked done -> skip.\n";
             datalog::saveState(stateFile, { idx + 1, "", sessionStamp, pointCounter, true });
             continue;
         }
 
+        cout << "\n#########################################################\n";
+        cout << "# POINT " << (idx + 1) << "/" << totalPoints
+             << "   target = (" << p.x << ", " << p.y << ", " << p.z << ")\n";
+        cout << "#########################################################\n";
+
+        cout << "[" << datalog::clockTime() << "] Moving receiver to target...\n";
+        sendCoordinates(sock, p.x, p.y, p.z);
+        string reach = receiveResponse(sock, 3);
+        if (reach != "reachable") {
+            cout << "  -> NOT REACHABLE (server: '" << reach << "'). Skipping point.\n";
+            datalog::saveState(stateFile, { idx + 1, "", sessionStamp, pointCounter, true });
+            continue;
+        }
+        cout << "  -> reachable.\n";
+
         pointCounter++;
         const string pointId = sessionStamp + "_" + std::to_string(pointCounter);
-        cout << "=== Punto " << pointCounter << " idx " << (idx + 1) << "/" << positions.size()
-             << "  (" << p.x << ", " << p.y << ", " << p.z << ")  id=" << pointId << " ===\n";
+        cout << "  point_id = " << pointId << "\n";
 
-        // ---- (1) Scan vertical {K} ----
+        // ---- STAGE 1/3: Vertical baseline scan {K} (PD -> zenith) ----
+        cout << "\n--- STAGE 1/3: Vertical baseline scan {K} (PD -> zenith) ---\n";
+        cout << "[" << datalog::clockTime() << "] Setting PD to vertical...\n";
         receiverPointingToCeil(sock);
         RobotPose poseV = receivePose(sock, 40);
         if (poseV.valid) {
@@ -284,7 +314,7 @@ int main() {
                 for (int i = 0; i < cfg::K_ORIENTATIONS; i++) {
                     double ntIncl, ntAz;
                     if (!setCodebook(i, ntIncl, ntAz)) {
-                        cerr << "[ABORT] Error de motor en orientacion " << i << ".\n";
+                        cerr << "[ABORT] Motor error at codebook orientation " << (i + 1) << ".\n";
                         master.close(); kp1.close();
                         datalog::saveState(stateFile, { idx, "", sessionStamp, pointCounter - 1, true });
                         receiverFinished(sock); closesocket(sock); WSACleanup(); return 1;
@@ -292,46 +322,56 @@ int main() {
                     Sleep(cfg::STABILIZATION_TIME_MS);
                     DaqStats st = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
                     writeMaster(pointId, p, "vertical", 0.0, 0.0, poseV, i + 1, ntIncl, ntAz, r, st);
+                    cout << "    [vertical rep " << r << "/" << cfg::M_REPEATS << "] LED orient "
+                         << (i + 1) << "/" << cfg::K_ORIENTATIONS
+                         << " (nt_incl=" << ntIncl << ", nt_az=" << ntAz << ")  ->  V = " << vStr(st) << "\n";
                 }
             }
-            cout << "  scan vertical {K} OK\n";
+            cout << "  STAGE 1 done (vertical {K}).\n";
         } else {
-            cout << "  [aviso] pose vertical invalida; se omite el scan vertical.\n";
+            cout << "  [WARN] Invalid vertical pose; skipping STAGE 1.\n";
         }
 
-        // ---- (2) Medicion cooperativa {K+1} ----
+        // ---- STAGE 2/3: Cooperative measurement {K+1} (PD -> LED, LED -> PD) ----
+        cout << "\n--- STAGE 2/3: Cooperative measurement {K+1} ---\n";
+        cout << "[" << datalog::clockTime() << "] Setting PD pointed to LED...\n";
         receiverPointingToTransmitter(sock);
         RobotPose poseP = receivePose(sock, 40);
         if (poseP.valid) {
             double ntInclKp1, ntAzKp1;
             ledToReceiver(p.x, p.y, p.z, ntInclKp1, ntAzKp1);
+            cout << "  Aiming LED to receiver (nt_incl=" << ntInclKp1 << ", nt_az=" << ntAzKp1 << ")...\n";
             int mr = gimbal.setTransmitterOrientation(ntInclKp1, fmod(ntAzKp1 + cfg::AZIMUTH_CMD_OFFSET, 360.0));
             if (mr == 0) {
                 Sleep(cfg::STABILIZATION_TIME_MS);
                 for (int r = 1; r <= cfg::M_REPEATS; r++) {
                     DaqStats st = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
                     writeKp1(pointId, r, ntInclKp1, ntAzKp1, poseP, st);
+                    cout << "    [K+1 rep " << r << "/" << cfg::M_REPEATS << "]  ->  V = " << vStr(st) << "\n";
                 }
-                cout << "  medicion (K+1) OK  (nt_incl=" << ntInclKp1 << ", nt_az=" << ntAzKp1 << ")\n";
+                cout << "  STAGE 2 done (K+1).\n";
             } else {
-                cout << "  [aviso] error de motor en (K+1); se omite.\n";
+                cout << "  [WARN] Motor error at (K+1); skipping.\n";
             }
         } else {
-            cout << "  [aviso] pose 'pointed' invalida; se omite (K+1).\n";
+            cout << "  [WARN] Invalid 'pointed' pose; skipping (K+1).\n";
         }
 
-        // ---- (3) Scans con tilt aleatorio {K} ----
+        // ---- STAGE 3/3: Random-tilt scans {K} (PD tilted) ----
+        cout << "\n--- STAGE 3/3: Random-tilt scans {K} (PD tilted) ---\n";
         for (int t = 0; t < cfg::N_TILT_SCANS_PER_POINT; t++) {
             double theta = tiltDist(rng);
             double az    = azDist(rng);
+            cout << "[" << datalog::clockTime() << "] Tilt scan " << (t + 1) << "/"
+                 << cfg::N_TILT_SCANS_PER_POINT << ": PD theta=" << theta << " deg, az=" << az << " deg\n";
             receiverTilt(sock, theta, az);
             RobotPose poseT = receivePose(sock, 40);
-            if (!poseT.valid) { cout << "  [aviso] pose tilt invalida; se omite este tilt.\n"; continue; }
+            if (!poseT.valid) { cout << "  [WARN] Invalid tilt pose; skipping this tilt.\n"; continue; }
             for (int r = 1; r <= cfg::M_REPEATS; r++) {
                 for (int i = 0; i < cfg::K_ORIENTATIONS; i++) {
                     double ntIncl, ntAz;
                     if (!setCodebook(i, ntIncl, ntAz)) {
-                        cerr << "[ABORT] Error de motor (tilt) en orientacion " << i << ".\n";
+                        cerr << "[ABORT] Motor error at codebook orientation " << (i + 1) << " (tilt scan).\n";
                         master.close(); kp1.close();
                         datalog::saveState(stateFile, { idx, "", sessionStamp, pointCounter - 1, true });
                         receiverFinished(sock); closesocket(sock); WSACleanup(); return 1;
@@ -339,30 +379,38 @@ int main() {
                     Sleep(cfg::STABILIZATION_TIME_MS);
                     DaqStats st = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
                     writeMaster(pointId, p, "tilt", theta, az, poseT, i + 1, ntIncl, ntAz, r, st);
+                    cout << "    [tilt#" << (t + 1) << " rep " << r << "/" << cfg::M_REPEATS << "] LED orient "
+                         << (i + 1) << "/" << cfg::K_ORIENTATIONS
+                         << " (nt_incl=" << ntIncl << ", nt_az=" << ntAz << ")  ->  V = " << vStr(st) << "\n";
                 }
             }
-            cout << "  scan tilt {K} OK  (theta=" << theta << ", az=" << az << ")\n";
         }
+        cout << "  STAGE 3 done (tilt {K}).\n";
 
-        // Fin del punto: liberar al servidor y guardar estado
+        // End of point: release the server, mark the point as recorded, persist state.
         receiverFinished(sock);
+        p.done = true;
+        savePositions(cfg::S3_POSITIONS_FILE, positions);   // write '1' in the done column
         datalog::saveState(stateFile, { idx + 1, "", sessionStamp, pointCounter, true });
-        cout << "\n";
+        cout << "[" << datalog::clockTime() << "] POINT " << (idx + 1) << "/" << totalPoints
+             << " COMPLETED and marked done in the positions file.\n";
     }
 
     master.close();
     kp1.close();
     datalog::deleteState(stateFile);
 
+    cout << "\n=========================================================\n";
+    cout << " SPATIAL CAMPAIGN COMPLETED\n";
     cout << "=========================================================\n";
-    cout << " CAMPANA ESPACIAL COMPLETADA\n";
-    cout << "=========================================================\n";
-    cout << "  Puntos registrados: " << pointCounter << "\n";
-    cout << "  Datos: " << sessionDir << "\n";
+    cout << "  Points recorded: " << pointCounter << "\n";
+    cout << "  Data folder:     " << sessionDir << "\n";
+    cout << "  Console log:     " << sessionDir << "/run.log\n";
 
+    logger.stop();
     closesocket(sock);
     WSACleanup();
-    cout << "Pulse Enter para salir...";
+    cout << "Press Enter to exit...";
     { string tmp; getline(cin, tmp); }
     return 0;
 }

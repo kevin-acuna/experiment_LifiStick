@@ -16,6 +16,7 @@
 #include <vector>
 #include <utility>
 #include <fstream>
+#include <memory>
 
 namespace datalog {
 
@@ -52,6 +53,29 @@ public:
     bool isOpen() const { return f_.is_open(); }
 private:
     std::ofstream f_;
+};
+
+// ---- Console logger (tee a archivo) -----------------------------------------
+// Duplica TODO lo que se imprime por std::cout / std::cerr a un archivo de log,
+// para conservar un registro de la corrida por si se interrumpe. Al destruirse
+// (o con stop()) restaura los buffers originales.
+class TeeBuf;  // detalle de implementacion (definido en el .cpp)
+
+class ConsoleLogger {
+public:
+    ConsoleLogger() = default;
+    ~ConsoleLogger();
+    // Abre el archivo (append=true para reanudar) y redirige cout/cerr.
+    bool start(const std::string& path, bool append = false);
+    // Restaura cout/cerr y cierra el archivo.
+    void stop();
+    bool isOpen() const;
+private:
+    std::ofstream            file_;
+    std::unique_ptr<TeeBuf>  outTee_;
+    std::unique_ptr<TeeBuf>  errTee_;
+    std::streambuf*          oldCout_ = nullptr;
+    std::streambuf*          oldCerr_ = nullptr;
 };
 
 // ---- Estado de reanudacion (resume) -----------------------------------------
