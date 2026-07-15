@@ -41,7 +41,7 @@
 
 using namespace std;
 
-static constexpr double PI = 3.14159265358979323846;
+static constexpr double kPi = 3.14159265358979323846;
 
 static string promptLine(const string& label) {
     cout << label << ": ";
@@ -59,8 +59,8 @@ static void ledToReceiver(double rx, double ry, double rz, double& incl, double&
     double dx = rx, dy = ry, dz = rz - cfg::TRANSMITTER_H;  // dz < 0 (receptor debajo)
     double r = std::sqrt(dx * dx + dy * dy + dz * dz);
     if (r < 1e-9) { incl = 0.0; az = 0.0; return; }
-    incl = std::acos(-dz / r) * 180.0 / PI;   // 0 = nadir
-    az = std::atan2(dy, dx) * 180.0 / PI;
+    incl = std::acos(-dz / r) * 180.0 / kPi;   // 0 = nadir
+    az = std::atan2(dy, dx) * 180.0 / kPi;
     if (az < 0) az += 360.0;
 }
 
