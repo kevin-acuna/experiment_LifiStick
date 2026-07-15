@@ -1,10 +1,46 @@
-*.ipch
+# ============================================================
+# Notas / comentarios locales
+# ============================================================
 Comentarios/
 
-Test1/.vs/
-Test1/test/
-Test1/x64/
-Test1/Debug
-Test1/src/server/__pycache__
+# ============================================================
+# Artefactos de build de Visual Studio (cualquier proyecto)
+# ============================================================
+.vs/
+[Dd]ebug/
+[Rr]elease/
+[Xx]64/
+[Xx]86/
+[Ww]in32/
+[Bb]uild/
+# Carpeta intermedia de build nombrada como el proyecto ("test")
+test/
 
-Test1/output/*
+*.ipch
+*.aps
+*.pch
+*.pdb
+*.idb
+*.ilk
+*.obj
+*.iobj
+*.ipdb
+*.tlog
+*.exp
+*.user
+*.VC.db
+*.VC.opendb
+UpgradeLog*.htm
+UpgradeLog*.XML
+
+# ============================================================
+# Python (servidor / emulador)
+# ============================================================
+__pycache__/
+*.pyc
+*.pyo
+
+# ============================================================
+# Salidas de datos generadas por los experimentos
+# ============================================================
+output/
