@@ -1,0 +1,74 @@
+
+Session folder: output/sub3_spatial/20260717_142915
+Console log:    output/sub3_spatial/20260717_142915/run.log
+
+
+#########################################################
+# POINT 1/5   target = (0.5, -0.5, 1.2)
+#########################################################
+[14:29:29] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 2/5   target = (0.5, -0.4, 1.2)
+#########################################################
+[14:29:29] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 3/5   target = (0.5, -0.3, 1.2)
+#########################################################
+[14:29:29] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 4/5   target = (0.25, -0.5, 1.2)
+#########################################################
+[14:29:29] Moving receiver to target...
+  -> reachable.
+  point_id = 20260717_142915_1
+
+--- STAGE 1/3: Vertical baseline scan {K} (PD -> zenith) ---
+[14:29:29] Setting PD to vertical...
+[Info] Sending command for receiver to face upward (vertical)...
+    [vertical rep 1/1] LED orient 1/9 (nt_incl=0, nt_az=0)  ->  V = 0.073654 V
+    [vertical rep 1/1] LED orient 2/9 (nt_incl=34, nt_az=182)  ->  V = 0.073396 V
+    [vertical rep 1/1] LED orient 3/9 (nt_incl=37, nt_az=267)  ->  V = 0.073396 V
+    [vertical rep 1/1] LED orient 4/9 (nt_incl=37, nt_az=355)  ->  V = 10.938389 V
+    [vertical rep 1/1] LED orient 5/9 (nt_incl=42, nt_az=78)  ->  V = 10.938389 V
+    [vertical rep 1/1] LED orient 6/9 (nt_incl=53, nt_az=97)  ->  V = 10.938389 V
+    [vertical rep 1/1] LED orient 7/9 (nt_incl=57, nt_az=179)  ->  V = 10.938389 V
+    [vertical rep 1/1] LED orient 8/9 (nt_incl=58, nt_az=360)  ->  V = 10.938389 V
+    [vertical rep 1/1] LED orient 9/9 (nt_incl=58, nt_az=272)  ->  V = 10.938389 V
+  STAGE 1 done (vertical {K}).
+
+--- STAGE 2/3: Cooperative measurement {K+1} ---
+[14:30:40] Setting PD pointed to LED...
+[Info] Sending command for receiver to face the transmitter (pointed)...
+  Aiming LED to receiver (nt_incl=34.9447, nt_az=296.565)...
+    [K+1 rep 1/1]  ->  V = 9.729533 V
+  STAGE 2 done (K+1).
+
+--- STAGE 3/3: Random-tilt scans {K} (PD tilted) ---
+[14:30:56] Tilt scan 1/1: PD theta=17.3632 deg, az=265.035 deg
+[Info] Sending tilt command: theta=17.3632 deg, az=265.035 deg...
+    [tilt#1 rep 1/1] LED orient 1/9 (nt_incl=0, nt_az=0)  ->  V = 10.938389 V
+    [tilt#1 rep 1/1] LED orient 2/9 (nt_incl=34, nt_az=182)  ->  V = 10.938389 V
+    [tilt#1 rep 1/1] LED orient 3/9 (nt_incl=37, nt_az=267)  ->  V = 10.938389 V
+    [tilt#1 rep 1/1] LED orient 4/9 (nt_incl=37, nt_az=355)  ->  V = 10.938389 V
+    [tilt#1 rep 1/1] LED orient 5/9 (nt_incl=42, nt_az=78)  ->  V = 10.938389 V
+    [tilt#1 rep 1/1] LED orient 6/9 (nt_incl=53, nt_az=97)  ->  V = 10.938389 V
+    [tilt#1 rep 1/1] LED orient 7/9 (nt_incl=57, nt_az=179)  ->  V = 10.938389 V
+    [tilt#1 rep 1/1] LED orient 8/9 (nt_incl=58, nt_az=360)  ->  V = 10.938389 V
+    [tilt#1 rep 1/1] LED orient 9/9 (nt_incl=58, nt_az=272)  ->  V = 10.938389 V
+  STAGE 3 done (tilt {K}).
+[Info] Sending command for receiver to face the transmitter (finish)...
+[14:32:10] POINT 4/5 COMPLETED and marked done in the positions file.
+[14:32:10] Point 5/5 already marked done -> skip.
+
+=========================================================
+ SPATIAL CAMPAIGN COMPLETED
+=========================================================
+  Points recorded: 1
+  Data folder:     output/sub3_spatial/20260717_142915
+  Console log:     output/sub3_spatial/20260717_142915/run.log

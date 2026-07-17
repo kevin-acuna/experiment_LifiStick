@@ -1,0 +1,31 @@
+
+Session folder: output/sub3_spatial/20260717_151042
+Console log:    output/sub3_spatial/20260717_151042/run.log
+
+
+#########################################################
+# POINT 1/5   target = (0.5, -0.5, 1.2)
+#########################################################
+[15:10:52] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 2/5   target = (0.5, -0.4, 1.2)
+#########################################################
+[15:10:52] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 3/5   target = (0.5, -0.3, 1.2)
+#########################################################
+[15:10:52] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+[15:10:52] Point 4/5 already marked done -> skip.
+[15:10:52] Point 5/5 already marked done -> skip.
+
+=========================================================
+ SPATIAL CAMPAIGN COMPLETED
+=========================================================
+  Points recorded: 0
+  Data folder:     output/sub3_spatial/20260717_151042
+  Console log:     output/sub3_spatial/20260717_151042/run.log
