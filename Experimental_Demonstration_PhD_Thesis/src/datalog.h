@@ -63,7 +63,11 @@ class TeeBuf;  // detalle de implementacion (definido en el .cpp)
 
 class ConsoleLogger {
 public:
-    ConsoleLogger() = default;
+    // Constructor y destructor definidos fuera de linea (en el .cpp), donde
+    // TeeBuf es un tipo completo. Esto evita el error "can't delete an
+    // incomplete type" que MSVC genera al instanciar el destructor de los
+    // miembros unique_ptr<TeeBuf> si estas funciones fueran inline aqui.
+    ConsoleLogger();
     ~ConsoleLogger();
     // Abre el archivo (append=true para reanudar) y redirige cout/cerr.
     bool start(const std::string& path, bool append = false);

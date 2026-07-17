@@ -121,6 +121,8 @@ private:
     std::streambuf* b_;
 };
 
+ConsoleLogger::ConsoleLogger() = default;
+
 ConsoleLogger::~ConsoleLogger() { stop(); }
 
 bool ConsoleLogger::start(const std::string& path, bool append) {
