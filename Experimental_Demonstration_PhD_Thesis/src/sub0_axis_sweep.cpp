@@ -113,6 +113,29 @@ static void measureVdarkToMetadata(const string& metadataPath) {
     }
 }
 
+// Startup alignment check: moves the gimbal to the nominal nadir (axis_angle = 0,
+// inclination 0) and WAITS for the operator to confirm alignment before sweeping.
+// This is the nominal LED->PD direction; the operator uses the live reading to
+// check that the maximum falls here (any offset is the mechanical/optical misalignment).
+static void alignmentCheck(instrument& gimbal) {
+    cout << "\n--- Alignment check (nominal nadir, axis_angle = 0) ---\n";
+    cout << "Moving gimbal to inclination 0 (LED pointing straight at the PD)...\n";
+    int mr = gimbal.setTransmitterOrientation(0.0, fmod(0.0 + cfg::AZIMUTH_CMD_OFFSET, 360.0));
+    if (mr != 0) cout << "  [Warn] Motor returned code " << mr << " while aligning.\n";
+    Sleep(cfg::STABILIZATION_TIME_MS);
+
+    while (true) {
+        DaqStats st = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
+        if (st.ok) cout << "  V(nadir) = " << std::fixed << std::setprecision(6)
+                        << st.mean << " V (std=" << st.std << ")\n";
+        else       cout << "  [Warn] Acquisition failed.\n";
+        cout << "Verify the LED is aligned with the PD. Press Enter to START the sweep, "
+                "or 'm' + Enter to measure again: ";
+        string in; getline(cin, in);
+        if (in != "m" && in != "M") break;
+    }
+}
+
 int main() {
     system("chcp 65001 > nul");
 
@@ -287,6 +310,12 @@ int main() {
     }
     // Fix the numeric format ONCE so every CSV row is consistent.
     csv.stream() << std::fixed << std::setprecision(6);
+
+    // -------------------------------------------------------------------------
+    // Alignment check: go to nominal nadir (axis_angle = 0) and wait for the
+    // operator to confirm the LED is aligned with the PD before sweeping.
+    // -------------------------------------------------------------------------
+    alignmentCheck(gimbal);
 
     // -------------------------------------------------------------------------
     // Main sweep loop
