@@ -52,8 +52,8 @@ inline constexpr int         SERVER_PORT = 12345;
 // =============================================================================
 inline constexpr double S1_INCLINATION_START = 0.0;   // [deg]
 inline constexpr double S1_INCLINATION_END   = 90.0;  // [deg]
-inline constexpr double S1_INCLINATION_STEP  = 1.0;   // [deg]
-inline constexpr double S1_AZIMUTH_STEP      = 1.0;   // [deg] (0 a 360, 360 excluido)
+inline constexpr double S1_INCLINATION_STEP  = 30.0;   // [deg]
+inline constexpr double S1_AZIMUTH_STEP      = 90.0;   // [deg] (0 a 360, 360 excluido)
 
 // Posicion fija del PD durante el barrido (marco global)
 inline constexpr double S1_RECEIVER_X = 0.0;
