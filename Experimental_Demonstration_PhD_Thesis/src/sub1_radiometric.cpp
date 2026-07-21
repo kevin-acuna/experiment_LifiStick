@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <cctype>
 #include <iomanip>
 
 #include "stdafx.h"
@@ -44,6 +45,23 @@ static string promptLine(const string& label) {
     if (a == string::npos) return "NA";
     size_t b = line.find_last_not_of(" \t\r\n");
     return line.substr(a, b - a + 1);
+}
+
+// Reads a numeric value (meters) from the console, repeating until valid.
+// Uses getline to stay consistent with the other getline-based prompts.
+static double promptDouble(const string& label) {
+    while (true) {
+        cout << label << ": ";
+        string line;
+        getline(cin, line);
+        try {
+            size_t pos = 0;
+            double value = stod(line, &pos);
+            while (pos < line.size() && isspace(static_cast<unsigned char>(line[pos]))) pos++;
+            if (pos == line.size()) return value;
+        } catch (...) {}
+        cout << "  [Error] Invalid number, please try again.\n";
+    }
 }
 
 int main() {
@@ -86,8 +104,15 @@ int main() {
     initializeWinsock();
     SOCKET sock = connectToServer(cfg::SERVER_IP, cfg::SERVER_PORT);
 
-    // Robot base
-    sendCoordinates(sock, cfg::ROBOT_OFFSET_X, cfg::ROBOT_OFFSET_Y, cfg::ROBOT_BASE_Z);
+    // Robot base position (global frame). Asked to the operator because the
+    // reachability of the fixed PD target depends on where the robot is placed.
+    // The calibration offset (ROBOT_OFFSET_X/Y) is added on top of the entered value.
+    cout << "\n--- Robot base position (global frame, meters) ---\n";
+    const double robotX = promptDouble("Robot base X [m]") + cfg::ROBOT_OFFSET_X;
+    const double robotY = promptDouble("Robot base Y [m]") + cfg::ROBOT_OFFSET_Y;
+    cout << "Sending robot base to (" << robotX << ", " << robotY << ", "
+         << cfg::ROBOT_BASE_Z << ") [calibration offset included]...\n";
+    sendCoordinates(sock, robotX, robotY, cfg::ROBOT_BASE_Z);
 
     // PD (receiver) position
     cout << "Sending PD to (" << cfg::S1_RECEIVER_X << ", " << cfg::S1_RECEIVER_Y
