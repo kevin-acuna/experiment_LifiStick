@@ -1,0 +1,26 @@
+Session folder: output/sub0_axis_sweep/20260721_163747
+Console log:    output/sub0_axis_sweep/20260721_163747/run.log
+=========================================================
+ SUB-DATASET 0: Single-axis R(phi) cut
+=========================================================
+  Axis:               X
+  Angle:              -90 to 90 deg (step 1)
+  Fixed LED-PD dist:  1 m
+  Acquisition:        1 s (1000 samples @ 1000 Hz)
+  Total orientations: 181
+  Estimated time:     4.5 min
+=========================================================
+
+--- Robot base position (global frame, meters) ---
+Robot base X [m]: Robot base Y [m]: Sending robot base to (-0.5, -0.5, 0.6) [calibration offset included]...
+Sending PD to (0.0, 0.0, 1.0)...
+[Info] Sending command for receiver to face upward (vertical)...
+PD in position, pointing to the zenith.
+
+--- Session metadata (press Enter to skip a field) ---
+Operator: LED serial: PD serial: I_LED [mA] (manual): T_ambient [C] (manual): T_LED [C] (manual): Moving gimbal to (0,0)...
+
+--- Alignment check (nominal nadir, axis_angle = 0) ---
+Moving gimbal to inclination 0 (LED pointing straight at the PD)...
+  V(nadir) = 10.938389 V (std=0.000000)
+Verify the LED is aligned with the PD. Press Enter to START the sweep, or 'm' + Enter to measure again: 
