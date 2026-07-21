@@ -18,6 +18,7 @@ src/
   instrument.h/.cpp       Gimbal Thorlabs + LED (sin cambios)
   network_utils.h/.cpp    Cliente del servidor del robot (+ receivePose, receiverTilt)
   positions.h/.cpp        Carga de posiciones (sin cambios)
+  sub0_axis_sweep.cpp     Sub-dataset 0: barrido de un solo eje (X/Y/ambos)
   sub1_radiometric.cpp    Sub-dataset 1: calibracion radiometrica R(phi)
   sub2_constant_c.cpp     Sub-dataset 2: calibracion de la constante C
   sub3_spatial.cpp        Sub-dataset 3: campana espacial ({K}, {K+1}, tilt)
@@ -34,6 +35,7 @@ Solo **un** programa de experimento se compila a la vez. En `test.vcxproj`,
 en el `ItemGroup` de `ClCompile`, pon `ExcludedFromBuild=false` en el programa
 deseado y `true` en los otros dos:
 
+- `sub0_axis_sweep.cpp`
 - `sub1_radiometric.cpp`
 - `sub2_constant_c.cpp`
 - `sub3_spatial.cpp`  (activo por defecto)
@@ -71,10 +73,17 @@ Compila en la configuracion **Debug | x64** (la unica con las rutas de NI-DAQmx)
 Cada medida guarda el **resumen estadistico** (`v_mean`, `v_median`, `v_std`,
 `n_samples`, `fs`) en vez de las muestras crudas. `v_std` conserva la varianza
 empirica (sigma^2). `V_dark`, `I_LED`, temperaturas y demas trazabilidad van en
-`metadata.txt` de cada sesion (metadata manual; `V_dark` se mide una sola vez).
+`metadata.txt` de cada sesion (metadata manual; `V_dark` se mide una sola vez, al
+**final** del barrido para no perturbar la señal del LED).
+
+### Sub-dataset 0 — `output/sub0_axis_sweep/<ts>/data.csv`
+`sample_id, date, time, axis, axis_angle, phi_cmd, azimuth_cmd, d_fixed, v_mean, v_median, v_std, n_samples, fs`
+
+Barrido de un solo eje: `axis` (`X`/`Y`) y `axis_angle` con signo en `[-90, 90]`,
+mapeado a `phi_cmd = |axis_angle|` y `azimuth_cmd` = semieje +/- (X: 0/180, Y: 90/270).
 
 ### Sub-dataset 1 — `output/sub1_radiometric/<ts>/data.csv`
-`sample_id, date, time, phi_cmd, azimuth_cmd, phi_meas, d_fixed, v_mean, v_median, v_std, n_samples, fs`
+`sample_id, date, time, phi_cmd, azimuth_cmd, d_fixed, v_mean, v_median, v_std, n_samples, fs`
 
 ### Sub-dataset 2 — `output/sub2_constant_c/<ts>/data.csv`
 `sample_id, date, time, d_calib, repeat_id, v_mean, v_median, v_std, n_samples, fs`

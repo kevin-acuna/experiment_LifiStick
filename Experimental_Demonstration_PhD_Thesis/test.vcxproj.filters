@@ -30,6 +30,9 @@
     <ClCompile Include="src\datalog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\sub0_axis_sweep.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\sub1_radiometric.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

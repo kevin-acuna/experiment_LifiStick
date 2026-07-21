@@ -149,6 +149,9 @@
     <ClCompile Include="src\datalog.cpp" />
     <!-- Programas de experimento: solo UNO activo a la vez en Debug|x64. -->
     <!-- Cambia cual compila poniendo su ExcludedFromBuild en false y los otros en true. -->
+    <ClCompile Include="src\sub0_axis_sweep.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\sub1_radiometric.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>

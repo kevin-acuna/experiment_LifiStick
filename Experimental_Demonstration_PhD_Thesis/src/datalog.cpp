@@ -165,14 +165,19 @@ void saveState(const std::string& stateFile, const ResumeState& s) {
 ResumeState loadState(const std::string& stateFile) {
     ResumeState s;
     std::ifstream f(stateFile);
-    if (f.is_open()) {
+    if (!f.is_open()) return s;
+    try {
         std::string line;
         if (std::getline(f, line)) s.nextIndex = std::stoi(line);
         if (std::getline(f, line)) s.csvPath = line;
         if (std::getline(f, line)) s.sessionStamp = line;
         if (std::getline(f, line)) s.counter = std::stoi(line);
-        s.valid = true;
-        f.close();
+        // Only treat the state as resumable if the essential fields are present.
+        s.valid = !s.sessionStamp.empty();
+    } catch (const std::exception& e) {
+        std::cerr << "[Warn] Ignoring corrupt state file '" << stateFile
+                  << "': " << e.what() << "\n";
+        s = ResumeState{};  // valid == false
     }
     return s;
 }

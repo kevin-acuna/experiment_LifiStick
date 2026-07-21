@@ -63,6 +63,23 @@ inline constexpr double S1_RECEIVER_Z = 1.0;
 inline constexpr double S1_D_FIXED = TRANSMITTER_H - S1_RECEIVER_Z;
 
 // =============================================================================
+// Sub-dataset 0 - Barrido de un solo eje (corte del patron R(phi))
+// Igual que sub1 pero, en vez del barrido completo de azimut, recorre un unico
+// eje (X, Y o ambos) con un angulo CON SIGNO de S0_ANGLE_START a S0_ANGLE_END.
+// El angulo con signo se mapea a (inclinacion=|a|, azimut = semieje +/-). Reutiliza
+// la posicion fija del PD (S1_RECEIVER_*) y la distancia (S1_D_FIXED) de sub1.
+// =============================================================================
+inline constexpr double S0_ANGLE_START = -90.0;  // [deg]
+inline constexpr double S0_ANGLE_END   =  90.0;  // [deg]
+inline constexpr double S0_ANGLE_STEP  =  10.0;  // [deg]
+
+// Azimut logico de cada semieje (lado positivo / negativo del angulo con signo).
+inline constexpr double S0_AXIS_X_AZ_POS = 0.0;    // eje X, angulo > 0
+inline constexpr double S0_AXIS_X_AZ_NEG = 180.0;  // eje X, angulo < 0
+inline constexpr double S0_AXIS_Y_AZ_POS = 90.0;   // eje Y, angulo > 0
+inline constexpr double S0_AXIS_Y_AZ_NEG = 270.0;  // eje Y, angulo < 0
+
+// =============================================================================
 // Sub-dataset 2 - Calibracion de la constante radiometrica C
 // PD bajo el LED, LED al nadir, PD al cenit, a distancias conocidas.
 // =============================================================================
