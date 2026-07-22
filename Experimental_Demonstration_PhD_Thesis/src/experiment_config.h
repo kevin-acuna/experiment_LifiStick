@@ -71,7 +71,7 @@ inline constexpr double S1_D_FIXED = TRANSMITTER_H - S1_RECEIVER_Z;
 // =============================================================================
 inline constexpr double S0_ANGLE_START = -90.0;  // [deg]
 inline constexpr double S0_ANGLE_END   =  90.0;  // [deg]
-inline constexpr double S0_ANGLE_STEP  =  1.0;  // [deg]
+inline constexpr double S0_ANGLE_STEP  =  2.0;  // [deg]
 
 // Azimut logico de cada semieje (lado positivo / negativo del angulo con signo).
 inline constexpr double S0_AXIS_X_AZ_POS = 0.0;    // eje X, angulo > 0
