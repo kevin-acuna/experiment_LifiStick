@@ -67,12 +67,14 @@ int instrument::rotateMotor(int serialNo, double deg)
     const double OFFSET_MOTOR_X_CENTER = +2.0; // Offset calibration for motor X - External
     const double OFFSET_MOTOR_Y_CENTER = -2.0; // Offset calibration for motor Y - Internal
 
-    // Recalibrado a partir de los barridos de un solo eje de sub0 (2026-07-21):
-    //   corte X (mueve motor Y): pico en +1.3 deg  -> OFFSET_Y = 1.3 - 1.5 = -0.2 deg
-    //   corte Y (mueve motor X): pico en -1.0 deg  -> OFFSET_X = 1.0 + 1.5 = +2.5 deg
-    // Cada corte aisla un motor, por lo que estos offsets centran tambien la
-    // reorientacion 2D (inclinacion+azimut) usada en sub3. Valores previos: X=+1.5, Y=-1.5.
-    const double OFFSET_MOTOR_X_OWP = +2.5; // Offset calibration for motor X - External
+    // Recalibrado a partir de los barridos de un solo eje de sub0 (2026-07-22):
+    //   corte X (mueve motor Y): pico en +1.3 deg  -> OFFSET_Y = 1.3 - 1.5 = -0.2 deg  (pico centrado, flancos simetricos)
+    //   corte Y (mueve motor X): pico en 0 deg, pero EJE DE SIMETRIA en ~+1.5 deg (corte
+    //     intrinsecamente sesgado). Se prioriza SIMETRIA sobre pico: OFFSET_X = +2.5 - 1.5 = +1.0 deg.
+    // NOTA (sub3): OFFSET_X se aplica al motor X en TODAS las orientaciones; al centrar el
+    // eje de simetria (en vez del pico) el corte Y queda simetrico pero su pico cae en ~-1.5 deg,
+    // lo que introduce un sesgo de puntería de ~1.5 deg en el motor X de sub3. Valores previos: X=+2.5, Y=-0.2.
+    const double OFFSET_MOTOR_X_OWP = +0.5; // Offset calibration for motor X - External (simetria del corte Y)
     const double OFFSET_MOTOR_Y_OWP = -0.2; // Offset calibration for motor Y - Internal
 
     // Apply calibration offset based on motor
