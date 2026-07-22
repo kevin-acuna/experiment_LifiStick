@@ -69,9 +69,9 @@ inline constexpr double S1_D_FIXED = TRANSMITTER_H - S1_RECEIVER_Z;
 // El angulo con signo se mapea a (inclinacion=|a|, azimut = semieje +/-). Reutiliza
 // la posicion fija del PD (S1_RECEIVER_*) y la distancia (S1_D_FIXED) de sub1.
 // =============================================================================
-inline constexpr double S0_ANGLE_START = -20.0;  // [deg]
-inline constexpr double S0_ANGLE_END   =  20.0;  // [deg]
-inline constexpr double S0_ANGLE_STEP  =  0.5;  // [deg]
+inline constexpr double S0_ANGLE_START = -90.0;  // [deg]
+inline constexpr double S0_ANGLE_END   =  90.0;  // [deg]
+inline constexpr double S0_ANGLE_STEP  =  2.0;  // [deg]
 
 // Azimut logico de cada semieje (lado positivo / negativo del angulo con signo).
 inline constexpr double S0_AXIS_X_AZ_POS = 0.0;    // eje X, angulo > 0

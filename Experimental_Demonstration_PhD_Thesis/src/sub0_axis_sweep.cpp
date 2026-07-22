@@ -182,10 +182,15 @@ int main() {
 
     datalog::ResumeState rs = datalog::loadState(stateFile);
     int startIndex = 0, counter = 0;
-    string sessionStamp, csvPath, sessionDir;
-    datalog::CsvWriter csv;
+    string sessionStamp, sessionDir;
+    datalog::CsvWriter csvX, csvY;   // one file per axis (data_x.csv / data_y.csv)
     const string header = "sample_id,date,time,axis,axis_angle,phi_cmd,azimuth_cmd,d_fixed,"
                           "v_mean,v_median,v_std,n_samples,fs";
+
+    // Active axes: a single axis writes one file; BOTH writes data_x.csv AND data_y.csv.
+    vector<string> activeAxes;
+    if (axis == "X" || axis == "BOTH") activeAxes.push_back("X");
+    if (axis == "Y" || axis == "BOTH") activeAxes.push_back("Y");
 
     bool resuming = rs.valid;
     if (resuming) {
@@ -196,7 +201,7 @@ int main() {
         if (op == 'Q') { receiverFinished(sock); closesocket(sock); WSACleanup(); return 0; }
         if (op == 'C') {
             startIndex = rs.nextIndex; counter = rs.counter;
-            sessionStamp = rs.sessionStamp; csvPath = rs.csvPath;
+            sessionStamp = rs.sessionStamp;
             sessionDir = baseDir + "/" + sessionStamp;
         } else {
             resuming = false;  // R -> new session
@@ -205,9 +210,16 @@ int main() {
     if (!resuming) {
         sessionStamp = datalog::stamp();
         sessionDir   = baseDir + "/" + sessionStamp;
-        csvPath      = sessionDir + "/data.csv";
     }
     datalog::ensureDir(sessionDir);
+
+    // Per-axis CSV paths (derived from the session folder). The '_x' / '_y' suffix
+    // tells which axis a file belongs to; for BOTH both files are written in parallel.
+    const string csvPathX = sessionDir + "/data_x.csv";
+    const string csvPathY = sessionDir + "/data_y.csv";
+    auto writerForAxis = [&](const string& ax) -> datalog::CsvWriter& { return ax == "X" ? csvX : csvY; };
+    auto pathForAxis   = [&](const string& ax) -> const string&      { return ax == "X" ? csvPathX : csvPathY; };
+    const string stateCsvPath = pathForAxis(activeAxes.front());  // representative path stored in state
 
     // Console logger: from here on, mirror all console output to <session>/run.log
     // so the log keeps a full record (banner, reachability, V_dark, sweep).
@@ -272,7 +284,7 @@ int main() {
     // V_dark is measured at the END (see below).
     // -------------------------------------------------------------------------
     if (resuming) {
-        csv.open(csvPath, header, /*append*/true);
+        for (const auto& ax : activeAxes) writerForAxis(ax).open(pathForAxis(ax), header, /*append*/true);
     } else {
         // Session metadata (traceability). Press Enter to leave "NA".
         cout << "--- Session metadata (press Enter to skip a field) ---\n";
@@ -298,9 +310,11 @@ int main() {
         meta.set("n_samples", cfg::DAQ_N_SAMPLES);
 
         meta.write(sessionDir + "/metadata.txt");
-        if (!csv.open(csvPath, header)) {
-            cerr << "Error: could not create " << csvPath << "\n";
-            receiverFinished(sock); closesocket(sock); WSACleanup(); return 1;
+        for (const auto& ax : activeAxes) {
+            if (!writerForAxis(ax).open(pathForAxis(ax), header)) {
+                cerr << "Error: could not create " << pathForAxis(ax) << "\n";
+                receiverFinished(sock); closesocket(sock); WSACleanup(); return 1;
+            }
         }
 
         // Reset gimbal to (0,0)
@@ -310,12 +324,14 @@ int main() {
         startIndex = 0; counter = 0;
     }
 
-    if (!csv.isOpen()) {
-        cerr << "Error: CSV not open.\n";
-        receiverFinished(sock); closesocket(sock); WSACleanup(); return 1;
+    for (const auto& ax : activeAxes) {
+        if (!writerForAxis(ax).isOpen()) {
+            cerr << "Error: CSV not open (" << pathForAxis(ax) << ").\n";
+            receiverFinished(sock); closesocket(sock); WSACleanup(); return 1;
+        }
+        // Fix the numeric format ONCE so every CSV row is consistent.
+        writerForAxis(ax).stream() << std::fixed << std::setprecision(6);
     }
-    // Fix the numeric format ONCE so every CSV row is consistent.
-    csv.stream() << std::fixed << std::setprecision(6);
 
     // -------------------------------------------------------------------------
     // Alignment check: go to nominal nadir (axis_angle = 0) and wait for the
@@ -336,8 +352,8 @@ int main() {
             o.inclination, fmod(o.azimuth + cfg::AZIMUTH_CMD_OFFSET, 360.0));
         if (mr != 0) {
             cerr << "[ABORT] Motor error (code " << mr << ").\n";
-            csv.close();
-            datalog::saveState(stateFile, { i, csvPath, sessionStamp, counter - 1, true });
+            csvX.close(); csvY.close();
+            datalog::saveState(stateFile, { i, stateCsvPath, sessionStamp, counter - 1, true });
             receiverFinished(sock); closesocket(sock); WSACleanup();
             cout << "State saved. You can resume (choose the same axis).\n";
             return 1;
@@ -346,16 +362,17 @@ int main() {
         Sleep(cfg::STABILIZATION_TIME_MS);
         DaqStats st = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
 
-        csv.stream() << sampleId << "," << datalog::date() << "," << datalog::clockTime() << ","
-                     << o.axis << "," << o.angle << "," << o.inclination << "," << o.azimuth << ","
-                     << cfg::S1_D_FIXED << ",";
+        datalog::CsvWriter& w = writerForAxis(o.axis);  // route the row to its axis file
+        w.stream() << sampleId << "," << datalog::date() << "," << datalog::clockTime() << ","
+                   << o.axis << "," << o.angle << "," << o.inclination << "," << o.azimuth << ","
+                   << cfg::S1_D_FIXED << ",";
         if (st.ok) {
-            csv.stream() << st.mean << "," << st.median << "," << st.std << ","
-                         << st.n << "," << cfg::DAQ_FSAMPLE << "\n";
+            w.stream() << st.mean << "," << st.median << "," << st.std << ","
+                       << st.n << "," << cfg::DAQ_FSAMPLE << "\n";
         } else {
-            csv.stream() << "NA,NA,NA,0," << cfg::DAQ_FSAMPLE << "\n";
+            w.stream() << "NA,NA,NA,0," << cfg::DAQ_FSAMPLE << "\n";
         }
-        csv.flush();
+        w.flush();
 
         cout << "[" << datalog::clockTime() << "] " << (i + 1) << "/" << total
              << "  axis=" << o.axis << "  angle=" << o.angle
@@ -363,10 +380,10 @@ int main() {
         if (st.ok) { cout << fixed << setprecision(6) << st.mean << " V\n"; }
         else       { cout << "ACQ_FAIL\n"; }
 
-        datalog::saveState(stateFile, { i + 1, csvPath, sessionStamp, counter, true });
+        datalog::saveState(stateFile, { i + 1, stateCsvPath, sessionStamp, counter, true });
     }
 
-    csv.close();
+    csvX.close(); csvY.close();
 
     // V_dark: measured ONCE at the END (LED off) so turning the LED off/on does
     // not perturb the sweep. Appended to <session>/metadata.txt.
@@ -375,7 +392,7 @@ int main() {
     datalog::deleteState(stateFile);
 
     cout << "\n=== SINGLE-AXIS SWEEP COMPLETED ===\n";
-    cout << "Data: " << csvPath << "\n";
+    for (const auto& ax : activeAxes) cout << "Data: " << pathForAxis(ax) << "\n";
 
     receiverFinished(sock);
     logger.stop();
