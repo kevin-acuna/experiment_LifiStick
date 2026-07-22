@@ -43,13 +43,14 @@
 
 using namespace std;
 
-// Reads a metadata line; returns "NA" if the operator leaves it empty.
-static string promptLine(const string& label) {
-    cout << label << ": ";
+// Reads a metadata line. The default (shown in [brackets]) is returned when the
+// operator just presses Enter, so common values need not be retyped every run.
+static string promptLine(const string& label, const string& def = "NA") {
+    cout << label << " [" << def << "]: ";
     string line;
     getline(cin, line);
     size_t a = line.find_first_not_of(" \t\r\n");
-    if (a == string::npos) return "NA";
+    if (a == string::npos) return def;
     size_t b = line.find_last_not_of(" \t\r\n");
     return line.substr(a, b - a + 1);
 }
@@ -286,8 +287,8 @@ int main() {
     if (resuming) {
         for (const auto& ax : activeAxes) writerForAxis(ax).open(pathForAxis(ax), header, /*append*/true);
     } else {
-        // Session metadata (traceability). Press Enter to leave "NA".
-        cout << "--- Session metadata (press Enter to skip a field) ---\n";
+        // Session metadata (traceability). Press Enter to accept the [default].
+        cout << "--- Session metadata (press Enter to accept the [default]) ---\n";
         datalog::Metadata meta;
         meta.set("session_date", datalog::date());
         meta.set("session_time", datalog::clockTime());
@@ -296,12 +297,13 @@ int main() {
         meta.set("angle_start_deg", cfg::S0_ANGLE_START);
         meta.set("angle_end_deg", cfg::S0_ANGLE_END);
         meta.set("angle_step_deg", cfg::S0_ANGLE_STEP);
-        meta.set("operator", promptLine("Operator"));
-        meta.set("LED_serial", promptLine("LED serial"));
-        meta.set("PD_serial", promptLine("PD serial"));
-        meta.set("I_LED", promptLine("I_LED [mA] (manual)"));
-        meta.set("T_ambient", promptLine("T_ambient [C] (manual)"));
-        meta.set("T_LED", promptLine("T_LED [C] (manual)"));
+        meta.set("operator", promptLine("Operator", "Kevin"));
+        meta.set("LED_serial", promptLine("LED serial", "SFH4725S"));
+        meta.set("PD_serial", promptLine("PD serial", "BPX61"));
+        meta.set("I_LED", promptLine("I_LED [mA] (manual)", "500"));
+        meta.set("T_ambient", promptLine("T_ambient [C] (manual)", "26"));
+        meta.set("T_LED", promptLine("T_LED [C] (manual)", "31"));
+        meta.set("comment", promptLine("Comment / reason", "NA"));
         meta.set("d_fixed_m", cfg::S1_D_FIXED);
         meta.set("robot_base_x", robotX);
         meta.set("robot_base_y", robotY);

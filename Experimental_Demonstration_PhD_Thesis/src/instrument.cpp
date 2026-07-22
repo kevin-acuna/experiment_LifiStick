@@ -74,7 +74,7 @@ int instrument::rotateMotor(int serialNo, double deg)
     // NOTA (sub3): OFFSET_X se aplica al motor X en TODAS las orientaciones; al centrar el
     // eje de simetria (en vez del pico) el corte Y queda simetrico pero su pico cae en ~-1.5 deg,
     // lo que introduce un sesgo de puntería de ~1.5 deg en el motor X de sub3. Valores previos: X=+2.5, Y=-0.2.
-    const double OFFSET_MOTOR_X_OWP = +0.5; // Offset calibration for motor X - External (simetria del corte Y)
+    const double OFFSET_MOTOR_X_OWP = +1.5; // Offset calibration for motor X - External (simetria del corte Y)
     const double OFFSET_MOTOR_Y_OWP = -0.2; // Offset calibration for motor Y - Internal
 
     // Apply calibration offset based on motor

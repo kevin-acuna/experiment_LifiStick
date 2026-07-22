@@ -44,12 +44,14 @@ using namespace std;
 
 static constexpr double kPi = 3.14159265358979323846;
 
-static string promptLine(const string& label) {
-    cout << label << ": ";
+// Reads a metadata line. The default (shown in [brackets]) is returned when the
+// operator just presses Enter, so common values need not be retyped every run.
+static string promptLine(const string& label, const string& def = "NA") {
+    cout << label << " [" << def << "]: ";
     string line;
     getline(cin, line);
     size_t a = line.find_first_not_of(" \t\r\n");
-    if (a == string::npos) return "NA";
+    if (a == string::npos) return def;
     size_t b = line.find_last_not_of(" \t\r\n");
     return line.substr(a, b - a + 1);
 }
@@ -98,8 +100,8 @@ int main() {
 
     cout << "Robot base position in the global frame.\n";
     double baseX = 0.0, baseY = 0.0;
-    { string s = promptLine("  Base X [m] (Enter=0)"); if (s != "NA") baseX = std::stod(s); }
-    { string s = promptLine("  Base Y [m] (Enter=0)"); if (s != "NA") baseY = std::stod(s); }
+    { string s = promptLine("  Base X [m]", "0"); baseX = std::stod(s); }
+    { string s = promptLine("  Base Y [m]", "0"); baseY = std::stod(s); }
     baseX += cfg::ROBOT_OFFSET_X;
     baseY += cfg::ROBOT_OFFSET_Y;
     sendCoordinates(sock, baseX, baseY, cfg::ROBOT_BASE_Z);
@@ -153,20 +155,21 @@ int main() {
     }
 
     if (!resuming) {
-        cout << "\n--- Session metadata (press Enter to skip a field) ---\n";
+        cout << "\n--- Session metadata (press Enter to accept the [default]) ---\n";
         datalog::Metadata meta;
         meta.set("session_date", datalog::date());
         meta.set("session_time", datalog::clockTime());
         meta.set("subdataset", std::string("3_spatial_campaign"));
-        meta.set("operator", promptLine("Operator"));
-        meta.set("LED_serial", promptLine("LED serial"));
-        meta.set("PD_serial", promptLine("PD serial"));
+        meta.set("operator", promptLine("Operator", "Kevin"));
+        meta.set("LED_serial", promptLine("LED serial", "SFH4725S"));
+        meta.set("PD_serial", promptLine("PD serial", "BPX61"));
         meta.set("amp_gain", promptLine("Amplifier gain (TIA+OPAM)"));
         meta.set("ambient_light_state", promptLine("Ambient light (on/off/level)"));
-        meta.set("I_LED", promptLine("I_LED [mA] (manual)"));
-        meta.set("T_ambient", promptLine("T_ambient [C] (manual)"));
+        meta.set("I_LED", promptLine("I_LED [mA] (manual)", "500"));
+        meta.set("T_ambient", promptLine("T_ambient [C] (manual)", "26"));
         meta.set("robot_repeatability_mm", promptLine("UR5 repeatability [mm] (datasheet)"));
-        meta.set("codebook_id", promptLine("Codebook ID (Enter=TCOM_K9)"));
+        meta.set("codebook_id", promptLine("Codebook ID", "TCOM_K9"));
+        meta.set("comment", promptLine("Comment / reason", "NA"));
         meta.set("K_orientations", cfg::K_ORIENTATIONS);
         meta.set("M_repeats", cfg::M_REPEATS);
         meta.set("n_tilt_scans_per_point", cfg::N_TILT_SCANS_PER_POINT);
