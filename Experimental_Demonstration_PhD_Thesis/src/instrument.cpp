@@ -68,12 +68,15 @@ int instrument::rotateMotor(int serialNo, double deg)
     const double OFFSET_MOTOR_Y_CENTER = -2.0; // Offset calibration for motor Y - Internal
 
     // Recalibrado a partir de los barridos de un solo eje de sub0 (2026-07-22):
-    //   corte X (mueve motor Y): pico en +1.3 deg  -> OFFSET_Y = 1.3 - 1.5 = -0.2 deg  (pico centrado, flancos simetricos)
-    //   corte Y (mueve motor X): pico en 0 deg, pero EJE DE SIMETRIA en ~+1.5 deg (corte
-    //     intrinsecamente sesgado). Se prioriza SIMETRIA sobre pico: OFFSET_X = +2.5 - 1.5 = +1.0 deg.
-    // NOTA (sub3): OFFSET_X se aplica al motor X en TODAS las orientaciones; al centrar el
-    // eje de simetria (en vez del pico) el corte Y queda simetrico pero su pico cae en ~-1.5 deg,
-    // lo que introduce un sesgo de puntería de ~1.5 deg en el motor X de sub3. Valores previos: X=+2.5, Y=-0.2.
+    //   corte X (mueve motor Y): pico centrado, flancos simetricos -> OFFSET_Y = -0.2 deg.
+    //   corte Y (mueve motor X): pico y eje de simetria NO coinciden (corte sesgado).
+    //     En espacio del motor X: pico ~+2.5 deg, eje de simetria ~+1.0 deg. Se elige un
+    //     COMPROMISO OFFSET_X = +1.5 deg -> el corte Y queda con su pico en ~-1.0 deg y su
+    //     eje de simetria en ~+0.5 deg (prioriza simetria manteniendo el pico cerca del centro).
+    // NOTA (sub1/sub3): OFFSET_X/Y son correcciones del CERO MECANICO de cada motor y se aplican
+    // en el espacio de motores, por lo que se trasladan igual al cono 2D de sub1 y a la puntería
+    // de sub3. Con OFFSET_X=+1.5 el boresight del cono queda ~1 deg fuera del cero comandado (lado -Y).
+    // Valores previos: X=+2.5 (pico centrado), Y=-0.2.
     const double OFFSET_MOTOR_X_OWP = +1.5; // Offset calibration for motor X - External (simetria del corte Y)
     const double OFFSET_MOTOR_Y_OWP = -0.2; // Offset calibration for motor Y - Internal
 
