@@ -51,7 +51,7 @@ inline constexpr int         SERVER_PORT = 12345;
 // Barrido de inclinacion x azimut del LED con el PD fijo apuntando al cenit.
 // =============================================================================
 inline constexpr double S1_INCLINATION_START = 0.0;   // [deg]
-inline constexpr double S1_INCLINATION_END   = 90.0;  // [deg]
+inline constexpr double S1_INCLINATION_END   = 70.0;  // [deg]
 inline constexpr double S1_INCLINATION_STEP  = 2.0;   // [deg]
 inline constexpr double S1_AZIMUTH_STEP      = 2.0;   // [deg] (0 a 360, 360 excluido)
 
