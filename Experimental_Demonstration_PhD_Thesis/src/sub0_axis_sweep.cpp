@@ -71,11 +71,13 @@ static double promptDouble(const string& label) {
 }
 
 // Asks which axis to sweep. Returns "X", "Y" or "BOTH".
+// Convention: choosing X sweeps the beam from -X to +X (through the nadir);
+// choosing Y sweeps from -Y to +Y. The signed axis_angle runs S0_ANGLE_START..END.
 static string promptAxis() {
     while (true) {
         cout << "\n--- Axis to sweep ---\n"
-             << "  x) X axis  (azimuth " << cfg::S0_AXIS_X_AZ_POS << " / " << cfg::S0_AXIS_X_AZ_NEG << " deg)\n"
-             << "  y) Y axis  (azimuth " << cfg::S0_AXIS_Y_AZ_POS << " / " << cfg::S0_AXIS_Y_AZ_NEG << " deg)\n"
+             << "  x) X axis:  sweep from -X to +X (azimuth " << cfg::S0_AXIS_X_AZ_NEG << " -> " << cfg::S0_AXIS_X_AZ_POS << " deg, through nadir)\n"
+             << "  y) Y axis:  sweep from -Y to +Y (azimuth " << cfg::S0_AXIS_Y_AZ_NEG << " -> " << cfg::S0_AXIS_Y_AZ_POS << " deg, through nadir)\n"
              << "  b) Both    (X then Y)\n"
              << "Choose [x/y/b]: ";
         string in;
@@ -147,6 +149,9 @@ int main() {
     struct Orientation { string axis; double angle; double inclination; double azimuth; };
     vector<Orientation> orientations;
 
+    // Sweep convention: X goes from -X to +X and Y from -Y to +Y, both through the
+    // nadir. axis_angle<0 uses the negative half-axis (azNeg), axis_angle>0 the
+    // positive half (azPos); inclination = |axis_angle|.
     auto addAxis = [&](const string& axisName, double azPos, double azNeg) {
         for (double a = cfg::S0_ANGLE_START; a <= cfg::S0_ANGLE_END + 1e-9; a += cfg::S0_ANGLE_STEP) {
             const double incl = std::fabs(a);
@@ -217,6 +222,7 @@ int main() {
     cout << "  Axis:               " << axis << "\n";
     cout << "  Angle:              " << cfg::S0_ANGLE_START << " to " << cfg::S0_ANGLE_END
          << " deg (step " << cfg::S0_ANGLE_STEP << ")\n";
+    cout << "  Sweep convention:   X = -X to +X, Y = -Y to +Y (through nadir)\n";
     cout << "  Fixed LED-PD dist:  " << cfg::S1_D_FIXED << " m\n";
     cout << "  Acquisition:        " << cfg::DAQ_ACQ_TIME_SEC << " s (" << cfg::DAQ_N_SAMPLES
          << " samples @ " << cfg::DAQ_FSAMPLE << " Hz)\n";
