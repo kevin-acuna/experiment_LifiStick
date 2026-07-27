@@ -6,6 +6,7 @@
 //   2) Medicion cooperativa {K+1}: PD apuntando al LED y LED apuntando al receptor.
 //   3) Scan(s) con tilt aleatorio {K}: PD inclinado con tilt UNIFORME (theta en
 //      [0,TILT_MAX_DEG], azimut en [0,360)), generado por este orquestador C++.
+//      OPCIONAL: se OMITE por completo si cfg::N_TILT_SCANS_PER_POINT == 0.
 //
 // Almacenamiento (dataset_specification.md seccion 5):
 //   - master.csv : una fila por (point_id, orientation_id, repeat_id) -> 4.1-4.2
@@ -67,6 +68,78 @@ static void ledToReceiver(double rx, double ry, double rz, double& incl, double&
     if (az < 0) az += 360.0;
 }
 
+// -----------------------------------------------------------------------------
+// Predefined robot base positions (X, Y) in the global frame [m].
+// The array size is deduced automatically from the number of initializers.
+// -----------------------------------------------------------------------------
+static const double PREDEFINED_POSITIONS[][2] = {
+    { -0.5, -0.5 }, { -0.5,  0.0 }, { -0.5,  0.5 }, { -0.5,  1.0 }, { -0.5,  1.5 },
+    {  0.0, -0.5 }, {  0.0,  0.0 }, {  0.0,  0.5 }, {  0.0,  1.0 }, {  0.0,  1.5 },
+    {  0.5, -0.5 }, {  0.5,  0.0 }, {  0.5,  0.5 }, {  0.5,  1.0 }, {  0.5,  1.5 },
+    {  1.0, -0.5 }, {  1.0,  0.0 }, {  1.0,  0.5 }, {  1.0,  1.0 }, {  1.0,  1.5 },
+    {  1.5, -0.5 }, {  1.5,  0.0 }, {  1.5,  0.5 }, {  1.5,  1.0 }, {  1.5,  1.5 }
+};
+
+// Holds a manually entered (custom) robot base position.
+struct CustomPosition { double x; double y; bool isCustom; };
+static CustomPosition customPos = { 0.0, 0.0, false };
+
+// Shows the predefined-position menu and returns the 1-based selection index.
+// Returns -1 if the operator chose to quit, or -2 if a custom position was entered.
+static int promptUserForRobotPositionIndex() {
+    const size_t numPositions = sizeof(PREDEFINED_POSITIONS) / sizeof(PREDEFINED_POSITIONS[0]);
+    while (true) {
+        cout << "\n"
+             << "====================================================\n"
+             << " Select Robot Position [1.." << numPositions << "], 'custom', or 'q' to quit\n"
+             << "----------------------------------------------------\n";
+        for (size_t i = 0; i < numPositions; i++) {
+            cout << " " << (i + 1) << ")  ("
+                 << PREDEFINED_POSITIONS[i][0] << ", "
+                 << PREDEFINED_POSITIONS[i][1] << ")\n";
+        }
+        cout << " custom) Enter a custom position\n";
+        cout << "----------------------------------------------------\n"
+             << "Choose an option: ";
+
+        string input;
+        cin >> input;
+
+        if (input == "q" || input == "Q") return -1;
+
+        if (input == "custom" || input == "Custom" || input == "CUSTOM" || input == "c" || input == "C") {
+            cout << "\n[Custom position]\n";
+            cout << "Enter X coordinate [m]: ";
+            while (!(cin >> customPos.x)) {
+                cout << "[Error] Invalid value. Enter X coordinate [m]: ";
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            }
+            cout << "Enter Y coordinate [m]: ";
+            while (!(cin >> customPos.y)) {
+                cout << "[Error] Invalid value. Enter Y coordinate [m]: ";
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            }
+            customPos.isCustom = true;
+            cout << "Custom position set: (" << customPos.x << ", " << customPos.y << ")\n";
+            return -2;
+        }
+
+        try {
+            int index = stoi(input);
+            if (index >= 1 && index <= static_cast<int>(numPositions)) {
+                customPos.isCustom = false;
+                return index;
+            }
+        } catch (...) { /* not a number */ }
+
+        cout << "[Error] Invalid selection. Please try again.\n";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+}
+
 int main() {
     system("chcp 65001 > nul");
 
@@ -86,8 +159,11 @@ int main() {
     cout << "  Points loaded:      " << positions.size() << "\n";
     cout << "  K (codebook):       " << cfg::K_ORIENTATIONS << "\n";
     cout << "  M_repeats:          " << cfg::M_REPEATS << "\n";
-    cout << "  Tilt scans / point: " << cfg::N_TILT_SCANS_PER_POINT
-         << " (uniform tilt 0-" << cfg::TILT_MAX_DEG << " deg)\n";
+    if (cfg::N_TILT_SCANS_PER_POINT > 0)
+        cout << "  Tilt scans / point: " << cfg::N_TILT_SCANS_PER_POINT
+             << " (uniform tilt 0-" << cfg::TILT_MAX_DEG << " deg)\n";
+    else
+        cout << "  Tilt scans / point: 0 (STAGE 3 DISABLED)\n";
     cout << "  Acquisition:        " << cfg::DAQ_ACQ_TIME_SEC << " s (" << cfg::DAQ_N_SAMPLES
          << " samples @ " << cfg::DAQ_FSAMPLE << " Hz)\n";
     cout << "=========================================================\n\n";
@@ -99,13 +175,31 @@ int main() {
     SOCKET sock = connectToServer(cfg::SERVER_IP, cfg::SERVER_PORT);
 
     cout << "Robot base position in the global frame.\n";
-    double baseX = 0.0, baseY = 0.0;
-    { string s = promptLine("  Base X [m]", "0"); baseX = std::stod(s); }
-    { string s = promptLine("  Base Y [m]", "0"); baseY = std::stod(s); }
-    baseX += cfg::ROBOT_OFFSET_X;
-    baseY += cfg::ROBOT_OFFSET_Y;
+    int posIndex = promptUserForRobotPositionIndex();
+    if (posIndex == -1) {
+        cout << "User selected 'q' to quit. Exiting.\n";
+        closesocket(sock); WSACleanup();
+        return 0;
+    }
+    // Consume the trailing newline left by 'cin >>' so the later getline() prompts work.
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    // Logical (intended) base position selected by the operator.
+    double baseXsel, baseYsel;
+    if (posIndex == -2) {
+        baseXsel = customPos.x; baseYsel = customPos.y;
+        cout << "  Using custom position: (" << baseXsel << ", " << baseYsel << ")\n";
+    } else {
+        baseXsel = PREDEFINED_POSITIONS[posIndex - 1][0];
+        baseYsel = PREDEFINED_POSITIONS[posIndex - 1][1];
+        cout << "  Selected position " << posIndex << ": (" << baseXsel << ", " << baseYsel << ")\n";
+    }
+
+    // Commanded base = intended + calibration offset (what is actually sent to the UR5).
+    double baseX = baseXsel + cfg::ROBOT_OFFSET_X;
+    double baseY = baseYsel + cfg::ROBOT_OFFSET_Y;
     sendCoordinates(sock, baseX, baseY, cfg::ROBOT_BASE_Z);
-    cout << "Base sent: (" << baseX << ", " << baseY << ", " << cfg::ROBOT_BASE_Z << ")\n\n";
+    cout << "Base sent (with offsets): (" << baseX << ", " << baseY << ", " << cfg::ROBOT_BASE_Z << ")\n\n";
 
     // -------------------------------------------------------------------------
     // Gimbal del transmisor
@@ -177,8 +271,11 @@ int main() {
         meta.set("transmitter_x", 0.0);
         meta.set("transmitter_y", 0.0);
         meta.set("transmitter_z", cfg::TRANSMITTER_H);
-        meta.set("robot_base_x", baseX);
-        meta.set("robot_base_y", baseY);
+        meta.set("robot_position_index", posIndex);   // menu selection (-2 = custom)
+        meta.set("robot_base_x", baseXsel);            // intended (menu-selected) position [m]
+        meta.set("robot_base_y", baseYsel);
+        meta.set("robot_base_x_cmd", baseX);           // commanded = intended + offset (sent to UR5) [m]
+        meta.set("robot_base_y_cmd", baseY);
         meta.set("daq_channel", std::string(cfg::DAQ_CHANNEL));
         meta.set("daq_sample_rate_hz", cfg::DAQ_FSAMPLE);
         meta.set("n_samples", cfg::DAQ_N_SAMPLES);
@@ -279,6 +376,8 @@ int main() {
     // Main loop over points
     // -------------------------------------------------------------------------
     const int totalPoints = static_cast<int>(positions.size());
+    const bool tiltEnabled = (cfg::N_TILT_SCANS_PER_POINT > 0);
+    const int nStages = tiltEnabled ? 3 : 2;   // STAGE 3 (tilt) is optional
     for (int idx = startIndex; idx < totalPoints; idx++) {
         Position& p = positions[idx];
         if (p.done) {
@@ -307,8 +406,8 @@ int main() {
         const string pointId = sessionStamp + "_" + std::to_string(pointCounter);
         cout << "  point_id = " << pointId << "\n";
 
-        // ---- STAGE 1/3: Vertical baseline scan {K} (PD -> zenith) ----
-        cout << "\n--- STAGE 1/3: Vertical baseline scan {K} (PD -> zenith) ---\n";
+        // ---- STAGE 1: Vertical baseline scan {K} (PD -> zenith) ----
+        cout << "\n--- STAGE 1/" << nStages << ": Vertical baseline scan {K} (PD -> zenith) ---\n";
         cout << "[" << datalog::clockTime() << "] Setting PD to vertical...\n";
         receiverPointingToCeil(sock);
         RobotPose poseV = receivePose(sock, 40);
@@ -335,8 +434,8 @@ int main() {
             cout << "  [WARN] Invalid vertical pose; skipping STAGE 1.\n";
         }
 
-        // ---- STAGE 2/3: Cooperative measurement {K+1} (PD -> LED, LED -> PD) ----
-        cout << "\n--- STAGE 2/3: Cooperative measurement {K+1} ---\n";
+        // ---- STAGE 2: Cooperative measurement {K+1} (PD -> LED, LED -> PD) ----
+        cout << "\n--- STAGE 2/" << nStages << ": Cooperative measurement {K+1} ---\n";
         cout << "[" << datalog::clockTime() << "] Setting PD pointed to LED...\n";
         receiverPointingToTransmitter(sock);
         RobotPose poseP = receivePose(sock, 40);
@@ -360,35 +459,38 @@ int main() {
             cout << "  [WARN] Invalid 'pointed' pose; skipping (K+1).\n";
         }
 
-        // ---- STAGE 3/3: Random-tilt scans {K} (PD tilted) ----
-        cout << "\n--- STAGE 3/3: Random-tilt scans {K} (PD tilted) ---\n";
-        for (int t = 0; t < cfg::N_TILT_SCANS_PER_POINT; t++) {
-            double theta = tiltDist(rng);
-            double az    = azDist(rng);
-            cout << "[" << datalog::clockTime() << "] Tilt scan " << (t + 1) << "/"
-                 << cfg::N_TILT_SCANS_PER_POINT << ": PD theta=" << theta << " deg, az=" << az << " deg\n";
-            receiverTilt(sock, theta, az);
-            RobotPose poseT = receivePose(sock, 40);
-            if (!poseT.valid) { cout << "  [WARN] Invalid tilt pose; skipping this tilt.\n"; continue; }
-            for (int r = 1; r <= cfg::M_REPEATS; r++) {
-                for (int i = 0; i < cfg::K_ORIENTATIONS; i++) {
-                    double ntIncl, ntAz;
-                    if (!setCodebook(i, ntIncl, ntAz)) {
-                        cerr << "[ABORT] Motor error at codebook orientation " << (i + 1) << " (tilt scan).\n";
-                        master.close(); kp1.close();
-                        datalog::saveState(stateFile, { idx, "", sessionStamp, pointCounter - 1, true });
-                        receiverFinished(sock); closesocket(sock); WSACleanup(); return 1;
+        // ---- STAGE 3: Random-tilt scans {K} (PD tilted) - OPTIONAL ----
+        // Skipped entirely when cfg::N_TILT_SCANS_PER_POINT == 0 (time-limited runs).
+        if (tiltEnabled) {
+            cout << "\n--- STAGE 3/" << nStages << ": Random-tilt scans {K} (PD tilted) ---\n";
+            for (int t = 0; t < cfg::N_TILT_SCANS_PER_POINT; t++) {
+                double theta = tiltDist(rng);
+                double az    = azDist(rng);
+                cout << "[" << datalog::clockTime() << "] Tilt scan " << (t + 1) << "/"
+                     << cfg::N_TILT_SCANS_PER_POINT << ": PD theta=" << theta << " deg, az=" << az << " deg\n";
+                receiverTilt(sock, theta, az);
+                RobotPose poseT = receivePose(sock, 40);
+                if (!poseT.valid) { cout << "  [WARN] Invalid tilt pose; skipping this tilt.\n"; continue; }
+                for (int r = 1; r <= cfg::M_REPEATS; r++) {
+                    for (int i = 0; i < cfg::K_ORIENTATIONS; i++) {
+                        double ntIncl, ntAz;
+                        if (!setCodebook(i, ntIncl, ntAz)) {
+                            cerr << "[ABORT] Motor error at codebook orientation " << (i + 1) << " (tilt scan).\n";
+                            master.close(); kp1.close();
+                            datalog::saveState(stateFile, { idx, "", sessionStamp, pointCounter - 1, true });
+                            receiverFinished(sock); closesocket(sock); WSACleanup(); return 1;
+                        }
+                        Sleep(cfg::STABILIZATION_TIME_MS);
+                        DaqStats st = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
+                        writeMaster(pointId, p, "tilt", theta, az, poseT, i + 1, ntIncl, ntAz, r, st);
+                        cout << "    [tilt#" << (t + 1) << " rep " << r << "/" << cfg::M_REPEATS << "] LED orient "
+                             << (i + 1) << "/" << cfg::K_ORIENTATIONS
+                             << " (nt_incl=" << ntIncl << ", nt_az=" << ntAz << ")  ->  V = " << vStr(st) << "\n";
                     }
-                    Sleep(cfg::STABILIZATION_TIME_MS);
-                    DaqStats st = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
-                    writeMaster(pointId, p, "tilt", theta, az, poseT, i + 1, ntIncl, ntAz, r, st);
-                    cout << "    [tilt#" << (t + 1) << " rep " << r << "/" << cfg::M_REPEATS << "] LED orient "
-                         << (i + 1) << "/" << cfg::K_ORIENTATIONS
-                         << " (nt_incl=" << ntIncl << ", nt_az=" << ntAz << ")  ->  V = " << vStr(st) << "\n";
                 }
             }
+            cout << "  STAGE 3 done (tilt {K}).\n";
         }
-        cout << "  STAGE 3 done (tilt {K}).\n";
 
         // End of point: release the server, mark the point as recorded, persist state.
         receiverFinished(sock);

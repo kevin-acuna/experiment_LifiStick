@@ -108,7 +108,8 @@ int instrument::rotateMotor(int serialNo, double deg)
     if (deg < MIN_ALLOWED_DEG || deg > MAX_ALLOWED_DEG)
     {
         cerr << "[Warning] " << axisLabel << ": Requested angle " << deg
-             << "° is out of bounds. Allowed range: [-60°, 60°]. Rotation aborted.\n";
+             << "° is out of bounds. Allowed range: [" << MIN_ALLOWED_DEG << "°, "
+             << MAX_ALLOWED_DEG << "°]. Rotation aborted.\n";
         return -3;
     }
 

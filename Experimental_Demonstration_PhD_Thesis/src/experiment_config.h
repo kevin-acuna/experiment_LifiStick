@@ -94,8 +94,9 @@ inline constexpr int    S2_REPEATS_PER_DISTANCE = 1;
 inline constexpr const char* S3_POSITIONS_FILE = "src/positionsToSample/positions3D.txt";
 
 // Codebook de orientaciones del LED {inclinacion, azimut} en grados (K=9 de TCOM).
-inline constexpr int K_ORIENTATIONS = 9;
-inline constexpr double CODEBOOK[K_ORIENTATIONS][2] = {
+// Para cambiar el numero de orientaciones basta con agregar/quitar filas aqui:
+// K_ORIENTATIONS se deduce automaticamente del tamano del array (evita desajustes).
+inline constexpr double CODEBOOK[][2] = {
     {  0.0,   0.0 },
     { 34.0, 182.0 },
     { 37.0, 267.0 },
@@ -106,13 +107,16 @@ inline constexpr double CODEBOOK[K_ORIENTATIONS][2] = {
     { 58.0, 360.0 },
     { 58.0, 272.0 }
 };
+inline constexpr int K_ORIENTATIONS = static_cast<int>(sizeof(CODEBOOK) / sizeof(CODEBOOK[0]));
 
 // Repeticiones del escaneo {K} por configuracion (M_repeats en la spec).
 inline constexpr int M_REPEATS = 1;
 
 // Barrido de tilt del PD (seccion 4.6). El orquestador C++ genera el tilt de forma
 // aleatoria con distribucion UNIFORME: inclinacion en [0, TILT_MAX_DEG], azimut en [0,360).
-inline constexpr int    N_TILT_SCANS_PER_POINT = 1;    // scans con tilt aleatorio por punto (ademas del vertical)
+// Poner N_TILT_SCANS_PER_POINT = 0 DESACTIVA por completo la etapa de tilt (STAGE 3):
+// el experimento solo recorre las K orientaciones (vertical) y la medida cooperativa {K+1}.
+inline constexpr int    N_TILT_SCANS_PER_POINT = 0;    // scans con tilt aleatorio por punto (0 = tilt desactivado)
 inline constexpr double TILT_MAX_DEG           = 20.0; // inclinacion maxima del tilt [deg]
 
 // -----------------------------------------------------------------------------
