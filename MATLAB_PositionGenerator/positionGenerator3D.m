@@ -2,8 +2,9 @@ clc, clear, close all
 % =====================================================================
 % Configuration
 % =====================================================================
-bed = [-1.4 , 1.4, -1.4, 1.4, 0.4, 1.2];
-step= 0.2;
+bed = [-1.4 , 1.4, -1.4, 1.4, 0.4, 1.1];
+step   = 0.2;   % paso horizontal en X e Y [m]
+step_H = 0.1;   % paso vertical en altura Z [m] (configurable, independiente de step)
 
 graph = 1; % 1:yes, 0:no
 save = 1; 
@@ -49,7 +50,7 @@ end
 % Funciona bien pero es para 3D con alturas distintas
 data=[];
 ii=0;
-for k = bed(6):-step:bed(5)
+for k = bed(6):-step_H:bed(5)
 
     % Agregar los "0" ya que aun no se han registrado.
     if(mod(ii,2)==0)
@@ -76,8 +77,8 @@ if(graph)
     hold on
     
     for i=1: size(data,1)
-        plot3(data(i,1),data(i,2),data(i,3),'ob','MarkerFaceColor','b','MarkerSize',4)
-%         pause(0.01)
+        plot3(data(i,1),data(i,2),data(i,3),'ob','MarkerFaceColor','b','MarkerSize',2)
+        % pause(0.02)
     end
     
 end
