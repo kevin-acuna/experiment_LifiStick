@@ -97,16 +97,20 @@ inline constexpr const char* S3_POSITIONS_FILE = "src/positionsToSample/position
 // Para cambiar el numero de orientaciones basta con agregar/quitar filas aqui:
 // K_ORIENTATIONS se deduce automaticamente del tamano del array (evita desajustes).
 inline constexpr double CODEBOOK[][2] = {
-    {  0.0,   0.0 },
-    { 34.0, 182.0 },
-    { 37.0, 267.0 },
-    { 37.0, 355.0 },
-    { 42.0,  78.0 },
-    { 53.0,  97.0 },
-    { 57.0, 179.0 },
-    { 58.0, 360.0 },
-    { 58.0, 272.0 }
+    { 16.0, 90.0 },
+    { 16.0, 210.0 },
+    { 16.0, 330.0 },
+    { 60.0, 0.0 },
+    { 64.0, 60.0 },
+    { 64.0, 120.0 },
+    { 60.0, 180.0 },
+    { 64.0, 240.0 },
+    { 64.0, 300.0 },
+    {0.0, 0.0},
+    {60.0, 90.0},
+    {60.0, 270.0}
 };
+
 inline constexpr int K_ORIENTATIONS = static_cast<int>(sizeof(CODEBOOK) / sizeof(CODEBOOK[0]));
 
 // Repeticiones del escaneo {K} por configuracion (M_repeats en la spec).
@@ -116,13 +120,13 @@ inline constexpr int M_REPEATS = 1;
 // aleatoria con distribucion UNIFORME: inclinacion en [0, TILT_MAX_DEG], azimut en [0,360).
 // Poner N_TILT_SCANS_PER_POINT = 0 DESACTIVA por completo la etapa de tilt (STAGE 3):
 // el experimento solo recorre las K orientaciones (vertical) y la medida cooperativa {K+1}.
-inline constexpr int    N_TILT_SCANS_PER_POINT = 0;    // scans con tilt aleatorio por punto (0 = tilt desactivado)
-inline constexpr double TILT_MAX_DEG           = 20.0; // inclinacion maxima del tilt [deg]
+inline constexpr int    N_TILT_SCANS_PER_POINT = 3;    // scans con tilt aleatorio por punto (0 = tilt desactivado)
+inline constexpr double TILT_MAX_DEG           = 15.0; // inclinacion maxima del tilt [deg]
 
 // Etapa cooperativa {K+1} (STAGE 2): el PD apunta al LED y el LED apunta al PD.
 // true  = se realiza la medida cooperativa.
 // false = se OMITE por completo la STAGE 2 (solo vertical {K} y, si aplica, tilt {K}).
-inline constexpr bool S3_ENABLE_COOPERATIVE = true;
+inline constexpr bool S3_ENABLE_COOPERATIVE = false;
 
 // Umbral de senal baja [V] para la advertencia (NO bloqueante) de "LED apagado".
 // Si TODAS las lecturas de un escaneo {K} quedan por debajo de este valor, se emite
