@@ -32,6 +32,7 @@
 #include <iomanip>
 #include <sstream>
 #include <random>
+#include <fstream>
 
 #include "stdafx.h"
 #include "experiment_config.h"
@@ -55,6 +56,29 @@ static string promptLine(const string& label, const string& def = "NA") {
     if (a == string::npos) return def;
     size_t b = line.find_last_not_of(" \t\r\n");
     return line.substr(a, b - a + 1);
+}
+
+// Measures V_dark (LED off) ONCE and appends it to the session metadata file.
+// Called at the END of the run: turning the LED off/on at the start could shift
+// its operating point and perturb the campaign, while at the end it is harmless.
+static void measureVdarkToMetadata(const string& metadataPath) {
+    cout << "\n[V_dark] Campaign finished. Turn OFF the LED MANUALLY (it cannot be switched "
+            "off by software) and press Enter to measure the baseline (or 's' + Enter to skip)...";
+    string tmp; getline(cin, tmp);
+    if (tmp == "s" || tmp == "S") { cout << "  V_dark skipped.\n"; return; }
+
+    DaqStats dark = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
+    std::ofstream mf(metadataPath, std::ios::app);
+    if (!mf.is_open()) { cout << "  [Warn] Could not open metadata to store V_dark.\n"; return; }
+    if (dark.ok) {
+        mf << "v_dark_mean="   << std::setprecision(10) << dark.mean   << "\n";
+        mf << "v_dark_median=" << std::setprecision(10) << dark.median << "\n";
+        mf << "v_dark_std="    << std::setprecision(10) << dark.std    << "\n";
+        cout << "  V_dark mean=" << dark.mean << " V, std=" << dark.std << " V\n";
+    } else {
+        mf << "v_dark_mean=NA\n";
+        cout << "  [Warn] Failed to measure V_dark.\n";
+    }
 }
 
 // Orientacion del LED (inclinacion, azimut globales) para apuntar al receptor.
@@ -159,6 +183,8 @@ int main() {
     cout << "  Points loaded:      " << positions.size() << "\n";
     cout << "  K (codebook):       " << cfg::K_ORIENTATIONS << "\n";
     cout << "  M_repeats:          " << cfg::M_REPEATS << "\n";
+    cout << "  Cooperative {K+1}:  " << (cfg::S3_ENABLE_COOPERATIVE ? "ENABLED"
+                                                                    : "DISABLED (STAGE 2 skipped)") << "\n";
     if (cfg::N_TILT_SCANS_PER_POINT > 0)
         cout << "  Tilt scans / point: " << cfg::N_TILT_SCANS_PER_POINT
              << " (uniform tilt 0-" << cfg::TILT_MAX_DEG << " deg)\n";
@@ -257,17 +283,17 @@ int main() {
         meta.set("operator", promptLine("Operator", "Kevin"));
         meta.set("LED_serial", promptLine("LED serial", "SFH4725S"));
         meta.set("PD_serial", promptLine("PD serial", "BPX61"));
-        meta.set("amp_gain", promptLine("Amplifier gain (TIA+OPAM)"));
-        meta.set("ambient_light_state", promptLine("Ambient light (on/off/level)"));
         meta.set("I_LED", promptLine("I_LED [mA] (manual)", "500"));
         meta.set("T_ambient", promptLine("T_ambient [C] (manual)", "26"));
-        meta.set("robot_repeatability_mm", promptLine("UR5 repeatability [mm] (datasheet)"));
-        meta.set("codebook_id", promptLine("Codebook ID", "TCOM_K9"));
+        meta.set("T_LED", promptLine("T_LED [C] (manual)", "31"));
+        meta.set("codebook_id", promptLine("Codebook ID", "Optimized LED Phi_1/2_36.7"));
         meta.set("comment", promptLine("Comment / reason", "NA"));
         meta.set("K_orientations", cfg::K_ORIENTATIONS);
         meta.set("M_repeats", cfg::M_REPEATS);
         meta.set("n_tilt_scans_per_point", cfg::N_TILT_SCANS_PER_POINT);
         meta.set("tilt_max_deg", cfg::TILT_MAX_DEG);
+        meta.set("cooperative_kp1_enabled", cfg::S3_ENABLE_COOPERATIVE ? 1 : 0);
+        meta.set("low_signal_warn_v", cfg::S3_LOW_SIGNAL_WARN_V);
         meta.set("transmitter_x", 0.0);
         meta.set("transmitter_y", 0.0);
         meta.set("transmitter_z", cfg::TRANSMITTER_H);
@@ -279,21 +305,8 @@ int main() {
         meta.set("daq_channel", std::string(cfg::DAQ_CHANNEL));
         meta.set("daq_sample_rate_hz", cfg::DAQ_FSAMPLE);
         meta.set("n_samples", cfg::DAQ_N_SAMPLES);
-
-        // V_dark: measured once per session (LED off). Stored in metadata, not per row.
-        cout << "\n[V_dark] Turn the LED OFF and press Enter to measure the baseline (s = skip)...";
-        { string tmp; getline(cin, tmp);
-          if (tmp != "s" && tmp != "S") {
-              DaqStats dark = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
-              if (dark.ok) { meta.set("v_dark_mean", dark.mean); meta.set("v_dark_median", dark.median); meta.set("v_dark_std", dark.std); }
-              else meta.set("v_dark_mean", std::string("NA"));
-              cout << "  V_dark mean = " << (dark.ok ? dark.mean : 0.0) << " V\n";
-              cout << "[V_dark] Turn the LED ON and press Enter to start...";
-              { string t2; getline(cin, t2); }
-          } else {
-              meta.set("v_dark_mean", std::string("NA"));
-          }
-        }
+        // V_dark is measured ONCE at the END of the campaign (LED off) and appended
+        // to metadata.txt, so turning the LED off/on does not perturb the session.
 
         sessionStamp = datalog::stamp();
         sessionDir = baseDir + "/" + sessionStamp;
@@ -372,12 +385,28 @@ int main() {
         return (mr == 0);
     };
 
+    // Non-blocking sanity check: if EVERY reading of a {K} scan is below the
+    // threshold (i.e. the maximum voltage is still low), the LED may have been left
+    // OFF (it cannot be switched on by software). Only warns; never blocks the run.
+    auto warnIfAllLow = [](double maxMean, int nOk, const string& ctx) {
+        if (nOk <= 0) return;
+        if (maxMean < cfg::S3_LOW_SIGNAL_WARN_V) {
+            std::ostringstream oss;
+            oss << std::fixed << std::setprecision(4) << maxMean;
+            cout << "  [WARNING] All " << nOk << " readings of the " << ctx
+                 << " are below " << cfg::S3_LOW_SIGNAL_WARN_V << " V (max = " << oss.str()
+                 << " V). The LED may be OFF (not switched back on after V_dark)."
+                    " Non-blocking warning.\n";
+        }
+    };
+
     // -------------------------------------------------------------------------
     // Main loop over points
     // -------------------------------------------------------------------------
     const int totalPoints = static_cast<int>(positions.size());
-    const bool tiltEnabled = (cfg::N_TILT_SCANS_PER_POINT > 0);
-    const int nStages = tiltEnabled ? 3 : 2;   // STAGE 3 (tilt) is optional
+    const bool coopEnabled = cfg::S3_ENABLE_COOPERATIVE;         // STAGE 2 (cooperative {K+1}) is optional
+    const bool tiltEnabled = (cfg::N_TILT_SCANS_PER_POINT > 0);  // STAGE 3 (random tilt {K}) is optional
+    const int nStages = 1 + (coopEnabled ? 1 : 0) + (tiltEnabled ? 1 : 0);
     for (int idx = startIndex; idx < totalPoints; idx++) {
         Position& p = positions[idx];
         if (p.done) {
@@ -406,13 +435,15 @@ int main() {
         const string pointId = sessionStamp + "_" + std::to_string(pointCounter);
         cout << "  point_id = " << pointId << "\n";
 
-        // ---- STAGE 1: Vertical baseline scan {K} (PD -> zenith) ----
-        cout << "\n--- STAGE 1/" << nStages << ": Vertical baseline scan {K} (PD -> zenith) ---\n";
+        // ---- STAGE 1: Vertical baseline scan {K} (PD -> zenith) - always on ----
+        int stageNo = 1;
+        cout << "\n--- STAGE " << stageNo << "/" << nStages << ": Vertical baseline scan {K} (PD -> zenith) ---\n";
         cout << "[" << datalog::clockTime() << "] Setting PD to vertical...\n";
         receiverPointingToCeil(sock);
         RobotPose poseV = receivePose(sock, 40);
         if (poseV.valid) {
             for (int r = 1; r <= cfg::M_REPEATS; r++) {
+                double maxV = 0.0; int nOk = 0;
                 for (int i = 0; i < cfg::K_ORIENTATIONS; i++) {
                     double ntIncl, ntAz;
                     if (!setCodebook(i, ntIncl, ntAz)) {
@@ -423,46 +454,53 @@ int main() {
                     }
                     Sleep(cfg::STABILIZATION_TIME_MS);
                     DaqStats st = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
+                    if (st.ok) { if (nOk == 0 || st.mean > maxV) maxV = st.mean; nOk++; }
                     writeMaster(pointId, p, "vertical", 0.0, 0.0, poseV, i + 1, ntIncl, ntAz, r, st);
                     cout << "    [vertical rep " << r << "/" << cfg::M_REPEATS << "] LED orient "
                          << (i + 1) << "/" << cfg::K_ORIENTATIONS
                          << " (nt_incl=" << ntIncl << ", nt_az=" << ntAz << ")  ->  V = " << vStr(st) << "\n";
                 }
+                warnIfAllLow(maxV, nOk, "vertical {K} scan (rep " + std::to_string(r) + ")");
             }
-            cout << "  STAGE 1 done (vertical {K}).\n";
+            cout << "  STAGE " << stageNo << " done (vertical {K}).\n";
         } else {
-            cout << "  [WARN] Invalid vertical pose; skipping STAGE 1.\n";
+            cout << "  [WARN] Invalid vertical pose; skipping STAGE " << stageNo << ".\n";
         }
 
-        // ---- STAGE 2: Cooperative measurement {K+1} (PD -> LED, LED -> PD) ----
-        cout << "\n--- STAGE 2/" << nStages << ": Cooperative measurement {K+1} ---\n";
-        cout << "[" << datalog::clockTime() << "] Setting PD pointed to LED...\n";
-        receiverPointingToTransmitter(sock);
-        RobotPose poseP = receivePose(sock, 40);
-        if (poseP.valid) {
-            double ntInclKp1, ntAzKp1;
-            ledToReceiver(p.x, p.y, p.z, ntInclKp1, ntAzKp1);
-            cout << "  Aiming LED to receiver (nt_incl=" << ntInclKp1 << ", nt_az=" << ntAzKp1 << ")...\n";
-            int mr = gimbal.setTransmitterOrientation(ntInclKp1, fmod(ntAzKp1 + cfg::AZIMUTH_CMD_OFFSET, 360.0));
-            if (mr == 0) {
-                Sleep(cfg::STABILIZATION_TIME_MS);
-                for (int r = 1; r <= cfg::M_REPEATS; r++) {
-                    DaqStats st = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
-                    writeKp1(pointId, r, ntInclKp1, ntAzKp1, poseP, st);
-                    cout << "    [K+1 rep " << r << "/" << cfg::M_REPEATS << "]  ->  V = " << vStr(st) << "\n";
+        // ---- STAGE 2: Cooperative measurement {K+1} (PD -> LED, LED -> PD) - OPTIONAL ----
+        // Skipped entirely when cfg::S3_ENABLE_COOPERATIVE == false.
+        if (coopEnabled) {
+            stageNo++;
+            cout << "\n--- STAGE " << stageNo << "/" << nStages << ": Cooperative measurement {K+1} ---\n";
+            cout << "[" << datalog::clockTime() << "] Setting PD pointed to LED...\n";
+            receiverPointingToTransmitter(sock);
+            RobotPose poseP = receivePose(sock, 40);
+            if (poseP.valid) {
+                double ntInclKp1, ntAzKp1;
+                ledToReceiver(p.x, p.y, p.z, ntInclKp1, ntAzKp1);
+                cout << "  Aiming LED to receiver (nt_incl=" << ntInclKp1 << ", nt_az=" << ntAzKp1 << ")...\n";
+                int mr = gimbal.setTransmitterOrientation(ntInclKp1, fmod(ntAzKp1 + cfg::AZIMUTH_CMD_OFFSET, 360.0));
+                if (mr == 0) {
+                    Sleep(cfg::STABILIZATION_TIME_MS);
+                    for (int r = 1; r <= cfg::M_REPEATS; r++) {
+                        DaqStats st = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
+                        writeKp1(pointId, r, ntInclKp1, ntAzKp1, poseP, st);
+                        cout << "    [K+1 rep " << r << "/" << cfg::M_REPEATS << "]  ->  V = " << vStr(st) << "\n";
+                    }
+                    cout << "  STAGE " << stageNo << " done (K+1).\n";
+                } else {
+                    cout << "  [WARN] Motor error at (K+1); skipping.\n";
                 }
-                cout << "  STAGE 2 done (K+1).\n";
             } else {
-                cout << "  [WARN] Motor error at (K+1); skipping.\n";
+                cout << "  [WARN] Invalid 'pointed' pose; skipping (K+1).\n";
             }
-        } else {
-            cout << "  [WARN] Invalid 'pointed' pose; skipping (K+1).\n";
         }
 
         // ---- STAGE 3: Random-tilt scans {K} (PD tilted) - OPTIONAL ----
         // Skipped entirely when cfg::N_TILT_SCANS_PER_POINT == 0 (time-limited runs).
         if (tiltEnabled) {
-            cout << "\n--- STAGE 3/" << nStages << ": Random-tilt scans {K} (PD tilted) ---\n";
+            stageNo++;
+            cout << "\n--- STAGE " << stageNo << "/" << nStages << ": Random-tilt scans {K} (PD tilted) ---\n";
             for (int t = 0; t < cfg::N_TILT_SCANS_PER_POINT; t++) {
                 double theta = tiltDist(rng);
                 double az    = azDist(rng);
@@ -472,6 +510,7 @@ int main() {
                 RobotPose poseT = receivePose(sock, 40);
                 if (!poseT.valid) { cout << "  [WARN] Invalid tilt pose; skipping this tilt.\n"; continue; }
                 for (int r = 1; r <= cfg::M_REPEATS; r++) {
+                    double maxV = 0.0; int nOk = 0;
                     for (int i = 0; i < cfg::K_ORIENTATIONS; i++) {
                         double ntIncl, ntAz;
                         if (!setCodebook(i, ntIncl, ntAz)) {
@@ -482,14 +521,17 @@ int main() {
                         }
                         Sleep(cfg::STABILIZATION_TIME_MS);
                         DaqStats st = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
+                        if (st.ok) { if (nOk == 0 || st.mean > maxV) maxV = st.mean; nOk++; }
                         writeMaster(pointId, p, "tilt", theta, az, poseT, i + 1, ntIncl, ntAz, r, st);
                         cout << "    [tilt#" << (t + 1) << " rep " << r << "/" << cfg::M_REPEATS << "] LED orient "
                              << (i + 1) << "/" << cfg::K_ORIENTATIONS
                              << " (nt_incl=" << ntIncl << ", nt_az=" << ntAz << ")  ->  V = " << vStr(st) << "\n";
                     }
+                    warnIfAllLow(maxV, nOk, "tilt {K} scan #" + std::to_string(t + 1)
+                                            + " (rep " + std::to_string(r) + ")");
                 }
             }
-            cout << "  STAGE 3 done (tilt {K}).\n";
+            cout << "  STAGE " << stageNo << " done (tilt {K}).\n";
         }
 
         // End of point: release the server, mark the point as recorded, persist state.
@@ -503,6 +545,21 @@ int main() {
 
     master.close();
     kp1.close();
+
+    // V_dark: measured ONCE at the END (LED off) so turning the LED off/on does
+    // not perturb the campaign. Appended to <session>/metadata.txt.
+    measureVdarkToMetadata(sessionDir + "/metadata.txt");
+
+    // Big reminder: the LED was just turned OFF to measure V_dark, so make sure it
+    // is turned back ON before starting the next measurement session.
+    cout << "\n";
+    cout << "#############################################################\n";
+    cout << "#                                                           #\n";
+    cout << "#   DO NOT FORGET TO TURN THE LED ON FOR A NEW              #\n";
+    cout << "#   MEASUREMENT SESSION!                                    #\n";
+    cout << "#                                                           #\n";
+    cout << "#############################################################\n";
+
     datalog::deleteState(stateFile);
 
     cout << "\n=========================================================\n";
