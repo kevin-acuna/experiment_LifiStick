@@ -16490,4 +16490,376 @@ Console log:    output/sub3_spatial/20260727_152417/run.log
 [01:49:51] Moving receiver to target...
   -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
 
-###################################################
+#########################################################
+# POINT 1763/1800   target = (0, -1, 0.4)
+#########################################################
+[01:49:51] Moving receiver to target...
+  -> reachable.
+  point_id = 20260727_152417_92
+
+--- STAGE 1/2: Vertical baseline scan {K} (PD -> zenith) ---
+[01:49:51] Setting PD to vertical...
+[Info] Sending command for receiver to face upward (vertical)...
+    [vertical rep 1/1] LED orient 1/12 (nt_incl=16, nt_az=90)  ->  V = 0.603046 V
+    [vertical rep 1/1] LED orient 2/12 (nt_incl=16, nt_az=210)  ->  V = 1.457936 V
+    [vertical rep 1/1] LED orient 3/12 (nt_incl=16, nt_az=330)  ->  V = 1.496074 V
+    [vertical rep 1/1] LED orient 4/12 (nt_incl=60, nt_az=0)  ->  V = 0.220898 V
+    [vertical rep 1/1] LED orient 5/12 (nt_incl=64, nt_az=60)  ->  V = 0.117783 V
+    [vertical rep 1/1] LED orient 6/12 (nt_incl=64, nt_az=120)  ->  V = 0.116784 V
+    [vertical rep 1/1] LED orient 7/12 (nt_incl=60, nt_az=180)  ->  V = 0.214561 V
+    [vertical rep 1/1] LED orient 8/12 (nt_incl=64, nt_az=240)  ->  V = 1.073788 V
+    [vertical rep 1/1] LED orient 9/12 (nt_incl=64, nt_az=300)  ->  V = 1.070457 V
+    [vertical rep 1/1] LED orient 10/12 (nt_incl=0, nt_az=0)  ->  V = 1.275592 V
+    [vertical rep 1/1] LED orient 11/12 (nt_incl=60, nt_az=90)  ->  V = 0.118170 V
+    [vertical rep 1/1] LED orient 12/12 (nt_incl=60, nt_az=270)  ->  V = 1.487828 V
+  STAGE 1 done (vertical {K}).
+
+--- STAGE 2/2: Random-tilt scans {K} (PD tilted) ---
+[01:51:34] Tilt scan 1/3: PD theta=0.491555 deg, az=155.839 deg
+[Info] Sending tilt command: theta=0.491555 deg, az=155.839 deg...
+    [tilt#1 rep 1/1] LED orient 1/12 (nt_incl=16, nt_az=90)  ->  V = 0.618661 V
+    [tilt#1 rep 1/1] LED orient 2/12 (nt_incl=16, nt_az=210)  ->  V = 1.495697 V
+    [tilt#1 rep 1/1] LED orient 3/12 (nt_incl=16, nt_az=330)  ->  V = 1.533978 V
+    [tilt#1 rep 1/1] LED orient 4/12 (nt_incl=60, nt_az=0)  ->  V = 0.224313 V
+    [tilt#1 rep 1/1] LED orient 5/12 (nt_incl=64, nt_az=60)  ->  V = 0.120822 V
+    [tilt#1 rep 1/1] LED orient 6/12 (nt_incl=64, nt_az=120)  ->  V = 0.119449 V
+    [tilt#1 rep 1/1] LED orient 7/12 (nt_incl=60, nt_az=180)  ->  V = 0.219297 V
+    [tilt#1 rep 1/1] LED orient 8/12 (nt_incl=64, nt_az=240)  ->  V = 1.095157 V
+    [tilt#1 rep 1/1] LED orient 9/12 (nt_incl=64, nt_az=300)  ->  V = 1.089338 V
+    [tilt#1 rep 1/1] LED orient 10/12 (nt_incl=0, nt_az=0)  ->  V = 1.308908 V
+    [tilt#1 rep 1/1] LED orient 11/12 (nt_incl=60, nt_az=90)  ->  V = 0.121327 V
+    [tilt#1 rep 1/1] LED orient 12/12 (nt_incl=60, nt_az=270)  ->  V = 1.517261 V
+[01:53:17] Tilt scan 2/3: PD theta=2.14138 deg, az=140.512 deg
+[Info] Sending tilt command: theta=2.14138 deg, az=140.512 deg...
+    [tilt#2 rep 1/1] LED orient 1/12 (nt_incl=16, nt_az=90)  ->  V = 0.626536 V
+    [tilt#2 rep 1/1] LED orient 2/12 (nt_incl=16, nt_az=210)  ->  V = 1.514663 V
+    [tilt#2 rep 1/1] LED orient 3/12 (nt_incl=16, nt_az=330)  ->  V = 1.552133 V
+    [tilt#2 rep 1/1] LED orient 4/12 (nt_incl=60, nt_az=0)  ->  V = 0.225267 V
+    [tilt#2 rep 1/1] LED orient 5/12 (nt_incl=64, nt_az=60)  ->  V = 0.122459 V
+    [tilt#2 rep 1/1] LED orient 6/12 (nt_incl=64, nt_az=120)  ->  V = 0.121786 V
+    [tilt#2 rep 1/1] LED orient 7/12 (nt_incl=60, nt_az=180)  ->  V = 0.222799 V
+    [tilt#2 rep 1/1] LED orient 8/12 (nt_incl=64, nt_az=240)  ->  V = 1.106133 V
+    [tilt#2 rep 1/1] LED orient 9/12 (nt_incl=64, nt_az=300)  ->  V = 1.097227 V
+    [tilt#2 rep 1/1] LED orient 10/12 (nt_incl=0, nt_az=0)  ->  V = 1.325156 V
+    [tilt#2 rep 1/1] LED orient 11/12 (nt_incl=60, nt_az=90)  ->  V = 0.123453 V
+    [tilt#2 rep 1/1] LED orient 12/12 (nt_incl=60, nt_az=270)  ->  V = 1.531134 V
+[01:55:00] Tilt scan 3/3: PD theta=14.2428 deg, az=161.681 deg
+[Info] Sending tilt command: theta=14.2428 deg, az=161.681 deg...
+    [tilt#3 rep 1/1] LED orient 1/12 (nt_incl=16, nt_az=90)  ->  V = 0.642439 V
+    [tilt#3 rep 1/1] LED orient 2/12 (nt_incl=16, nt_az=210)  ->  V = 1.552758 V
+    [tilt#3 rep 1/1] LED orient 3/12 (nt_incl=16, nt_az=330)  ->  V = 1.586120 V
+    [tilt#3 rep 1/1] LED orient 4/12 (nt_incl=60, nt_az=0)  ->  V = 0.225473 V
+    [tilt#3 rep 1/1] LED orient 5/12 (nt_incl=64, nt_az=60)  ->  V = 0.125917 V
+    [tilt#3 rep 1/1] LED orient 6/12 (nt_incl=64, nt_az=120)  ->  V = 0.129808 V
+    [tilt#3 rep 1/1] LED orient 7/12 (nt_incl=60, nt_az=180)  ->  V = 0.238119 V
+    [tilt#3 rep 1/1] LED orient 8/12 (nt_incl=64, nt_az=240)  ->  V = 1.127104 V
+    [tilt#3 rep 1/1] LED orient 9/12 (nt_incl=64, nt_az=300)  ->  V = 1.102185 V
+    [tilt#3 rep 1/1] LED orient 10/12 (nt_incl=0, nt_az=0)  ->  V = 1.357219 V
+    [tilt#3 rep 1/1] LED orient 11/12 (nt_incl=60, nt_az=90)  ->  V = 0.128462 V
+    [tilt#3 rep 1/1] LED orient 12/12 (nt_incl=60, nt_az=270)  ->  V = 1.550684 V
+  STAGE 2 done (tilt {K}).
+[Info] Sending command for receiver to face the transmitter (finish)...
+[01:56:43] POINT 1763/1800 COMPLETED and marked done in the positions file.
+
+#########################################################
+# POINT 1764/1800   target = (-0.2, -1, 0.4)
+#########################################################
+[01:56:43] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1765/1800   target = (-0.4, -1, 0.4)
+#########################################################
+[01:56:43] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1766/1800   target = (-0.6, -1, 0.4)
+#########################################################
+[01:56:43] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1767/1800   target = (-0.8, -1, 0.4)
+#########################################################
+[01:56:43] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1768/1800   target = (-1, -1, 0.4)
+#########################################################
+[01:56:43] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1769/1800   target = (-1.2, -1, 0.4)
+#########################################################
+[01:56:43] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1770/1800   target = (-1.4, -1, 0.4)
+#########################################################
+[01:56:43] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1771/1800   target = (-1.4, -1.2, 0.4)
+#########################################################
+[01:56:43] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1772/1800   target = (-1.2, -1.2, 0.4)
+#########################################################
+[01:56:43] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1773/1800   target = (-1, -1.2, 0.4)
+#########################################################
+[01:56:43] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1774/1800   target = (-0.8, -1.2, 0.4)
+#########################################################
+[01:56:43] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1775/1800   target = (-0.6, -1.2, 0.4)
+#########################################################
+[01:56:43] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1776/1800   target = (-0.4, -1.2, 0.4)
+#########################################################
+[01:56:43] Moving receiver to target...
+  -> reachable.
+  point_id = 20260727_152417_93
+
+--- STAGE 1/2: Vertical baseline scan {K} (PD -> zenith) ---
+[01:56:43] Setting PD to vertical...
+[Info] Sending command for receiver to face upward (vertical)...
+    [vertical rep 1/1] LED orient 1/12 (nt_incl=16, nt_az=90)  ->  V = 0.316179 V
+    [vertical rep 1/1] LED orient 2/12 (nt_incl=16, nt_az=210)  ->  V = 1.114521 V
+    [vertical rep 1/1] LED orient 3/12 (nt_incl=16, nt_az=330)  ->  V = 0.805736 V
+    [vertical rep 1/1] LED orient 4/12 (nt_incl=60, nt_az=0)  ->  V = 0.132078 V
+    [vertical rep 1/1] LED orient 5/12 (nt_incl=64, nt_az=60)  ->  V = 0.060463 V
+    [vertical rep 1/1] LED orient 6/12 (nt_incl=64, nt_az=120)  ->  V = 0.103425 V
+    [vertical rep 1/1] LED orient 7/12 (nt_incl=60, nt_az=180)  ->  V = 0.277804 V
+    [vertical rep 1/1] LED orient 8/12 (nt_incl=64, nt_az=240)  ->  V = 1.224574 V
+    [vertical rep 1/1] LED orient 9/12 (nt_incl=64, nt_az=300)  ->  V = 0.690450 V
+    [vertical rep 1/1] LED orient 10/12 (nt_incl=0, nt_az=0)  ->  V = 0.783158 V
+    [vertical rep 1/1] LED orient 11/12 (nt_incl=60, nt_az=90)  ->  V = 0.078414 V
+    [vertical rep 1/1] LED orient 12/12 (nt_incl=60, nt_az=270)  ->  V = 1.258463 V
+  STAGE 1 done (vertical {K}).
+
+--- STAGE 2/2: Random-tilt scans {K} (PD tilted) ---
+[01:58:26] Tilt scan 1/3: PD theta=9.99088 deg, az=110.007 deg
+[Info] Sending tilt command: theta=9.99088 deg, az=110.007 deg...
+    [tilt#1 rep 1/1] LED orient 1/12 (nt_incl=16, nt_az=90)  ->  V = 0.359274 V
+    [tilt#1 rep 1/1] LED orient 2/12 (nt_incl=16, nt_az=210)  ->  V = 1.277136 V
+    [tilt#1 rep 1/1] LED orient 3/12 (nt_incl=16, nt_az=330)  ->  V = 0.919967 V
+    [tilt#1 rep 1/1] LED orient 4/12 (nt_incl=60, nt_az=0)  ->  V = 0.143365 V
+    [tilt#1 rep 1/1] LED orient 5/12 (nt_incl=64, nt_az=60)  ->  V = 0.070009 V
+    [tilt#1 rep 1/1] LED orient 6/12 (nt_incl=64, nt_az=120)  ->  V = 0.118583 V
+    [tilt#1 rep 1/1] LED orient 7/12 (nt_incl=60, nt_az=180)  ->  V = 0.309955 V
+    [tilt#1 rep 1/1] LED orient 8/12 (nt_incl=64, nt_az=240)  ->  V = 1.361528 V
+    [tilt#1 rep 1/1] LED orient 9/12 (nt_incl=64, nt_az=300)  ->  V = 0.753683 V
+    [tilt#1 rep 1/1] LED orient 10/12 (nt_incl=0, nt_az=0)  ->  V = 0.895903 V
+    [tilt#1 rep 1/1] LED orient 11/12 (nt_incl=60, nt_az=90)  ->  V = 0.091006 V
+    [tilt#1 rep 1/1] LED orient 12/12 (nt_incl=60, nt_az=270)  ->  V = 1.396054 V
+[02:00:08] Tilt scan 2/3: PD theta=6.04541 deg, az=52.518 deg
+[Info] Sending tilt command: theta=6.04541 deg, az=52.518 deg...
+    [tilt#2 rep 1/1] LED orient 1/12 (nt_incl=16, nt_az=90)  ->  V = 0.348687 V
+    [tilt#2 rep 1/1] LED orient 2/12 (nt_incl=16, nt_az=210)  ->  V = 1.237927 V
+    [tilt#2 rep 1/1] LED orient 3/12 (nt_incl=16, nt_az=330)  ->  V = 0.893623 V
+    [tilt#2 rep 1/1] LED orient 4/12 (nt_incl=60, nt_az=0)  ->  V = 0.142450 V
+    [tilt#2 rep 1/1] LED orient 5/12 (nt_incl=64, nt_az=60)  ->  V = 0.067489 V
+    [tilt#2 rep 1/1] LED orient 6/12 (nt_incl=64, nt_az=120)  ->  V = 0.112533 V
+    [tilt#2 rep 1/1] LED orient 7/12 (nt_incl=60, nt_az=180)  ->  V = 0.297712 V
+    [tilt#2 rep 1/1] LED orient 8/12 (nt_incl=64, nt_az=240)  ->  V = 1.330973 V
+    [tilt#2 rep 1/1] LED orient 9/12 (nt_incl=64, nt_az=300)  ->  V = 0.744909 V
+    [tilt#2 rep 1/1] LED orient 10/12 (nt_incl=0, nt_az=0)  ->  V = 0.868947 V
+    [tilt#2 rep 1/1] LED orient 11/12 (nt_incl=60, nt_az=90)  ->  V = 0.086564 V
+    [tilt#2 rep 1/1] LED orient 12/12 (nt_incl=60, nt_az=270)  ->  V = 1.368442 V
+[02:01:51] Tilt scan 3/3: PD theta=11.3662 deg, az=17.2182 deg
+[Info] Sending tilt command: theta=11.3662 deg, az=17.2182 deg...
+    [tilt#3 rep 1/1] LED orient 1/12 (nt_incl=16, nt_az=90)  ->  V = 0.336877 V
+    [tilt#3 rep 1/1] LED orient 2/12 (nt_incl=16, nt_az=210)  ->  V = 1.193744 V
+    [tilt#3 rep 1/1] LED orient 3/12 (nt_incl=16, nt_az=330)  ->  V = 0.868005 V
+    [tilt#3 rep 1/1] LED orient 4/12 (nt_incl=60, nt_az=0)  ->  V = 0.145107 V
+    [tilt#3 rep 1/1] LED orient 5/12 (nt_incl=64, nt_az=60)  ->  V = 0.066340 V
+    [tilt#3 rep 1/1] LED orient 6/12 (nt_incl=64, nt_az=120)  ->  V = 0.105027 V
+    [tilt#3 rep 1/1] LED orient 7/12 (nt_incl=60, nt_az=180)  ->  V = 0.277838 V
+    [tilt#3 rep 1/1] LED orient 8/12 (nt_incl=64, nt_az=240)  ->  V = 1.289425 V
+    [tilt#3 rep 1/1] LED orient 9/12 (nt_incl=64, nt_az=300)  ->  V = 0.742797 V
+    [tilt#3 rep 1/1] LED orient 10/12 (nt_incl=0, nt_az=0)  ->  V = 0.839900 V
+    [tilt#3 rep 1/1] LED orient 11/12 (nt_incl=60, nt_az=90)  ->  V = 0.082839 V
+    [tilt#3 rep 1/1] LED orient 12/12 (nt_incl=60, nt_az=270)  ->  V = 1.338927 V
+  STAGE 2 done (tilt {K}).
+[Info] Sending command for receiver to face the transmitter (finish)...
+[02:03:34] POINT 1776/1800 COMPLETED and marked done in the positions file.
+
+#########################################################
+# POINT 1777/1800   target = (-0.2, -1.2, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1778/1800   target = (0, -1.2, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1779/1800   target = (0.2, -1.2, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1780/1800   target = (0.4, -1.2, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1781/1800   target = (0.6, -1.2, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1782/1800   target = (0.8, -1.2, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1783/1800   target = (1, -1.2, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1784/1800   target = (1.2, -1.2, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1785/1800   target = (1.4, -1.2, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1786/1800   target = (1.4, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1787/1800   target = (1.2, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1788/1800   target = (1, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1789/1800   target = (0.8, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1790/1800   target = (0.6, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1791/1800   target = (0.4, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1792/1800   target = (0.2, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1793/1800   target = (0, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1794/1800   target = (-0.2, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1795/1800   target = (-0.4, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1796/1800   target = (-0.6, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1797/1800   target = (-0.8, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1798/1800   target = (-1, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1799/1800   target = (-1.2, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 1800/1800   target = (-1.4, -1.4, 0.4)
+#########################################################
+[02:03:34] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+[V_dark] Campaign finished. Turn OFF the LED MANUALLY (it cannot be switched off by software) and press Enter to measure the baseline (or 's' + Enter to skip)...  V_dark mean=0.00692775 V, std=0.00213941 V
+
+#############################################################
+#                                                           #
+#   DO NOT FORGET TO TURN THE LED ON FOR A NEW              #
+#   MEASUREMENT SESSION!                                    #
+#                                                           #
+#############################################################
+
+=========================================================
+ SPATIAL CAMPAIGN COMPLETED
+=========================================================
+  Points recorded: 93
+  Data folder:     output/sub3_spatial/20260727_152417
+  Console log:     output/sub3_spatial/20260727_152417/run.log

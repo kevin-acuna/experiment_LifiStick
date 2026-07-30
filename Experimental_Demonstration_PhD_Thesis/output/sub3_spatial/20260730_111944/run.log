@@ -1,0 +1,97 @@
+
+Session folder: output/sub3_spatial/20260730_111944
+Console log:    output/sub3_spatial/20260730_111944/run.log
+
+
+#########################################################
+# POINT 1/1800   target = (-1.4, -1.4, 1.1)
+#########################################################
+[11:19:56] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 2/1800   target = (-1.2, -1.4, 1.1)
+#########################################################
+[11:19:56] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 3/1800   target = (-1, -1.4, 1.1)
+#########################################################
+[11:19:57] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 4/1800   target = (-0.8, -1.4, 1.1)
+#########################################################
+[11:19:57] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 5/1800   target = (-0.6, -1.4, 1.1)
+#########################################################
+[11:19:57] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 6/1800   target = (-0.4, -1.4, 1.1)
+#########################################################
+[11:19:57] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 7/1800   target = (-0.2, -1.4, 1.1)
+#########################################################
+[11:19:57] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 8/1800   target = (0, -1.4, 1.1)
+#########################################################
+[11:19:57] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 9/1800   target = (0.2, -1.4, 1.1)
+#########################################################
+[11:19:57] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 10/1800   target = (0.4, -1.4, 1.1)
+#########################################################
+[11:19:57] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 11/1800   target = (0.6, -1.4, 1.1)
+#########################################################
+[11:19:57] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 12/1800   target = (0.8, -1.4, 1.1)
+#########################################################
+[11:19:57] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 13/1800   target = (1, -1.4, 1.1)
+#########################################################
+[11:19:57] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 14/1800   target = (1.2, -1.4, 1.1)
+#########################################################
+[11:19:57] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 15/1800   target = (1.4, -1.4, 1.1)
+#########################################################
+[11:19:57] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+#
