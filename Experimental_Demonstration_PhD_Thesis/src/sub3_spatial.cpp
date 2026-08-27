@@ -46,6 +46,13 @@ using namespace std;
 
 static constexpr double kPi = 3.14159265358979323846;
 
+// Operator's answer to the anti-stuck warning (see askStuckDecision in main).
+enum class StuckAnswer {
+    Stop,    // [N] halt the campaign and leave the current point NOT done
+    Retry,   // [C] robot fixed: discard the suspect rows and re-measure the point
+    Accept   // [A] robot verified healthy: keep the rows, it was a false positive
+};
+
 // Reads a metadata line. The default (shown in [brackets]) is returned when the
 // operator just presses Enter, so common values need not be retyped every run.
 static string promptLine(const string& label, const string& def = "NA") {
@@ -192,6 +199,11 @@ int main() {
         cout << "  Tilt scans / point: 0 (STAGE 3 DISABLED)\n";
     cout << "  Acquisition:        " << cfg::DAQ_ACQ_TIME_SEC << " s (" << cfg::DAQ_N_SAMPLES
          << " samples @ " << cfg::DAQ_FSAMPLE << " Hz)\n";
+    if (cfg::S3_STUCK_CHECK_ENABLED)
+        cout << "  Anti-stuck check:   ENABLED (pauses if two consecutive points give the\n"
+             << "                      same vertical {K} vector within " << cfg::S3_STUCK_TOL_V << " V)\n";
+    else
+        cout << "  Anti-stuck check:   DISABLED (a silent UR5 protective stop will NOT be caught)\n";
     cout << "=========================================================\n\n";
 
     // -------------------------------------------------------------------------
@@ -355,17 +367,34 @@ int main() {
         else       w.stream() << "NA,NA,NA,0," << cfg::DAQ_FSAMPLE << "\n";
         w.flush();
     };
+    // Formats ONE master.csv row (newline included) instead of writing it out.
+    // Returning a string lets STAGE 1 buffer its rows in memory and commit them
+    // only after the anti-stuck check has passed, so a frozen scan never reaches
+    // master.csv (otherwise a retried point would leave a corrupt partial scan
+    // glued in front of the good one under the same point_id).
+    // setprecision(8) mirrors the one applied to master.stream() so the text is
+    // byte-for-byte identical to a direct write.
+    auto masterRow = [](const string& pid, const Position& p, const char* kind,
+                        double tiltDeg, double tiltAz, const RobotPose& pose,
+                        int oid, double ntIncl, double ntAz, int rep, const DaqStats& st) -> string {
+        std::ostringstream oss;
+        oss << std::setprecision(8);
+        oss << pid << "," << p.x << "," << p.y << "," << p.z << ","
+            << kind << "," << tiltDeg << "," << tiltAz << ","
+            << pose.px << "," << pose.py << "," << pose.pz << ","
+            << pose.qx << "," << pose.qy << "," << pose.qz << "," << pose.qw << ","
+            << pose.nr_incl << "," << pose.nr_az << ","
+            << oid << "," << ntIncl << "," << ntAz << "," << rep << ","
+            << datalog::date() << "," << datalog::clockTime() << ",";
+        if (st.ok) oss << st.mean << "," << st.median << "," << st.std << "," << st.n << "," << cfg::DAQ_FSAMPLE << "\n";
+        else       oss << "NA,NA,NA,0," << cfg::DAQ_FSAMPLE << "\n";
+        return oss.str();
+    };
     auto writeMaster = [&](const string& pid, const Position& p, const char* kind,
                            double tiltDeg, double tiltAz, const RobotPose& pose,
                            int oid, double ntIncl, double ntAz, int rep, const DaqStats& st) {
-        master.stream() << pid << "," << p.x << "," << p.y << "," << p.z << ","
-                        << kind << "," << tiltDeg << "," << tiltAz << ","
-                        << pose.px << "," << pose.py << "," << pose.pz << ","
-                        << pose.qx << "," << pose.qy << "," << pose.qz << "," << pose.qw << ","
-                        << pose.nr_incl << "," << pose.nr_az << ","
-                        << oid << "," << ntIncl << "," << ntAz << "," << rep << ","
-                        << datalog::date() << "," << datalog::clockTime() << ",";
-        writeStats(master, st);
+        master.stream() << masterRow(pid, p, kind, tiltDeg, tiltAz, pose, oid, ntIncl, ntAz, rep, st);
+        master.flush();
     };
     auto writeKp1 = [&](const string& pid, int rep, double ntIncl, double ntAz,
                         const RobotPose& pose, const DaqStats& st) {
@@ -400,9 +429,116 @@ int main() {
         }
     };
 
+    // ---- Anti-stuck check (silent UR5 protective stop) ----------------------
+    // Max |dV| between two vertical {K} fingerprints. Returns -1 when they are
+    // not comparable (different length, or one of them empty).
+    auto maxAbsDiff = [](const vector<double>& a, const vector<double>& b) -> double {
+        if (a.empty() || a.size() != b.size()) return -1.0;
+        double m = 0.0;
+        for (size_t i = 0; i < a.size(); i++) {
+            double d = std::fabs(a[i] - b[i]);
+            if (d > m) m = d;
+        }
+        return m;
+    };
+
+    // Blocking WARNING + operator decision. 'pp' is the target commanded for the
+    // current point and 'prevP' is where the PD physically still is (the previous
+    // point). See StuckAnswer for the meaning of the three possible answers.
+    auto askStuckDecision = [&](int pointNo, int nPoints, const Position& pp,
+                                const Position& prevP, const string& prevLabel,
+                                double dev, size_t nDiscard) -> StuckAnswer {
+        cout << "\n\n";
+        cout << "#############################################################################\n";
+        cout << "#                                                                           #\n";
+        cout << "#      W A R N I N G  -  T H E   R O B O T   D I D   N O T   M O V E        #\n";
+        cout << "#                                                                           #\n";
+        cout << "#############################################################################\n";
+        cout << "\n";
+        cout << "  THE CAMPAIGN IS NOW PAUSED. NOTHING HAS BEEN WRITTEN TO master.csv YET:\n";
+        cout << "  what happens to the rows just measured depends on your choice below.\n";
+        cout << "\n";
+        cout << "  WHAT WAS DETECTED\n";
+        cout << "  -----------------\n";
+        cout << "  The vertical {K} scan just measured at POINT " << pointNo << "/" << nPoints << "\n";
+        cout << "  is IDENTICAL to the one measured at the previous point (" << prevLabel << ").\n";
+        cout << "\n";
+        cout << "  WHERE THE RECEIVER IS\n";
+        cout << "  ---------------------\n";
+        cout << "    commanded target for THIS point : (" << pp.x << ", " << pp.y << ", " << pp.z << ")\n";
+        cout << "    >>>  PD IS STILL STUCK AT       : (" << prevP.x << ", " << prevP.y << ", "
+             << prevP.z << ")  <<<\n";
+        cout << "    i.e. the previous point's position: the receiver never left it.\n";
+        cout << "\n";
+        {   // Local formatting: never touch cout's own precision, otherwise every
+            // double printed for the rest of the campaign would change format.
+            std::ostringstream d, t;
+            d << std::fixed << std::setprecision(5) << dev;
+            t << std::fixed << std::setprecision(5) << cfg::S3_STUCK_TOL_V;
+            cout << "    max |dV| between both scans : " << d.str() << " V\n";
+            cout << "    tolerance                   : " << t.str() << " V\n";
+        }
+        cout << "\n";
+        cout << "  If the photodiode had really travelled to a new position, the " << cfg::K_ORIENTATIONS << "\n";
+        cout << "  voltages would have changed by tens of mV at least. Reading the same\n";
+        cout << "  vector twice means the PD is STILL PHYSICALLY AT THE PREVIOUS POINT.\n";
+        cout << "\n";
+        cout << "  MOST LIKELY CAUSE\n";
+        cout << "  -----------------\n";
+        cout << "  The UR5 is in PROTECTIVE STOP (e.g. the arm touched itself). This is\n";
+        cout << "  silent from here: the Python server keeps answering 'reachable' and\n";
+        cout << "  keeps returning a pose, because the pose it reports is the COMMANDED\n";
+        cout << "  one, not the measured one. So the campaign would happily keep\n";
+        cout << "  re-measuring the same physical location for hours.\n";
+        cout << "\n";
+        cout << "  WHAT TO DO BEFORE CONTINUING\n";
+        cout << "  ----------------------------\n";
+        cout << "   1. Look at the UR5 teach pendant and clear the protective stop.\n";
+        cout << "   2. Check that the arm is not colliding with itself or the structure.\n";
+        cout << "   3. Make sure the Python server is STILL RUNNING (do not restart it:\n";
+        cout << "      this program keeps the same socket open).\n";
+        cout << "   4. Leave the LED ON and do not touch the gimbal.\n";
+        cout << "\n";
+        cout << "  OPTIONS\n";
+        cout << "  -------\n";
+        cout << "   [C] CONTINUE - I fixed the robot. Re-measure THIS point (" << pointNo
+             << ") from the\n";
+        cout << "                  start and then carry on with the rest of the campaign.\n";
+        cout << "                  The " << nDiscard << " suspect row(s) are discarded, not saved.\n";
+        cout << "   [A] ACCEPT ANYWAY - I checked the robot and there is NO error: it really\n";
+        cout << "                  did move, so this is a FALSE POSITIVE. Keep the " << nDiscard << " row(s)\n";
+        cout << "                  just measured, save them to master.csv and carry on with\n";
+        cout << "                  the campaign. Use this ONLY after checking with your own\n";
+        cout << "                  eyes that the PD is at the commanded target above.\n";
+        cout << "   [N] DO NOT CONTINUE - stop here. The point is left NOT done, so the\n";
+        cout << "                  next run resumes exactly at this point with 'C'.\n";
+        cout << "\n";
+        while (true) {
+            cout << "  Your choice (C = re-measure / A = accept anyway / N = stop): ";
+            string ans;
+            // EOF (no console) -> stop, the only choice that cannot corrupt the dataset.
+            if (!getline(cin, ans)) return StuckAnswer::Stop;
+            size_t a = ans.find_first_not_of(" \t\r\n");
+            if (a != string::npos) {
+                char c = static_cast<char>(toupper(ans[a]));
+                if (c == 'C') return StuckAnswer::Retry;
+                if (c == 'A') return StuckAnswer::Accept;
+                if (c == 'N' || c == 'Q') return StuckAnswer::Stop;
+            }
+            cout << "  [Error] Type C to re-measure, A to accept anyway, or N to stop.\n";
+        }
+    };
+
     // -------------------------------------------------------------------------
     // Main loop over points
     // -------------------------------------------------------------------------
+    // Vertical {K} fingerprint of the last successfully validated point, used to
+    // tell whether the robot actually moved. Empty on the first point of a run
+    // (and right after a resume), so that point cannot be checked - a stuck
+    // robot is then caught at the NEXT point instead.
+    vector<double> prevVertical;
+    string prevVerticalLabel;
+    Position prevPos(0.0, 0.0, 0.0);   // where the PD physically is while stuck
     const int totalPoints = static_cast<int>(positions.size());
     const bool coopEnabled = cfg::S3_ENABLE_COOPERATIVE;         // STAGE 2 (cooperative {K+1}) is optional
     const bool tiltEnabled = (cfg::N_TILT_SCANS_PER_POINT > 0);  // STAGE 3 (random tilt {K}) is optional
@@ -436,12 +572,33 @@ int main() {
         cout << "  point_id = " << pointId << "\n";
 
         // ---- STAGE 1: Vertical baseline scan {K} (PD -> zenith) - always on ----
+        // The {K} voltages of this scan are this point's "fingerprint": they are
+        // compared against the previous point's to prove the robot really moved
+        // (cfg::S3_STUCK_CHECK_ENABLED). The rows are buffered and committed to
+        // master.csv ONLY after that check passes, so a frozen scan is never
+        // stored and a retried point leaves no corrupt partial scan behind.
         int stageNo = 1;
-        cout << "\n--- STAGE " << stageNo << "/" << nStages << ": Vertical baseline scan {K} (PD -> zenith) ---\n";
-        cout << "[" << datalog::clockTime() << "] Setting PD to vertical...\n";
-        receiverPointingToCeil(sock);
-        RobotPose poseV = receivePose(sock, 40);
-        if (poseV.valid) {
+        bool stuckStop = false;        // operator answered "do not continue"
+        vector<double> curVertical;    // fingerprint, in (repeat, orientation) order
+
+        for (int attempt = 1; ; attempt++) {
+            vector<string> pending;         // STAGE 1 rows, not written yet
+            bool fingerprintUsable = true;  // false if any acquisition failed
+            bool accepted = false;          // operator overrode the check with [A]
+            curVertical.clear();
+
+            cout << "\n--- STAGE " << stageNo << "/" << nStages
+                 << ": Vertical baseline scan {K} (PD -> zenith)";
+            if (attempt > 1) cout << "   [RETRY " << (attempt - 1) << "]";
+            cout << " ---\n";
+            cout << "[" << datalog::clockTime() << "] Setting PD to vertical...\n";
+            receiverPointingToCeil(sock);
+            RobotPose poseV = receivePose(sock, 40);
+            if (!poseV.valid) {
+                cout << "  [WARN] Invalid vertical pose; skipping STAGE " << stageNo << ".\n";
+                break;                      // nothing measured: nothing to check or commit
+            }
+
             for (int r = 1; r <= cfg::M_REPEATS; r++) {
                 double maxV = 0.0; int nOk = 0;
                 for (int i = 0; i < cfg::K_ORIENTATIONS; i++) {
@@ -454,17 +611,91 @@ int main() {
                     }
                     Sleep(cfg::STABILIZATION_TIME_MS);
                     DaqStats st = daqAcquireStats(cfg::DAQ_N_SAMPLES, cfg::DAQ_FSAMPLE);
-                    if (st.ok) { if (nOk == 0 || st.mean > maxV) maxV = st.mean; nOk++; }
-                    writeMaster(pointId, p, "vertical", 0.0, 0.0, poseV, i + 1, ntIncl, ntAz, r, st);
+                    if (st.ok) {
+                        if (nOk == 0 || st.mean > maxV) maxV = st.mean;
+                        nOk++;
+                        curVertical.push_back(st.mean);
+                    } else {
+                        fingerprintUsable = false;   // a hole makes the vector non-comparable
+                    }
+                    pending.push_back(masterRow(pointId, p, "vertical", 0.0, 0.0, poseV,
+                                                i + 1, ntIncl, ntAz, r, st));
                     cout << "    [vertical rep " << r << "/" << cfg::M_REPEATS << "] LED orient "
                          << (i + 1) << "/" << cfg::K_ORIENTATIONS
                          << " (nt_incl=" << ntIncl << ", nt_az=" << ntAz << ")  ->  V = " << vStr(st) << "\n";
                 }
                 warnIfAllLow(maxV, nOk, "vertical {K} scan (rep " + std::to_string(r) + ")");
             }
+
+            // ---- Defensive check: did the PD really travel to a new position? ---
+            double dev = -1.0;   // <0 = not comparable, so the check cannot run
+            if (cfg::S3_STUCK_CHECK_ENABLED && fingerprintUsable && !prevVertical.empty())
+                dev = maxAbsDiff(prevVertical, curVertical);
+
+            if (dev >= 0.0 && dev <= cfg::S3_STUCK_TOL_V) {
+                StuckAnswer answer = askStuckDecision(idx + 1, totalPoints, p, prevPos,
+                                                      prevVerticalLabel, dev, pending.size());
+                if (answer == StuckAnswer::Retry) {
+                    cout << "\n  -> CONTINUE: discarding the " << pending.size()
+                         << " suspect row(s) and re-measuring point " << (idx + 1) << ".\n";
+                    cout << "[" << datalog::clockTime() << "] Re-sending the target to the robot...\n";
+                    sendCoordinates(sock, p.x, p.y, p.z);
+                    string reachRetry = receiveResponse(sock, 3);
+                    if (reachRetry == "reachable") cout << "  -> reachable.\n";
+                    else cout << "  [WARNING] server answered '" << reachRetry
+                              << "' instead of 'reachable'. Watch the next readings closely.\n";
+                    continue;                        // redo the whole vertical scan
+                }
+                if (answer == StuckAnswer::Stop) {
+                    stuckStop = true;
+                    break;
+                }
+                // [A] The operator inspected the robot and found no fault, so this
+                // is a false positive: keep the rows and commit them like any other
+                // point. Logged loudly so the override is traceable in run.log.
+                accepted = true;
+                cout << "\n  -> ACCEPT ANYWAY: operator confirmed the robot is healthy and that\n";
+                cout << "     this is a FALSE POSITIVE. The " << pending.size()
+                     << " row(s) WILL be saved to master.csv.\n";
+            }
+
+            // ---- Validated: commit the buffered rows to master.csv --------------
+            for (size_t k = 0; k < pending.size(); k++) master.stream() << pending[k];
+            master.flush();
+            if (fingerprintUsable) {
+                prevVertical      = curVertical;
+                prevVerticalLabel = "point " + std::to_string(idx + 1) + ", " + pointId;
+                prevPos           = p;   // last position the PD is known to have reached
+            }
+            if (dev >= 0.0) {
+                std::ostringstream oss;
+                oss << std::fixed << std::setprecision(5) << dev;
+                if (accepted)
+                    cout << "  Anti-stuck check OVERRIDDEN BY THE OPERATOR: max |dV| vs the previous\n"
+                         << "  point was only " << oss.str() << " V, accepted as a false positive.\n";
+                else
+                    cout << "  Anti-stuck check PASSED: max |dV| vs the previous point = "
+                         << oss.str() << " V (> " << cfg::S3_STUCK_TOL_V << " V) -> the robot moved.\n";
+            }
             cout << "  STAGE " << stageNo << " done (vertical {K}).\n";
-        } else {
-            cout << "  [WARN] Invalid vertical pose; skipping STAGE " << stageNo << ".\n";
+            break;
+        }
+
+        // Operator chose to stop: leave this point NOT done and exit cleanly, so
+        // the next run resumes exactly here when answering 'C'.
+        if (stuckStop) {
+            cout << "\n";
+            cout << "  CAMPAIGN STOPPED BY THE OPERATOR (the robot was not moving).\n";
+            cout << "  Point " << (idx + 1) << "/" << totalPoints
+                 << " is left NOT done and none of its rows were written.\n";
+            cout << "  Fix the robot, run this program again and answer 'C' to resume\n";
+            cout << "  exactly at this point.\n";
+            receiverFinished(sock);
+            master.close(); kp1.close();
+            datalog::saveState(stateFile, { idx, "", sessionStamp, pointCounter - 1, true });
+            logger.stop();
+            closesocket(sock); WSACleanup();
+            return 2;
         }
 
         // ---- STAGE 2: Cooperative measurement {K+1} (PD -> LED, LED -> PD) - OPTIONAL ----

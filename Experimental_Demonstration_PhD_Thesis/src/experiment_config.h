@@ -134,6 +134,32 @@ inline constexpr bool S3_ENABLE_COOPERATIVE = false;
 inline constexpr double S3_LOW_SIGNAL_WARN_V = 0.08;
 
 // -----------------------------------------------------------------------------
+// Chequeo defensivo "robot atascado" (protective stop silencioso).
+//
+// Si el UR5 entra en protective stop (p.ej. se toca a si mismo), el servidor
+// sigue respondiendo "reachable" y sigue devolviendo una pose, asi que la
+// campana continuaria midiendo la MISMA posicion fisica una y otra vez. Las
+// coordenadas de pose_p* NO sirven para detectarlo porque son la pose COMANDADA
+// y si cambian. La unica senal real es que el vector de voltajes del escaneo
+// vertical {K} deja de cambiar entre puntos consecutivos.
+//
+// Al detectarlo el programa SE DETIENE, muestra un WARNING grande y pide al
+// operador decidir: continuar (re-mide el punto sospechoso) o parar.
+// true = chequeo activo (recomendado).
+inline constexpr bool S3_STUCK_CHECK_ENABLED = true;
+
+// Tolerancia [V]: desviacion maxima entre el vector vertical {K} de dos puntos
+// consecutivos para considerar que el PD NO se movio.
+// Valor medido sobre las sesiones 20260728/29/30: dos puntos consecutivos en la
+// MISMA posicion atascada difieren hasta ~0.005 V (deriva termica del PD),
+// mientras que el movimiento real mas pequeno observado es ~0.040 V. El
+// resultado es identico para cualquier tolerancia entre 0.006 y 0.030 V, asi
+// que 0.010 V queda centrado: 2x por encima del ruido y 4x por debajo del
+// movimiento real mas pequeno. NO bajar a 0.003 V (queda por debajo del ruido
+// y dispara falsos positivos).
+inline constexpr double S3_STUCK_TOL_V = 0.010;
+
+// -----------------------------------------------------------------------------
 // Offset de alineamiento azimutal del gimbal del LED.
 // Se aplica al comandar el motor: motor_az = fmod(az + AZIMUTH_CMD_OFFSET, 360).
 // Alinea el cero mecanico del gimbal con el eje +X global. El azimut REGISTRADO
