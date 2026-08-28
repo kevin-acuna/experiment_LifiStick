@@ -1,0 +1,18 @@
+Session   : C:\Users\userlisv\Documents\Kevin\Project-Haitham\experiment_LifiStick\Experimental_Demonstration_PhD_Thesis\output\sub3_spatial\20260827_104436
+Generated : 2026-08-28T16:58:58
+Tolerance : 0.01 V   min run: 2   keep-first: False   keep-stale: False
+
+--- Run 1/1 ---
+  Run of 2 consecutive points with a frozen voltage vector (scan 'vertical', tol 0.0100 V):
+    total drift first -> last: 0.00095 V  (slow thermal drift, not movement)
+    - previous point 20260827_104436_64           (0.8, -0.4, 0.5)         1.0822   1.0818   2.2459   1.4255   0.2396   0.1357   0.1319   0.2251   1.0806   1.6019   0.1864   0.5873
+      step into the run: 0.04082 V (> tol) -> the robot really moved between these two points
+    * 20260827_104436_65             (0.6, -0.2, 0.5)         1.1059   1.1049   2.2867   1.4427   0.2472   0.1406   0.1336   0.2217   1.0838   1.6336   0.1934   0.5856  step=  --     (run start)
+    * 20260827_104436_66             (0.6, 0, 0.5)            1.1055   1.1047   2.2858   1.4425   0.2472   0.1405   0.1335   0.2217   1.0834   1.6338   0.1934   0.5855  step=0.00095 V
+    - next point     <none: the run reaches the end of the session>
+    -> removing all 2 point(s) of the run.
+
+Stuck points removed (2):
+  20260827_104436_65  (0.6, -0.2, 0.5)
+  20260827_104436_66  (0.6, 0, 0.5)
+
