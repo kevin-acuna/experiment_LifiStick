@@ -47,8 +47,12 @@ WS_THETA_FIN = 355 # Final angle of the workspace
 # Height-dependent workspace radii
 WS_HEIGHT_RADII = {
     0.4: {'inner': 0.64, 'outer': 0.74},
+    0.5: {'inner': 0.63, 'outer': 0.78},
     0.6: {'inner': 0.62, 'outer': 0.82},
+    0.7: {'inner': 0.55, 'outer': 0.84},
     0.8: {'inner': 0.50, 'outer': 0.86},
+    0.9: {'inner': 0.47, 'outer': 0.85},
     1.0: {'inner': 0.44, 'outer': 0.84},
+    1.1: {'inner': 0.42, 'outer': 0.82},
     1.2: {'inner': 0.40, 'outer': 0.80}
 }
