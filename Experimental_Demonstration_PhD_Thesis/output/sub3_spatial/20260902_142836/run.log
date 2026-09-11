@@ -1,0 +1,608 @@
+
+Session folder: output/sub3_spatial/20260902_142836
+Console log:    output/sub3_spatial/20260902_142836/run.log
+
+
+#########################################################
+# POINT 1/1800   target = (-1.4, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 2/1800   target = (-1.2, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 3/1800   target = (-1, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 4/1800   target = (-0.8, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 5/1800   target = (-0.6, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 6/1800   target = (-0.4, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 7/1800   target = (-0.2, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 8/1800   target = (0, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 9/1800   target = (0.2, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 10/1800   target = (0.4, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 11/1800   target = (0.6, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 12/1800   target = (0.8, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 13/1800   target = (1, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 14/1800   target = (1.2, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 15/1800   target = (1.4, -1.4, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 16/1800   target = (1.4, -1.2, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 17/1800   target = (1.2, -1.2, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 18/1800   target = (1, -1.2, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 19/1800   target = (0.8, -1.2, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 20/1800   target = (0.6, -1.2, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+[14:28:49] Point 21/1800 already marked done -> skip.
+[14:28:49] Point 22/1800 already marked done -> skip.
+[14:28:49] Point 23/1800 already marked done -> skip.
+[14:28:49] Point 24/1800 already marked done -> skip.
+[14:28:49] Point 25/1800 already marked done -> skip.
+
+#########################################################
+# POINT 26/1800   target = (-0.6, -1.2, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 27/1800   target = (-0.8, -1.2, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 28/1800   target = (-1, -1.2, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 29/1800   target = (-1.2, -1.2, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 30/1800   target = (-1.4, -1.2, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 31/1800   target = (-1.4, -1, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 32/1800   target = (-1.2, -1, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 33/1800   target = (-1, -1, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 34/1800   target = (-0.8, -1, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 35/1800   target = (-0.6, -1, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 36/1800   target = (-0.4, -1, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 37/1800   target = (-0.2, -1, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+[14:28:49] Point 38/1800 already marked done -> skip.
+
+#########################################################
+# POINT 39/1800   target = (0.2, -1, 1.1)
+#########################################################
+[14:28:49] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+[14:28:49] Point 40/1800 already marked done -> skip.
+[14:28:49] Point 41/1800 already marked done -> skip.
+
+#########################################################
+# POINT 42/1800   target = (0.8, -1, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 43/1800   target = (1, -1, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 44/1800   target = (1.2, -1, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 45/1800   target = (1.4, -1, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 46/1800   target = (1.4, -0.8, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 47/1800   target = (1.2, -0.8, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 48/1800   target = (1, -0.8, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 49/1800   target = (0.8, -0.8, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+[14:28:50] Point 50/1800 already marked done -> skip.
+
+#########################################################
+# POINT 51/1800   target = (0.4, -0.8, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+[14:28:50] Point 52/1800 already marked done -> skip.
+[14:28:50] Point 53/1800 already marked done -> skip.
+
+#########################################################
+# POINT 54/1800   target = (-0.2, -0.8, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+[14:28:50] Point 55/1800 already marked done -> skip.
+
+#########################################################
+# POINT 56/1800   target = (-0.6, -0.8, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 57/1800   target = (-0.8, -0.8, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 58/1800   target = (-1, -0.8, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 59/1800   target = (-1.2, -0.8, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 60/1800   target = (-1.4, -0.8, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 61/1800   target = (-1.4, -0.6, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 62/1800   target = (-1.2, -0.6, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 63/1800   target = (-1, -0.6, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 64/1800   target = (-0.8, -0.6, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 65/1800   target = (-0.6, -0.6, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 66/1800   target = (-0.4, -0.6, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+[14:28:50] Point 67/1800 already marked done -> skip.
+[14:28:50] Point 68/1800 already marked done -> skip.
+[14:28:50] Point 69/1800 already marked done -> skip.
+[14:28:50] Point 70/1800 already marked done -> skip.
+
+#########################################################
+# POINT 71/1800   target = (0.6, -0.6, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+[14:28:50] Point 72/1800 already marked done -> skip.
+
+#########################################################
+# POINT 73/1800   target = (1, -0.6, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 74/1800   target = (1.2, -0.6, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 75/1800   target = (1.4, -0.6, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 76/1800   target = (1.4, -0.4, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 77/1800   target = (1.2, -0.4, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 78/1800   target = (1, -0.4, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+[14:28:50] Point 79/1800 already marked done -> skip.
+[14:28:50] Point 80/1800 already marked done -> skip.
+[14:28:50] Point 81/1800 already marked done -> skip.
+[14:28:50] Point 82/1800 already marked done -> skip.
+[14:28:50] Point 83/1800 already marked done -> skip.
+
+#########################################################
+# POINT 84/1800   target = (-0.2, -0.4, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 85/1800   target = (-0.4, -0.4, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 86/1800   target = (-0.6, -0.4, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 87/1800   target = (-0.8, -0.4, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 88/1800   target = (-1, -0.4, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 89/1800   target = (-1.2, -0.4, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 90/1800   target = (-1.4, -0.4, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 91/1800   target = (-1.4, -0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 92/1800   target = (-1.2, -0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 93/1800   target = (-1, -0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 94/1800   target = (-0.8, -0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 95/1800   target = (-0.6, -0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 96/1800   target = (-0.4, -0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 97/1800   target = (-0.2, -0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+[14:28:50] Point 98/1800 already marked done -> skip.
+[14:28:50] Point 99/1800 already marked done -> skip.
+[14:28:50] Point 100/1800 already marked done -> skip.
+[14:28:50] Point 101/1800 already marked done -> skip.
+[14:28:50] Point 102/1800 already marked done -> skip.
+
+#########################################################
+# POINT 103/1800   target = (1, -0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 104/1800   target = (1.2, -0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 105/1800   target = (1.4, -0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 106/1800   target = (1.4, 0, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 107/1800   target = (1.2, 0, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 108/1800   target = (1, 0, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+[14:28:50] Point 109/1800 already marked done -> skip.
+[14:28:50] Point 110/1800 already marked done -> skip.
+[14:28:50] Point 111/1800 already marked done -> skip.
+[14:28:50] Point 112/1800 already marked done -> skip.
+[14:28:50] Point 113/1800 already marked done -> skip.
+
+#########################################################
+# POINT 114/1800   target = (-0.2, 0, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 115/1800   target = (-0.4, 0, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 116/1800   target = (-0.6, 0, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 117/1800   target = (-0.8, 0, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 118/1800   target = (-1, 0, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 119/1800   target = (-1.2, 0, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 120/1800   target = (-1.4, 0, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 121/1800   target = (-1.4, 0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 122/1800   target = (-1.2, 0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 123/1800   target = (-1, 0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 124/1800   target = (-0.8, 0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+
+#########################################################
+# POINT 125/1800   target = (-0.6, 0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> NOT REACHABLE (server: 'unobtainable'). Skipping point.
+[14:28:50] Point 126/1800 already marked done -> skip.
+[14:28:50] Point 127/1800 already marked done -> skip.
+
+#########################################################
+# POINT 128/1800   target = (0, 0.2, 1.1)
+#########################################################
+[14:28:50] Moving receiver to target...
+  -> reachable.
+  point_id = 20260902_142836_1
+
+--- STAGE 1/2: Vertical baseline scan {K} (PD -> zenith) ---
+[14:28:50] Setting PD to vertical...
+[Info] Sending command for receiver to face upward (vertical)...
+    [vertical rep 1/1] LED orient 1/12 (nt_incl=16, nt_az=90)  ->  V = 10.938389 V
