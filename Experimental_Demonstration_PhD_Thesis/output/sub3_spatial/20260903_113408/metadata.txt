@@ -29,3 +29,5 @@ n_samples=1000
 v_dark_mean=10.93838908
 v_dark_median=10.93838908
 v_dark_std=9.419402128e-14
+v_dark_valid=0
+v_dark_valid_note=LED was not switched off before pressing Enter; baseline is saturated at ~10.94 V (std ~1e-13). Do NOT subtract this v_dark from the point-wise measurements.

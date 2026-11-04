@@ -29,3 +29,5 @@ n_samples=1000
 v_dark_mean=0.3117454902
 v_dark_median=0.3117096262
 v_dark_std=0.003255360143
+removed_points=20260929_145944_24
+removed_points_note=Noise bursts in tilt scans (v_std ~1.2 V vs ~0.003 V nominal). Whole point moved to removed_rows.csv; needs re-measurement.

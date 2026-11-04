@@ -29,3 +29,5 @@ n_samples=1000
 v_dark_mean=9.672039139
 v_dark_median=9.672345121
 v_dark_std=0.07584090354
+v_dark_valid=0
+v_dark_valid_note=LED was still on (or another strong light source) when the baseline was measured; v_dark=9.67 V is orders of magnitude above a real BPX61 dark reading (~mV). Do NOT subtract this v_dark from the point-wise measurements.

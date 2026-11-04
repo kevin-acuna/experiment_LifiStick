@@ -29,3 +29,7 @@ n_samples=1000
 v_dark_mean=10.93838908
 v_dark_median=10.93838908
 v_dark_std=9.419402128e-14
+v_dark_valid=0
+v_dark_valid_note=LED was not switched off before pressing Enter; baseline is saturated at ~10.94 V (std ~1e-13). Do NOT subtract this v_dark from the point-wise measurements.
+removed_points=20260924_143134_19;20260924_143134_22;20260924_143134_36
+removed_points_note=Noise bursts in tilt scans (v_std 1-3 V vs ~0.003 V nominal, v_mean << v_median). Whole points moved to removed_rows.csv. Points (1,-0.4,0.7) (1.2,0.6,0.7) (1,0.6,0.5) need re-measurement.

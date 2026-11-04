@@ -26,3 +26,5 @@ robot_base_y_cmd=0.012
 daq_channel=Dev1/ai1
 daq_sample_rate_hz=1000
 n_samples=1000
+removed_points=20260922_162454_33;20260922_162454_34
+removed_points_note=Signal-chain failure: readings railed at the DAQ negative limit (-10.6248 V, std 0). Whole points moved to removed_rows.csv. Points (1.2,0.6,0.9) (1.4,0.6,0.9) need re-measurement.
